@@ -1,6 +1,6 @@
 package semix
 
-import "fmt"
+import "github.com/sirupsen/logrus"
 
 // DFAMatcher uses a DFA to search for matches in a string.
 type DFAMatcher struct {
@@ -13,7 +13,7 @@ type DFAMatcher struct {
 func (m DFAMatcher) Match(str string) MatchPos {
 	for i := 0; i < len(str); {
 		pos, c, _ := m.matchFromHere(str[i:])
-		fmt.Printf("match from here %s = %d %s\n", str[i:], pos, c)
+		logrus.Debugf("match from here %q:{%d %s}", str[i:], pos, c)
 		if c != nil {
 			return MatchPos{Concept: c, Begin: i + 1, End: i + pos}
 		}

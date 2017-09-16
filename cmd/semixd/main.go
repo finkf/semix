@@ -119,7 +119,7 @@ func index(dfa semix.DFA, w http.ResponseWriter, r *http.Request) {
 	}
 	stream, cancel := makeStream(dfa, r.Body)
 	defer cancel()
-	var info IndexInfo
+	info := IndexInfo{Tokens: []TokenInfo{}} // for json
 	for t := range stream {
 		if t.Err != nil {
 			logrus.Infof("error in stream: %v", t.Err)
