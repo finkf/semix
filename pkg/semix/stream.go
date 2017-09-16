@@ -9,12 +9,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// StreamToken Wraps either a token or an error
 type StreamToken struct {
 	Token Token
 	Err   error
 }
 
-// TokenStream repsents a strem to read tokens.
+// Stream repsents a stream to read tokens.
 type Stream <-chan StreamToken
 
 // Filter filters all tokens for which f returns true.
@@ -40,6 +41,7 @@ func Filter(ctx context.Context, s Stream) Stream {
 	return filterstream
 }
 
+// Take takes no more than n tokens from a stream.
 func Take(ctx context.Context, n int, stream Stream) Stream {
 	takestream := make(chan StreamToken)
 	go func() {
