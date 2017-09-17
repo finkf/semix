@@ -3,14 +3,33 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
 	"bitbucket.org/fflo/semix/pkg/semix"
 	"github.com/sirupsen/logrus"
 )
+
+var semixdir string
+
+// check for environment variable SEMIXDIR
+func init() {
+	semixdir = os.Getenv("SEMIXDIR")
+	if semixdir == "" {
+		panic("environment variable SEMIXDIR not set")
+	}
+	info, err := os.Lstat(semixdir)
+	if err != nil {
+		panic(fmt.Sprintf("could not stat %s: %v", semixdir, err))
+	}
+	if !info.IsDir() {
+		panic(fmt.Sprintf("%s: not a directory", semixdir))
+	}
+}
 
 var file = "/home/flo/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"
 
@@ -23,6 +42,7 @@ func main() {
 		logrus.Fatal(err)
 	}
 	g, d := p.Get()
+	i := semix.NewDirIndex(semixdir, 10)
 	dfa := semix.NewDFA(d, g)
 	logrus.Infof("done reading RDF-XML")
 	logrus.Infof("starting the server")
@@ -30,7 +50,7 @@ func main() {
 		search(g, d, w, r)
 	})
 	http.HandleFunc("/put", func(w http.ResponseWriter, r *http.Request) {
-		index(dfa, w, r)
+		index(dfa, i, w, r)
 	})
 	http.ListenAndServe(":8080", nil)
 }
@@ -110,7 +130,7 @@ type IndexInfo struct {
 	Tokens []TokenInfo
 }
 
-func index(dfa semix.DFA, w http.ResponseWriter, r *http.Request) {
+func index(dfa semix.DFA, i semix.Index, w http.ResponseWriter, r *http.Request) {
 	logrus.Infof("serving request for %s", r.RequestURI)
 	if r.Method != "POST" {
 		logrus.Infof("invalid method: %s", r.Method)
@@ -127,6 +147,11 @@ func index(dfa semix.DFA, w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		logrus.Debugf("token: %s", t.Token)
+		if err := i.Put(t.Token); err != nil {
+			logrus.Infof("could not indet token: %v", err)
+			http.Error(w, "could not index", http.StatusInternalServerError)
+			return
+		}
 		info.Tokens = append(info.Tokens, TokenInfo{
 			Token:      t.Token.Token,
 			ConceptURL: t.Token.Concept.URL(),
