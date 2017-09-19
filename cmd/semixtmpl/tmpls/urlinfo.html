@@ -16,11 +16,11 @@
 				<ul>
 						{{range $p, $v := .Links}}
 						<li><a href="http://localhost:8080/info?q={{$p}}">{{$p}}</a></li>
-						<li><ul>
+						<ul>
 						{{range $v}}
-						<li>Predicate: <a href="http://localhost:8080/info?q={{.}}">{{.}}</a></li>
+						<li><a href="http://localhost:8080/info?q={{.}}">{{.}}</a></li>
 						{{end}}
-						</ul></li>
+						</ul>
 						{{end}}
 				</ul>
 		</body>
