@@ -37,6 +37,10 @@ type dirIndex struct {
 }
 
 func (i *dirIndex) Put(t Token) error {
+	return errors.New("Not implemented")
+}
+
+/*
 	if i.index == nil {
 		i.index = make(map[int][]IndexEntry)
 	}
@@ -59,6 +63,7 @@ func (i *dirIndex) Put(t Token) error {
 		i.doPut(int(edge.O.ID()), e)
 	})
 }
+*/
 
 func (i *dirIndex) doPut(id int, e IndexEntry) error {
 	i.index[id] = append(i.index[id], e)
@@ -85,7 +90,7 @@ func (i *dirIndex) write(es []IndexEntry) error {
 		return errors.Wrap(err, fmt.Sprintf("could not write index %s: %v", path, err))
 	}
 	logrus.Infof("encoded entries to %s", path)
-	i.index
+	// i.index
 	return nil
 }
 

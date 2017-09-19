@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+		<head>
+				<title>Semix Info</title>
+		</head>
+		<body>
+				<h1>Query: {{.Query}}</h1>
+				<h2>URL: <a href="http://localhost:8080/info?q={{.Subject}}">{{.Subject}}</a></h2>
+				<h2>Entries</h2>
+				<ul>
+						{{range .Entries}}
+						<li><a href="http://localhost:8080/info?q={{.}}">{{.}}</a></li>
+						{{end}}
+				</ul>
+				<h2>Links</h2>
+				<ul>
+						{{range $p, $v := .Links}}
+						<li><a href="http://localhost:8080/info?q={{$p}}">{{$p}}</a></li>
+						<li><ul>
+						{{range $v}}
+						<li>Predicate: <a href="http://localhost:8080/info?q={{.}}">{{.}}</a></li>
+						{{end}}
+						</ul></li>
+						{{end}}
+				</ul>
+		</body>
+</html>

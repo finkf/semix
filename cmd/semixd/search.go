@@ -9,14 +9,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type LinkInfo struct {
-	Predicate, Object string
-}
-
 type SearchInfo struct {
 	Query   string
 	Subject string
-	Links   []LinkInfo
+	Links   map[string][]string
 	Entries []string
 }
 
@@ -33,7 +29,7 @@ func search(g *semix.Graph, d map[string]*semix.Concept, w http.ResponseWriter, 
 		http.Error(w, "invalid query paramters", http.StatusBadRequest)
 		return
 	}
-	c := lookup(d, q[0])
+	c := lookup(g, d, q[0])
 	if c == nil {
 		logrus.Infof("could not find %q", q[0])
 		http.Error(w, "not found", http.StatusNotFound)
@@ -57,16 +53,17 @@ func makeLookupInfo(d map[string]*semix.Concept, c *semix.Concept) SearchInfo {
 			info.Entries = append(info.Entries, str)
 		}
 	}
+	info.Links = make(map[string][]string)
 	c.Edges(func(edge semix.Edge) {
-		info.Links = append(info.Links, LinkInfo{
-			Predicate: edge.P.URL(),
-			Object:    edge.O.URL(),
-		})
+		info.Links[edge.P.URL()] = append(info.Links[edge.P.URL()], edge.O.URL())
 	})
 	return info
 }
 
-func lookup(d map[string]*semix.Concept, q string) *semix.Concept {
+func lookup(g *semix.Graph, d map[string]*semix.Concept, q string) *semix.Concept {
+	if c, ok := g.FindByURL(q); ok {
+		return c
+	}
 	if c, ok := d[q]; ok {
 		return c
 	}

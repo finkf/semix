@@ -16,24 +16,24 @@ func NewGraph() *Graph {
 	}
 }
 
-func (g *Graph) FindByURL(str string) *Concept {
+func (g *Graph) FindByURL(str string) (*Concept, bool) {
 	if c, ok := g.cMap[str]; ok {
-		return c
+		return c, true
 	}
-	return nil
+	return nil, false
 }
 
-func (g *Graph) FindById(id int32) *Concept {
+func (g *Graph) FindById(id int32) (*Concept, bool) {
 	if id == 0 {
-		return nil
+		return nil, false
 	}
 	if id < 0 {
 		id = -id
 	}
 	if int(id) > len(g.cArr) {
-		return nil
+		return nil, false
 	}
-	return g.cArr[id-1]
+	return g.cArr[id-1], true
 }
 
 func (g *Graph) Add(s, p, o string) Triple {

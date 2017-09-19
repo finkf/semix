@@ -119,7 +119,9 @@ func (p *Parser) Get() (*semix.Graph, map[string]*semix.Concept) {
 	}
 	d := make(map[string]*semix.Concept, len(p.dictionary))
 	for str, url := range p.dictionary {
-		d[str] = g.FindByURL(url)
+		if c, ok := g.FindByURL(url); ok {
+			d[str] = c
+		}
 	}
 	return g, d
 }

@@ -51,5 +51,5 @@ func main() {
 	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
 		get(dfa, i, w, r)
 	})
-	logrus.Fatalf(http.ListenAndServe(":8080", nil).Error())
+	logrus.Fatalf(http.ListenAndServe(":6060", nil).Error())
 }
