@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -12,9 +13,9 @@ import (
 
 // IndexEntry denotes a public available index entry
 type IndexEntry struct {
-	URL        string
-	Begin, End int
-	Token      string
+	ConceptURL, Path, OriginURL, OriginRelationURL string
+	Begin, End                                     int
+	Token                                          string
 }
 
 // Index represents the basic interface to put and get tokens from an index.
@@ -43,41 +44,48 @@ func (i *dirIndex) Put(t Token) error {
 		return nil
 	}
 	id := int(t.Concept.ID())
-	if id < 0 {
-		id = -id
+	e := IndexEntry{
+		Token:      t.Token,
+		ConceptURL: t.Concept.URL(),
+		Path:       t.Path,
+		Begin:      t.Begin,
+		End:        t.End,
 	}
-	i.index[id] = append(i.index[id], IndexEntry{
-		Token: t.Token,
-		URL:   t.Concept.URL(),
-		Begin: t.Begin,
-		End:   t.End,
+	i.doPut(id, e)
+	t.Concept.Edges(func(edge Edge) {
+		e.OriginURL = t.Concept.URL()
+		e.ConceptURL = edge.O.URL()
+		e.OriginRelationURL = edge.P.URL()
+		i.doPut(int(edge.O.ID()), e)
 	})
-	if len(i.index[id]) < i.n {
-		return i.write(id)
+}
+
+func (i *dirIndex) doPut(id int, e IndexEntry) error {
+	i.index[id] = append(i.index[id], e)
+	if len(i.index[id]) >= i.n {
+		return i.write(i.index[id])
 	}
 	return nil
 }
 
-func (i *dirIndex) write(id int) error {
-	if id <= 0 {
-		panic(fmt.Sprintf("dirIndex: invalid id: %d", id))
-	}
-	if len(i.index[id]) == 0 {
+func (i *dirIndex) write(es []IndexEntry) error {
+	if len(es) == 0 {
 		return nil
 	}
 	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
-	path := i.indexFile(id)
+	path := i.indexFile(es[0].ConceptURL)
 	of, err := os.OpenFile(path, flags, 0644)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("could not write index: %s", path))
 	}
 	defer of.Close()
 	e := gob.NewEncoder(of)
-	logrus.Debugf("encoding id %d to %s", id, path)
-	if err := e.Encode(i.index[id]); err != nil {
+	logrus.Debugf("encoding entries to %s", path)
+	if err := e.Encode(es); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("could not write index %s: %v", path, err))
 	}
-	logrus.Infof("encoded id %d to %s", id, path)
+	logrus.Infof("encoded entries to %s", path)
+	i.index
 	return nil
 }
 
@@ -86,14 +94,17 @@ func (i *dirIndex) Get(*Concept, func(IndexEntry)) error {
 }
 
 func (i *dirIndex) Flush() error {
-	for id := range i.index {
-		if err := i.write(id); err != nil {
+	for _, arr := range i.index {
+		if err := i.write(arr); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (i *dirIndex) indexFile(id int) string {
-	return filepath.Join(i.dir, fmt.Sprintf("%016x.gob", id))
+func (i *dirIndex) indexFile(url string) string {
+	if i := strings.LastIndex(url, "/"); i != -1 {
+		url = url[i+1:]
+	}
+	return filepath.Join(i.dir, url+".gob")
 }

@@ -2,7 +2,6 @@ package semix
 
 import (
 	"context"
-	"io"
 	"io/ioutil"
 	"sync"
 
@@ -124,6 +123,7 @@ func doMatch(s chan StreamToken, t Token, m Matcher) {
 			s <- StreamToken{
 				Token: Token{
 					Token:   rest,
+					Path:    t.Path,
 					Begin:   ofs,
 					End:     ofs + len(rest),
 					Concept: nil,
@@ -135,6 +135,7 @@ func doMatch(s chan StreamToken, t Token, m Matcher) {
 			s <- StreamToken{
 				Token: Token{
 					Token:   rest[0:match.End],
+					Path:    t.Path,
 					Begin:   ofs,
 					End:     ofs + match.End,
 					Concept: match.Concept,
@@ -147,6 +148,7 @@ func doMatch(s chan StreamToken, t Token, m Matcher) {
 			s <- StreamToken{
 				Token: Token{
 					Token:   rest[0:match.Begin],
+					Path:    t.Path,
 					Begin:   ofs,
 					End:     ofs + match.Begin,
 					Concept: nil,
@@ -155,6 +157,7 @@ func doMatch(s chan StreamToken, t Token, m Matcher) {
 			s <- StreamToken{
 				Token: Token{
 					Token:   rest[match.Begin:match.End],
+					Path:    t.Path,
 					Begin:   ofs + match.Begin,
 					End:     ofs + match.End,
 					Concept: match.Concept,
@@ -166,16 +169,17 @@ func doMatch(s chan StreamToken, t Token, m Matcher) {
 	}
 }
 
-func Read(ctx context.Context, rs ...io.Reader) Stream {
-	rstream := make(chan StreamToken, len(rs))
+// Read reads documents into tokens.
+func Read(ctx context.Context, ds ...Document) Stream {
+	rstream := make(chan StreamToken, len(ds))
 	go func() {
 		defer close(rstream)
 		var wg sync.WaitGroup
-		wg.Add(len(rs))
-		for _, r := range rs {
-			go func(r io.Reader) {
+		wg.Add(len(ds))
+		for _, d := range ds {
+			go func(d Document) {
 				defer wg.Done()
-				token := readToken(r)
+				token := readToken(d)
 				logrus.Debugf("READ %v", token)
 				select {
 				case <-ctx.Done():
@@ -183,21 +187,23 @@ func Read(ctx context.Context, rs ...io.Reader) Stream {
 				case rstream <- token:
 					return
 				}
-			}(r)
+			}(d)
 		}
 		wg.Wait()
 	}()
 	return rstream
 }
 
-func readToken(r io.Reader) StreamToken {
-	bs, err := ioutil.ReadAll(r)
+func readToken(d Document) StreamToken {
+	defer d.Close()
+	bs, err := ioutil.ReadAll(d)
 	if err != nil {
 		return StreamToken{Err: err}
 	}
 	return StreamToken{
 		Token: Token{
 			Token: " " + string(bs) + " ",
+			Path:  d.Path(),
 			Begin: 0,
 			End:   len(bs) + 2,
 		},
