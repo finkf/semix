@@ -27,7 +27,7 @@ func init() {
 	}
 }
 
-var file = "/home/flo/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"
+var file = os.Getenv("HOME") + "/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"
 
 func main() {
 	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})

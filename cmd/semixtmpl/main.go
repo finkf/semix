@@ -21,7 +21,7 @@ type LookupInfo struct {
 var t *template.Template
 
 func main() {
-	t = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/urlinfo.html"))
+	t = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/info.html"))
 	http.HandleFunc("/info", handle)
 	log.Fatalf(http.ListenAndServe(":8080", nil).Error())
 }
