@@ -18,10 +18,12 @@ type LookupInfo struct {
 	Entries []string
 }
 
-var t *template.Template
+var tmpl *template.Template
+var client *http.Client
 
 func main() {
-	t = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/info.html"))
+	tmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/info.html"))
+	client = &http.Client{}
 	http.HandleFunc("/info", handle)
 	log.Fatalf(http.ListenAndServe(":8080", nil).Error())
 }
@@ -44,7 +46,7 @@ func handle(w http.ResponseWriter, req *http.Request) {
 		log.Printf("could not load info: %v", err)
 		http.Error(w, "could not find info", http.StatusNotFound)
 	}
-	if err := t.Execute(w, info); err != nil {
+	if err := tmpl.Execute(w, info); err != nil {
 		log.Printf("could not load info: %v", err)
 		http.Error(w, "could not load info: %v", http.StatusInternalServerError)
 	}
@@ -58,7 +60,6 @@ func get(q string) (LookupInfo, error) {
 	if err != nil {
 		return info, err
 	}
-	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
 		return info, err
