@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"bitbucket.org/fflo/semix/pkg/semix"
@@ -27,7 +29,13 @@ func put(dfa semix.DFA, i semix.Index, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "not a POST request", http.StatusBadRequest)
 		return
 	}
-	stream, cancel := makeStream(dfa, makeDocumentFromRequest(r))
+	doc, err := makeDocumentFromRequest(r)
+	if err != nil {
+		logrus.Infof("could not create document: %v", err)
+		http.Error(w, "invalid post data", http.StatusInternalServerError)
+		return
+	}
+	stream, cancel := makeStream(dfa, doc)
 	defer cancel()
 	info := IndexInfo{Tokens: []TokenInfo{}} // for json
 	for t := range stream {
@@ -37,11 +45,11 @@ func put(dfa semix.DFA, i semix.Index, w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		logrus.Debugf("token: %s", t.Token)
-		if err := i.Put(t.Token); err != nil {
-			logrus.Infof("could not indet token: %v", err)
-			http.Error(w, "could not index", http.StatusInternalServerError)
-			return
-		}
+		// if err := i.Put(t.Token); err != nil {
+		// 	logrus.Infof("could not index token: %v", err)
+		// 	http.Error(w, "could not index", http.StatusInternalServerError)
+		// 	return
+		// }
 		info.Tokens = append(info.Tokens, TokenInfo{
 			Token:      t.Token.Token,
 			ConceptURL: t.Token.Concept.URL(),
@@ -66,12 +74,17 @@ func makeStream(dfa semix.DFA, d semix.Document) (semix.Stream, context.CancelFu
 	return stream, cancel
 }
 
-func makeDocumentFromRequest(r *http.Request) semix.Document {
+func makeDocumentFromRequest(r *http.Request) (semix.Document, error) {
 	path := time.Now().Format(time.RFC3339) + "-" + r.RemoteAddr
-	return requestDocument{
-		r:    r.Body,
-		path: path,
+	doc, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
 	}
+	repl := strings.NewReplacer("=", " ", "+", " ")
+	return requestDocument{
+		r:    strings.NewReader(repl.Replace(string(doc))),
+		path: path,
+	}, nil
 }
 
 type requestDocument struct {
