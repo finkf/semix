@@ -38,7 +38,7 @@ func main() {
 		logrus.Fatal(err)
 	}
 	g, d := p.Get()
-	i := semix.NewDirIndex(semixdir, 10)
+	i := semix.OpenDirIndex(semixdir)
 	dfa := semix.NewDFA(d, g)
 	logrus.Infof("done reading RDF-XML")
 	logrus.Infof("starting the server")
