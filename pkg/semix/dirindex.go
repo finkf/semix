@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -136,7 +137,7 @@ func (i *dirIndex) write(data dirIndexData, id int) error {
 	if !ok {
 		return fmt.Errorf("invalid internal id: %d", id)
 	}
-	path := filepath.Join(i.dir, url)
+	path := getFilenameFromURL(i.dir, url)
 	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
 	os, err := os.OpenFile(path, flags, 0666)
 	if err != nil {
@@ -150,6 +151,10 @@ func (i *dirIndex) write(data dirIndexData, id int) error {
 	// clear the buffer
 	data.buffer[id] = data.buffer[id][:0]
 	return nil
+}
+
+func getFilenameFromURL(dir, u string) string {
+	return filepath.Join(dir, url.PathEscape(u))
 }
 
 // Put puts a token in the index.
