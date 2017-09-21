@@ -1,4 +1,4 @@
-package urlregister
+package semix
 
 import (
 	"bytes"
