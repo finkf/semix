@@ -32,6 +32,7 @@ func OpenDirIndex(dir string, opts ...DirIndexOpt) Index {
 		dir:      dir,
 		n:        DefaultIndexDirBufferSize,
 		put:      make(chan Token),
+		get:      make(chan dirIndexQuery),
 		err:      make(chan error),
 		cancel:   cancel,
 	}
@@ -48,13 +49,26 @@ type dirIndex struct {
 	cancel   context.CancelFunc
 	err      chan error
 	put      chan Token
+	get      chan dirIndexQuery
 	dir      string
 	n        int
 }
 
+// Short var names for smaller gob indices.
+// S is the string
+// P is the document path
+// B is the start position
+// E is the end position
+// R is the relation id
+// O is the origin id
 type dirIndexEntry struct {
-	Token                 string
-	Begin, End, Rel, Orig int
+	S, P       string
+	B, E, R, O int
+}
+
+type dirIndexQuery struct {
+	f   func(IndexEntry)
+	url string
 }
 
 type dirIndexData struct {
@@ -71,6 +85,8 @@ func (i *dirIndex) start(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
+		case q := <-i.get:
+			i.putError(i.getEntries(data, q))
 		case t := <-i.put:
 			i.putError(i.putToken(data, t))
 		}
@@ -100,17 +116,18 @@ func (i *dirIndex) getError() error {
 
 func (i *dirIndex) putToken(data dirIndexData, t Token) error {
 	e := dirIndexEntry{
-		Token: t.Token,
-		Begin: t.Begin,
-		End:   t.End,
+		S: t.Token,
+		P: t.Path,
+		B: t.Begin,
+		E: t.End,
 	}
 	id := data.register.Register(t.Concept.URL())
 	if err := i.putEntry(data, id, e); err != nil {
 		return err
 	}
 	for _, edge := range t.Concept.edges {
-		e.Orig = id
-		e.Rel = data.register.Register(edge.P.URL())
+		e.O = id
+		e.R = data.register.Register(edge.P.URL())
 		oid := data.register.Register(edge.O.URL())
 		if err := i.putEntry(data, oid, e); err != nil {
 			return err
@@ -170,6 +187,53 @@ func (i *dirIndex) Close() error {
 	return errors.New("not implemented")
 }
 
-func (i *dirIndex) Get(*Concept, func(Token)) error {
-	return errors.New("not implemented")
+func (i *dirIndex) Get(c *Concept, f func(IndexEntry)) error {
+	if c == nil {
+		return nil
+	}
+	if err := i.getError(); err != nil {
+		return err
+	}
+	i.get <- dirIndexQuery{url: c.URL(), f: f}
+	return i.getError()
+}
+
+func (i *dirIndex) getEntries(data dirIndexData, q dirIndexQuery) error {
+	path := getFilenameFromURL(i.dir, q.url)
+	is, err := os.Open(path)
+	if err != nil {
+		return errors.Wrapf(err, "could not open %q", path)
+	}
+	defer is.Close()
+	d := gob.NewDecoder(is)
+	var es []dirIndexEntry
+	for {
+		if err := d.Decode(&es); err != nil {
+			return errors.Wrapf(err, "could not decode %q", path)
+		}
+		if len(es) == 0 {
+			break
+		}
+		for _, e := range es {
+			O, ok := data.register.LookupID(e.O)
+			if !ok {
+				return fmt.Errorf("invalid internal id: %d", e.O)
+			}
+			R, ok := data.register.LookupID(e.R)
+			if !ok {
+				return fmt.Errorf("invalid internal id: %d", e.R)
+			}
+			ientry := IndexEntry{
+				ConceptURL:        q.url,
+				Token:             e.S,
+				Path:              e.P,
+				OriginURL:         O,
+				OriginRelationURL: R,
+				Begin:             e.B,
+				End:               e.E,
+			}
+			q.f(ientry)
+		}
+	}
+	return nil
 }
