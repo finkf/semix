@@ -16,15 +16,15 @@ type lexerError string
 
 // LexemTypes
 const (
-	LexemIdent   = 0
-	LexemLeft    = '<'
-	LexemRight   = '>'
-	LexemQuest   = '?'
-	LexemOBrace  = '('
-	LexemCBrace  = ')'
-	LexemOBracet = '{'
-	LexemCBracet = '}'
-	LexemComma   = ','
+	LexemeIdent   = 0
+	LexemeLeft    = '<'
+	LexemeRight   = '>'
+	LexemeQuest   = '?'
+	LexemeOBrace  = '('
+	LexemeCBrace  = ')'
+	LexemeOBracet = '{'
+	LexemeCBracet = '}'
+	LexemeComma   = ','
 )
 
 // Lexeme represents a lexem.
@@ -107,7 +107,7 @@ func (l *Lexer) parseQuotedIdent(q byte) Lexeme {
 		c := l.next()
 		switch {
 		case c == q:
-			return Lexeme{Typ: LexemIdent, Str: l.str[spos : l.pos-1]}
+			return Lexeme{Typ: LexemeIdent, Str: l.str[spos : l.pos-1]}
 		case c == 0:
 			panic(lexerError("missing quotation"))
 		}
@@ -121,9 +121,9 @@ func (l *Lexer) parseIdent() Lexeme {
 		c := l.peek()
 		switch {
 		case isop(c) || c == '\'' || c == '"' || isws(c):
-			return Lexeme{Typ: LexemIdent, Str: l.str[spos:l.pos]}
+			return Lexeme{Typ: LexemeIdent, Str: l.str[spos:l.pos]}
 		case c == 0:
-			return Lexeme{Typ: LexemIdent, Str: l.str[spos:]}
+			return Lexeme{Typ: LexemeIdent, Str: l.str[spos:]}
 		default:
 			l.next()
 		}
