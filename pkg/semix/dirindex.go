@@ -9,10 +9,13 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
+// DirIndexOpt defines a functional argument setter.
 type DirIndexOpt func(*dirIndex)
 
+// WithBufferSize sets the optional buffer size of the directory index.
 func WithBufferSize(n int) DirIndexOpt {
 	return func(i *dirIndex) {
 		i.n = n
@@ -20,6 +23,7 @@ func WithBufferSize(n int) DirIndexOpt {
 }
 
 const (
+	// DefaultIndexDirBufferSize is the default buffer size.
 	DefaultIndexDirBufferSize = 1024
 )
 
@@ -76,6 +80,33 @@ type dirIndexData struct {
 	register *URLRegister
 }
 
+// Put puts a token in the index.
+func (i *dirIndex) Put(t Token) error {
+	if err := i.getError(); err != nil {
+		return err
+	}
+	i.put <- t
+	return i.getError()
+}
+
+// Get queries the index for a concept and calls the callback function
+// for each entry in the index.
+func (i *dirIndex) Get(c *Concept, f func(IndexEntry)) error {
+	if c == nil {
+		return nil
+	}
+	if err := i.getError(); err != nil {
+		return err
+	}
+	i.get <- dirIndexQuery{url: c.URL(), f: f}
+	return i.getError()
+}
+
+// Close closes the index and writes all buffered entries to disc.
+func (i *dirIndex) Close() error {
+	return errors.New("not implemented")
+}
+
 func (i *dirIndex) start(ctx context.Context) {
 	data := dirIndexData{
 		buffer:   make(map[int][]dirIndexEntry),
@@ -86,21 +117,30 @@ func (i *dirIndex) start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case q := <-i.get:
-			i.putError(i.getEntries(data, q))
+			if err := i.getEntries(data, q); err != nil {
+				logrus.Infof("i.getEntries error: %v", err)
+				i.putError(err)
+			}
 		case t := <-i.put:
-			i.putError(i.putToken(data, t))
+			if err := i.putToken(data, t); err != nil {
+				logrus.Infof("i.putToken error: %v", err)
+				i.putError(err)
+			}
 		}
 	}
 }
 
 func (i *dirIndex) putError(err error) {
 	if err == nil {
+		// logrus.Infof("not putting a nil error")
 		return
 	}
 	select {
 	case i.err <- err:
+		// logrus.Infof("put error: %v", err)
 		return
 	default:
+		// logrus.Infof("put nothing")
 		// drop it
 	}
 }
@@ -108,8 +148,10 @@ func (i *dirIndex) putError(err error) {
 func (i *dirIndex) getError() error {
 	select {
 	case err := <-i.err:
+		// logrus.Infof("got error: %v", err)
 		return err
 	default:
+		// logrus.Infof("got nothing")
 		return nil
 	}
 }
@@ -125,8 +167,8 @@ func (i *dirIndex) putToken(data dirIndexData, t Token) error {
 	if err := i.putEntry(data, id, e); err != nil {
 		return err
 	}
+	e.O = id
 	for _, edge := range t.Concept.edges {
-		e.O = id
 		e.R = data.register.Register(edge.P.URL())
 		oid := data.register.Register(edge.O.URL())
 		if err := i.putEntry(data, oid, e); err != nil {
@@ -137,6 +179,7 @@ func (i *dirIndex) putToken(data dirIndexData, t Token) error {
 }
 
 func (i *dirIndex) putEntry(data dirIndexData, id int, e dirIndexEntry) error {
+	// logrus.Infof("putting entry %v (id: %d)", e, id)
 	data.buffer[id] = append(data.buffer[id], e)
 	if len(data.buffer[id]) == i.n {
 		if err := i.write(data, id); err != nil {
@@ -171,69 +214,83 @@ func (i *dirIndex) write(data dirIndexData, id int) error {
 }
 
 func getFilenameFromURL(dir, u string) string {
-	return filepath.Join(dir, url.PathEscape(u))
-}
-
-// Put puts a token in the index.
-func (i *dirIndex) Put(t Token) error {
-	if err := i.getError(); err != nil {
-		return err
-	}
-	i.put <- t
-	return i.getError()
-}
-
-func (i *dirIndex) Close() error {
-	return errors.New("not implemented")
-}
-
-func (i *dirIndex) Get(c *Concept, f func(IndexEntry)) error {
-	if c == nil {
-		return nil
-	}
-	if err := i.getError(); err != nil {
-		return err
-	}
-	i.get <- dirIndexQuery{url: c.URL(), f: f}
-	return i.getError()
+	return filepath.Join(dir, url.PathEscape(u)+".gob")
 }
 
 func (i *dirIndex) getEntries(data dirIndexData, q dirIndexQuery) error {
+	// handle entries that are still in the buffer.
+	id, _ := data.register.LookupURL(q.url)
+	if es, ok := data.buffer[id]; ok {
+		for _, e := range es {
+			ie, err := makeIndexEntry(data.register, q.url, e)
+			if err != nil {
+				return err
+			}
+			q.f(ie)
+		}
+	}
+	// open file
 	path := getFilenameFromURL(i.dir, q.url)
 	is, err := os.Open(path)
 	if err != nil {
 		return errors.Wrapf(err, "could not open %q", path)
 	}
 	defer is.Close()
-	d := gob.NewDecoder(is)
 	var es []dirIndexEntry
 	for {
+		logrus.Infof("start of for")
+		d := gob.NewDecoder(is)
+		logrus.Infof("decoding")
 		if err := d.Decode(&es); err != nil {
+			logrus.Infof("returning error %v", err)
 			return errors.Wrapf(err, "could not decode %q", path)
 		}
+		logrus.Infof("decoded: %v", es)
+		logrus.Infof("decoded: %d", len(es))
 		if len(es) == 0 {
 			break
 		}
+		logrus.Infof("here")
 		for _, e := range es {
-			O, ok := data.register.LookupID(e.O)
-			if !ok {
-				return fmt.Errorf("invalid internal id: %d", e.O)
+			ie, err := makeIndexEntry(data.register, q.url, e)
+			if err != nil {
+				logrus.Infof("returning error")
+				return err
 			}
-			R, ok := data.register.LookupID(e.R)
-			if !ok {
-				return fmt.Errorf("invalid internal id: %d", e.R)
-			}
-			ientry := IndexEntry{
-				ConceptURL:        q.url,
-				Token:             e.S,
-				Path:              e.P,
-				OriginURL:         O,
-				OriginRelationURL: R,
-				Begin:             e.B,
-				End:               e.E,
-			}
-			q.f(ientry)
+			q.f(ie)
 		}
+		logrus.Infof("end of for")
 	}
 	return nil
+}
+
+func makeIndexEntry(register *URLRegister, url string, e dirIndexEntry) (IndexEntry, error) {
+	// logrus.Infof("entry: %v", e)
+	ie := IndexEntry{
+		ConceptURL: url,
+		Token:      e.S,
+		Path:       e.P,
+		Begin:      e.B,
+		End:        e.E,
+	}
+	// direct hit
+	if e.O == 0 && e.R == 0 {
+		// logrus.Infof("ientry: %v", ie)
+		return ie, nil
+	}
+
+	O, ok := register.LookupID(e.O)
+	// logrus.Infof("%s %t", O, ok)
+	if !ok {
+		return ie, fmt.Errorf("invalid internal id: %d", e.O)
+	}
+	R, ok := register.LookupID(e.R)
+	// logrus.Infof("%s %t", R, ok)
+	if !ok {
+		return ie, fmt.Errorf("invalid internal id: %d", e.R)
+	}
+	ie.OriginRelationURL = R
+	ie.OriginURL = O
+	// logrus.Infof("ientry: %v", ie)
+	return ie, nil
 }
