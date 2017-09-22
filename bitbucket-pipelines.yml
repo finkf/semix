@@ -1,4 +1,4 @@
-s is a sample build configuration for Go.
+# This is a sample build configuration for Go.
 # Check our guides at https://confluence.atlassian.com/x/5Q4SMw for more examples.
 # Only use spaces to indent your .yml configuration.
 # -----
