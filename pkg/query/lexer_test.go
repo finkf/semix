@@ -16,6 +16,7 @@ func TestLexer(t *testing.T) {
 		{`?(> R { "quot ed" , A } )`, "[? ( > R { quot ed , A } )]", false},
 		{`?(<{ident1 ident2`, "[? ( < { ident1 ident2]", false},
 		{`?(>R{"Missing quote, A})`, "[]", true},
+		{"", "[]", false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.query, func(t *testing.T) {
