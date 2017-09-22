@@ -2,61 +2,11 @@ package query
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/pkg/errors"
 )
 
 type parserError string
-
-// Query represents a query.
-type Query struct {
-	constraint constraint
-	set        set
-}
-
-// String returns a string representing the query.
-func (q Query) String() string {
-	return "?(" + q.constraint.String() + "(" + q.set.String() + "))"
-}
-
-type set map[string]bool
-
-func (s set) String() string {
-	if len(s) == 0 {
-		return "{}"
-	}
-	sep := "{"
-	str := ""
-	keys := make([]string, 0, len(s))
-	for k := range s {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
-	for _, k := range keys {
-		str += sep + k
-		sep = ","
-	}
-	return str + "}"
-}
-
-type constraint struct {
-	set      set
-	not, all bool
-}
-
-func (c constraint) String() string {
-	str := ""
-	if c.not {
-		str = "!"
-	}
-	if c.all {
-		return str + "*"
-	}
-	return str + c.set.String()
-}
 
 // Parser represents a query parser.
 type Parser struct {
