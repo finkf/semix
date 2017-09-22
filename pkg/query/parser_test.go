@@ -10,7 +10,16 @@ func TestParser(t *testing.T) {
 		query, want string
 		iserr       bool
 	}{
-		{"?(<{A,B,C})", "? [< [SET [A B C]]]", false},
+		{"?({A, B}({C, D}))", "?({A,B}({C,D}))", false},
+		{"?({}({C}))", "?({}({C}))", false},
+		{"?(!{A, B}({C, D}))", "?(!{A,B}({C,D}))", false},
+		{"?(*({C, D}))", "?(*({C,D}))", false},
+		{"?(!*({C, D}))", "?(!*({C,D}))", false},
+		{"", Query{}.String(), true},
+		{"?(", Query{}.String(), true},
+		{"?({}({}", Query{}.String(), true},
+		{"?{}({})", Query{}.String(), true},
+		{"?({'A, B}({C, D}))", Query{}.String(), true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.query, func(t *testing.T) {
