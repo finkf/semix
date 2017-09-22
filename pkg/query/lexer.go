@@ -26,6 +26,7 @@ const (
 	LexemeCBracet = '}'
 	LexemeComma   = ','
 	LexemeStar    = '*'
+	LexemeBang    = '!'
 )
 
 // Lexeme represents a lexem.
@@ -138,7 +139,8 @@ func isws(c byte) bool {
 
 func isop(c byte) bool {
 	switch {
-	case c == '?' || c == '<' || c == '>' || c == '(' || c == ')' || c == '{' || c == '}' || c == ',' || c == '*':
+	case c == '?' || c == '<' || c == '>' || c == '(' || c == ')' ||
+		c == '{' || c == '}' || c == ',' || c == '*' || c == '!':
 		return true
 	default:
 		return false
