@@ -106,6 +106,20 @@ func (p *Parser) parseSet() Query {
 	panic("not reached")
 }
 
+func (p *Parser) parseIdentSet() Query {
+	p.eat(LexemeOBracet)
+	set := make(map[string]bool)
+	for l := p.peek(); l.Typ != LexemeCBracet; l = p.peek() {
+		ident := p.eat(LexemeIdent)
+		set[ident.Str] = true
+		if p.peek().Typ == LexemeComma {
+			p.eat(LexemeComma)
+		}
+	}
+	p.eat(LexemeCBracet)
+	return Query{}
+}
+
 func (p *Parser) peek() Lexeme {
 	if p.pos >= len(p.lexemes) {
 		return Lexeme{}
