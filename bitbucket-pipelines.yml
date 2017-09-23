@@ -14,6 +14,6 @@ pipelines:
           - mkdir -pv "${PACKAGE_PATH}/pkg/query"
           - tar -cO --exclude-vcs --exclude=bitbucket-pipelines.yml . | tar -xv -C "${PACKAGE_PATH}/pkg/query"
           - cd "${PACKAGE_PATH}/pkg/query"
-          - PACKAGE = "bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}"
+          - PACKAGE="bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}"
           - go get -v ${PACKAGE}/pkg/query
           - go test ${PACKAGE}/pkg/query
