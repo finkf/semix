@@ -164,17 +164,12 @@ func (i *dirIndex) write(data dirIndexData, id int) error {
 		return errors.Wrapf(err, "could not open %q", path)
 	}
 	defer os.Close()
-	e := gob.NewEncoder(os)
-	if err := e.Encode(data.buffer[id]); err != nil {
-		return errors.Wrapf(err, "could not encode %q", path)
+	if err := writeDirIndexEntries(os, data.buffer[id]); err != nil {
+		return errors.Wrapf(err, "could not write id %d to %q", id, path)
 	}
 	// clear the buffer
 	data.buffer[id] = data.buffer[id][:0]
 	return nil
-}
-
-func getFilenameFromURL(dir, u string) string {
-	return filepath.Join(dir, url.PathEscape(u)+".gob")
 }
 
 func (i *dirIndex) getEntries(data dirIndexData, q dirIndexQuery) error {
@@ -203,12 +198,10 @@ func (i *dirIndex) getEntries(data dirIndexData, q dirIndexQuery) error {
 }
 
 func (i *dirIndex) getEntriesReader(data dirIndexData, r io.Reader, q dirIndexQuery) error {
-	var es []dirIndexEntry
 	for {
 		logrus.Infof("start of for")
-		d := gob.NewDecoder(r)
-		logrus.Infof("decoding")
-		if err := d.Decode(&es); err != nil {
+		es, err := readDirIndexEntries(r)
+		if err != nil {
 			logrus.Infof("returning error %v", err)
 			return errors.Wrap(err, "could not decode")
 		}
@@ -229,6 +222,31 @@ func (i *dirIndex) getEntriesReader(data dirIndexData, r io.Reader, q dirIndexQu
 		logrus.Infof("end of for")
 	}
 	return nil
+}
+
+func readDirIndexEntries(r io.Reader) ([]dirIndexEntry, error) {
+	d := gob.NewDecoder(r)
+	var es []dirIndexEntry
+	err := d.Decode(&es)
+	if err == io.EOF {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return es, nil
+}
+
+func writeDirIndexEntries(w io.Writer, es []dirIndexEntry) error {
+	e := gob.NewEncoder(w)
+	if err := e.Encode(es); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getFilenameFromURL(dir, u string) string {
+	return filepath.Join(dir, url.PathEscape(u)+".gob")
 }
 
 func makeIndexEntry(register *URLRegister, url string, e dirIndexEntry) (IndexEntry, error) {
