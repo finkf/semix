@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/gob"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -236,14 +237,21 @@ func (i *dirIndex) getEntries(data dirIndexData, q dirIndexQuery) error {
 		return errors.Wrapf(err, "could not open %q", path)
 	}
 	defer is.Close()
+	if err := i.getEntriesReader(data, is, q); err != nil {
+		return errors.Wrapf(err, "could not read %q", path)
+	}
+	return nil
+}
+
+func (i *dirIndex) getEntriesReader(data dirIndexData, r io.Reader, q dirIndexQuery) error {
 	var es []dirIndexEntry
 	for {
 		logrus.Infof("start of for")
-		d := gob.NewDecoder(is)
+		d := gob.NewDecoder(r)
 		logrus.Infof("decoding")
 		if err := d.Decode(&es); err != nil {
 			logrus.Infof("returning error %v", err)
-			return errors.Wrapf(err, "could not decode %q", path)
+			return errors.Wrap(err, "could not decode")
 		}
 		logrus.Infof("decoded: %v", es)
 		logrus.Infof("decoded: %d", len(es))
