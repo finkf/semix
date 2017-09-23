@@ -58,6 +58,7 @@ func (i *dirIndex) Put(t Token) error {
 		e.OriginRelationURL = edge.P.URL()
 		i.doPut(int(edge.O.ID()), e)
 	})
+	return nil
 }
 
 func (i *dirIndex) doPut(id int, e IndexEntry) error {
@@ -85,7 +86,7 @@ func (i *dirIndex) write(es []IndexEntry) error {
 		return errors.Wrap(err, fmt.Sprintf("could not write index %s: %v", path, err))
 	}
 	logrus.Infof("encoded entries to %s", path)
-	i.index
+	// i.index
 	return nil
 }
 
