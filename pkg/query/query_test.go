@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 	"testing"
+
+	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
 func TestQuery(t *testing.T) {
@@ -34,9 +36,9 @@ func TestQuery(t *testing.T) {
 				t.Fatalf("got error: %v", err)
 			}
 			sort.Slice(es, func(i, j int) bool {
-				return es[i].URL < es[j].URL
+				return es[i].ConceptURL < es[j].ConceptURL
 			})
-			if str := fmt.Sprintf("%v", es); str != tc.want {
+			if str := tostring(es); str != tc.want {
 				t.Fatalf("expected %q; got %q", tc.want, str)
 			}
 			_, err = Execute(tc.query, queryTestIndex{errors.New("test")})
@@ -49,13 +51,29 @@ func TestQuery(t *testing.T) {
 	}
 }
 
+func tostring(es []semix.IndexEntry) string {
+	type pair struct {
+		first, second string
+	}
+	var pairs []pair
+	for _, e := range es {
+		pairs = append(pairs, pair{
+			first:  e.ConceptURL,
+			second: e.OriginRelationURL,
+		})
+	}
+	return fmt.Sprintf("%v", pairs)
+}
+
 type queryTestIndex struct {
 	err error
 }
 
-func (i queryTestIndex) Get(url string, f func(e IndexEntry)) error {
-	f(IndexEntry{URL: url, Rel: ""})
-	f(IndexEntry{URL: url, Rel: "R"})
-	f(IndexEntry{URL: url, Rel: "S"})
+func (queryTestIndex) Put(semix.Token) error { return nil }
+func (queryTestIndex) Close() error          { return nil }
+func (i queryTestIndex) Get(url string, f func(e semix.IndexEntry)) error {
+	f(semix.IndexEntry{ConceptURL: url, OriginRelationURL: ""})
+	f(semix.IndexEntry{ConceptURL: url, OriginRelationURL: "R"})
+	f(semix.IndexEntry{ConceptURL: url, OriginRelationURL: "S"})
 	return i.err
 }

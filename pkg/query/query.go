@@ -1,21 +1,14 @@
 package query
 
-import "sort"
+import (
+	"sort"
 
-// IndexEntry is a fake struct for the basic Index interface (see below).
-type IndexEntry struct {
-	URL, Rel string
-}
-
-// Index represents a fake index that needs to be removed if the
-// query and index branches are moved
-type Index interface {
-	Get(string, func(IndexEntry)) error
-}
+	"bitbucket.org/fflo/semix/pkg/semix"
+)
 
 // Execute executes a query on the given index and returns a slice
 // with all the matched IndexEntries.
-func Execute(query string, index Index) ([]IndexEntry, error) {
+func Execute(query string, index semix.Index) ([]semix.IndexEntry, error) {
 	q, err := New(query)
 	if err != nil {
 		return nil, err
@@ -25,7 +18,7 @@ func Execute(query string, index Index) ([]IndexEntry, error) {
 
 // ExecuteFunc executes a query on the given index.
 // The callback is called for every matched IndexEntry.
-func ExecuteFunc(query string, index Index, f func(IndexEntry)) error {
+func ExecuteFunc(query string, index semix.Index, f func(semix.IndexEntry)) error {
 	q, err := New(query)
 	if err != nil {
 		return err
@@ -51,9 +44,9 @@ func New(query string) (Query, error) {
 
 // Execute executes the query on the given index and returns
 // the slice of the matched IndexEntries.
-func (q Query) Execute(index Index) ([]IndexEntry, error) {
-	var es []IndexEntry
-	err := q.ExecuteFunc(index, func(e IndexEntry) {
+func (q Query) Execute(index semix.Index) ([]semix.IndexEntry, error) {
+	var es []semix.IndexEntry
+	err := q.ExecuteFunc(index, func(e semix.IndexEntry) {
 		es = append(es, e)
 	})
 	if err != nil {
@@ -64,9 +57,9 @@ func (q Query) Execute(index Index) ([]IndexEntry, error) {
 
 // ExecuteFunc executes the query on an index. The callback function
 // is called for every matched IndexEntry.
-func (q Query) ExecuteFunc(index Index, f func(IndexEntry)) error {
+func (q Query) ExecuteFunc(index semix.Index, f func(semix.IndexEntry)) error {
 	for url := range q.set {
-		err := index.Get(url, func(e IndexEntry) {
+		err := index.Get(url, func(e semix.IndexEntry) {
 			if q.constraint.match(e) {
 				f(e)
 			}
@@ -133,11 +126,11 @@ func (c constraint) String() string {
 // !not & !in -> false
 // !not & in  -> true
 // not & !in  -> true
-func (c constraint) match(i IndexEntry) bool {
-	if c.not && i.Rel == "" {
+func (c constraint) match(i semix.IndexEntry) bool {
+	if c.not && i.OriginRelationURL == "" {
 		return false
 	}
-	return c.not != c.in(i.Rel)
+	return c.not != c.in(i.OriginRelationURL)
 }
 
 func (c constraint) in(url string) bool {
