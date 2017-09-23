@@ -83,21 +83,15 @@ type dirIndexData struct {
 
 // Put puts a token in the index.
 func (i *dirIndex) Put(t Token) error {
-	if err := i.getError(); err != nil {
-		return err
-	}
 	i.put <- t
-	return i.getError()
+	return <-i.err
 }
 
 // Get queries the index for a concept and calls the callback function
 // for each entry in the index.
 func (i *dirIndex) Get(url string, f func(IndexEntry)) error {
-	if err := i.getError(); err != nil {
-		return err
-	}
 	i.get <- dirIndexQuery{url: url, f: f}
-	return i.getError()
+	return <-i.err
 }
 
 // Close closes the index and writes all buffered entries to disc.
@@ -115,42 +109,10 @@ func (i *dirIndex) start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case q := <-i.get:
-			if err := i.getEntries(data, q); err != nil {
-				logrus.Infof("i.getEntries error: %v", err)
-				i.putError(err)
-			}
+			i.err <- i.getEntries(data, q)
 		case t := <-i.put:
-			if err := i.putToken(data, t); err != nil {
-				logrus.Infof("i.putToken error: %v", err)
-				i.putError(err)
-			}
+			i.err <- i.putToken(data, t)
 		}
-	}
-}
-
-func (i *dirIndex) putError(err error) {
-	if err == nil {
-		// logrus.Infof("not putting a nil error")
-		return
-	}
-	select {
-	case i.err <- err:
-		// logrus.Infof("put error: %v", err)
-		return
-	default:
-		// logrus.Infof("put nothing")
-		// drop it
-	}
-}
-
-func (i *dirIndex) getError() error {
-	select {
-	case err := <-i.err:
-		// logrus.Infof("got error: %v", err)
-		return err
-	default:
-		// logrus.Infof("got nothing")
-		return nil
 	}
 }
 
