@@ -10,6 +10,6 @@ type IndexEntry struct {
 // Index represents the basic interface to put and get tokens from an index.
 type Index interface {
 	Put(Token) error
-	Get(*Concept, func(IndexEntry)) error
+	Get(string, func(IndexEntry)) error
 	Close() error
 }

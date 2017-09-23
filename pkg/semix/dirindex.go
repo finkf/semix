@@ -92,14 +92,11 @@ func (i *dirIndex) Put(t Token) error {
 
 // Get queries the index for a concept and calls the callback function
 // for each entry in the index.
-func (i *dirIndex) Get(c *Concept, f func(IndexEntry)) error {
-	if c == nil {
-		return nil
-	}
+func (i *dirIndex) Get(url string, f func(IndexEntry)) error {
 	if err := i.getError(); err != nil {
 		return err
 	}
-	i.get <- dirIndexQuery{url: c.URL(), f: f}
+	i.get <- dirIndexQuery{url: url, f: f}
 	return i.getError()
 }
 
