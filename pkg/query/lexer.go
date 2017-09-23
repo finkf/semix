@@ -2,7 +2,6 @@ package query
 
 import (
 	"errors"
-	"fmt"
 	"unicode"
 )
 
@@ -55,7 +54,6 @@ func (l *Lexer) Lex() (ls []Lexeme, err error) {
 	}()
 	for {
 		lexeme, done := l.nextLexem()
-		fmt.Printf("lexeme, done = %s, %t\n", lexeme, done)
 		if done {
 			return ls, nil
 		}
