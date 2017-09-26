@@ -68,15 +68,22 @@ func (p *Parser) parseConstraint() (constraint, set) {
 
 func (p *Parser) parseSet() set {
 	p.eat(LexemeOBracet)
-	set := make(map[string]bool)
-	for l := p.peek(); l.Typ != LexemeCBracet; l = p.peek() {
-		ident := p.eat(LexemeIdent)
-		set[ident.Str] = true
-		if p.peek().Typ == LexemeComma {
-			p.eat(LexemeComma)
-		}
-	}
+	set := p.parseList()
 	p.eat(LexemeCBracet)
+	return set
+}
+
+func (p *Parser) parseList() set {
+	set := make(map[string]bool)
+	// check for empty
+	if p.peek().Typ != LexemeIdent {
+		return set
+	}
+	set[p.eat(LexemeIdent).Str] = true
+	for l := p.peek(); l.Typ == LexemeComma; l = p.peek() {
+		p.eat(LexemeComma)
+		set[p.eat(LexemeIdent).Str] = true
+	}
 	return set
 }
 
