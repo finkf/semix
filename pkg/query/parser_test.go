@@ -10,9 +10,9 @@ func TestParser(t *testing.T) {
 		query, want string
 		iserr       bool
 	}{
-		{"?({A, B}({C, D}))", "?({A,B}({C,D}))", false},
-		{"?({}({C}))", "?({}({C}))", false},
-		{"?(!{A, B}({C, D}))", "?(!{A,B}({C,D}))", false},
+		{"?(A, B({C, D}))", "?(A,B({C,D}))", false},
+		{"?({C})", "?({C})", false},
+		{"?(!A, B({C, D}))", "?(!A,B({C,D}))", false},
 		{"?(*({C, D}))", "?(*({C,D}))", false},
 		{"?(!*({C, D}))", "?(!*({C,D}))", false},
 		{"", Query{}.String(), true},

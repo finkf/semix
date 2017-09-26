@@ -15,15 +15,15 @@ func TestQuery(t *testing.T) {
 		err         bool
 	}{
 		{"?(*({A}))", "[{A R} {A S}]", false},
-		{"?({R,S}({A}))", "[{A R} {A S}]", false},
-		{"?({S}({A}))", "[{A S}]", false},
-		{"?(!{S}({A}))", "[{A R}]", false},
-		{"?({}({A}))", "[{A }]", false},
+		{"?(R,S({A}))", "[{A R} {A S}]", false},
+		{"?(S({A}))", "[{A S}]", false},
+		{"?(!S({A}))", "[{A R}]", false},
+		{"?({A})", "[{A }]", false},
 		{"?(*({A,B}))", "[{A R} {A S} {B R} {B S}]", false},
-		{"?({R,S}({A,B}))", "[{A R} {A S} {B R} {B S}]", false},
-		{"?({S}({A,B}))", "[{A S} {B S}]", false},
-		{"?(!{S}({A,B}))", "[{A R} {B R}]", false},
-		{"?({}({A,B}))", "[{A } {B }]", false},
+		{"?(R,S({A,B}))", "[{A R} {A S} {B R} {B S}]", false},
+		{"?(S({A,B}))", "[{A S} {B S}]", false},
+		{"?(!S({A,B}))", "[{A R} {B R}]", false},
+		{"?({A,B})", "[{A } {B }]", false},
 		{"?(}({A,B}))", "[]", true},
 	}
 	for _, tc := range tests {

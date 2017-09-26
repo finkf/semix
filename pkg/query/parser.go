@@ -41,29 +41,42 @@ func (p *Parser) parseQueryExp() Query {
 	p.eat(LexemeQuest)
 	p.eat(LexemeOBrace)
 	c, s := p.parseConstraint()
+	p.eat(LexemeCBrace)
 	return Query{set: s, constraint: c}
 }
 
 func (p *Parser) parseConstraint() (constraint, set) {
 	var c constraint
 	l := p.peek()
+	// {<-...}
+	if l.Typ == LexemeOBracet {
+		return c, p.parseSet()
+	}
+	// !<-...
 	if l.Typ == LexemeBang {
 		p.eat(LexemeBang)
 		c.not = true
 		l = p.peek()
 	}
+	// *<-(...)
 	if l.Typ == LexemeStar {
 		p.eat(LexemeStar)
 		c.all = true
-		l = p.peek()
+		p.eat(LexemeOBrace)
+		s := p.parseSet()
+		p.eat(LexemeCBrace)
+		return c, s
 	}
-	if l.Typ == LexemeOBracet {
-		c.set = p.parseSet()
+	// A<-,...
+	if l.Typ == LexemeIdent {
+		c.set = p.parseList()
+		p.eat(LexemeOBrace)
+		s := p.parseSet()
+		p.eat(LexemeCBrace)
+		return c, s
 	}
-	p.eat(LexemeOBrace)
-	s := p.parseSet()
-	p.eat(LexemeCBrace)
-	return c, s
+	p.die(l.Typ, LexemeIdent, LexemeStar, LexemeBang, LexemeOBracet)
+	panic("not reached")
 }
 
 func (p *Parser) parseSet() set {

@@ -73,16 +73,20 @@ func (q Query) ExecuteFunc(index semix.Index, f func(semix.IndexEntry)) error {
 
 // String returns a string representing the query.
 func (q Query) String() string {
-	return "?(" + q.constraint.String() + "(" + q.set.String() + "))"
+	c := q.constraint.String()
+	if len(c) == 0 {
+		return "?({" + q.set.String() + "})"
+	}
+	return "?(" + c + "({" + q.set.String() + "}))"
 }
 
 type set map[string]bool
 
 func (s set) String() string {
 	if len(s) == 0 {
-		return "{}"
+		return ""
 	}
-	sep := "{"
+	sep := ""
 	str := ""
 	keys := make([]string, 0, len(s))
 	for k := range s {
@@ -95,7 +99,7 @@ func (s set) String() string {
 		str += sep + k
 		sep = ","
 	}
-	return str + "}"
+	return str
 }
 
 func (s set) in(url string) bool {
@@ -107,8 +111,8 @@ func (s set) in(url string) bool {
 }
 
 type constraint struct {
-	set      set
-	not, all bool
+	set          set
+	not, all, up bool
 }
 
 func (c constraint) String() string {
