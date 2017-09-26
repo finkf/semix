@@ -8,11 +8,13 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
+// IndexStorage puts IndexEntries into files.
 type IndexStorage interface {
 	Put(string, []IndexEntry) error
 	Get(string, func(IndexEntry)) error
@@ -24,6 +26,7 @@ type dirIndexStorage struct {
 	register *URLRegister
 }
 
+// OpenDirIndexStorage opens a new IndexStorage.
 func OpenDirIndexStorage(dir string) (IndexStorage, error) {
 	s := dirIndexStorage{dir: dir, register: NewURLRegister()}
 	path := s.urlRegisterPath()
@@ -117,12 +120,12 @@ func (s dirIndexStorage) Close() error {
 	return e.Encode(s.register)
 }
 
-func (s dirIndexStorage) path(u string) string {
-	return filepath.Join(s.dir, url.PathEscape(u)+".gob")
+func (s dirIndexStorage) path(url string) string {
+	return filepath.Join(s.dir, escapeURL(url)+".gob")
 }
 
 func (s dirIndexStorage) urlRegisterPath() string {
-	return filepath.Join(s.dir, "url-register.gob")
+	return filepath.Join(s.dir, escapeURL("http://bitbucket.org/fflo/semix/url-register")+".gob")
 }
 
 func (s dirIndexStorage) lookup(id int) string {
@@ -177,4 +180,16 @@ func readBlock(r io.Reader) ([]dsentry, error) {
 type dsentry struct {
 	S, P       string
 	B, E, R, O int
+}
+
+func escapeURL(u string) string {
+	u = strings.Replace(u, "http://", "", 1)
+	u = strings.Replace(u, "https://", "", 1)
+	u = strings.Map(func(r rune) rune {
+		if r == '/' {
+			return '.'
+		}
+		return r
+	}, u)
+	return url.PathEscape(u)
 }
