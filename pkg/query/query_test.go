@@ -25,6 +25,7 @@ func TestQuery(t *testing.T) {
 		{"?(!S({A,B}))", "[{A R} {B R}]", false},
 		{"?({A,B})", "[{A } {B }]", false},
 		{"?(}({A,B}))", "[]", true},
+		{"?({A,B}({C,D}))", "[]", true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.query, func(t *testing.T) {
