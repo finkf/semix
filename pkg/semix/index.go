@@ -2,9 +2,9 @@ package semix
 
 // IndexEntry denotes a public available index entry
 type IndexEntry struct {
-	ConceptURL, Path, OriginURL, OriginRelationURL string
-	Begin, End                                     int
-	Token                                          string
+	ConceptURL, Path, OriginURL, RelationURL string
+	Begin, End                               int
+	Token                                    string
 }
 
 // Index represents the basic interface to put and get tokens from an index.

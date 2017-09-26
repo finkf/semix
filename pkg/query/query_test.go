@@ -59,7 +59,7 @@ func tostring(es []semix.IndexEntry) string {
 	for _, e := range es {
 		pairs = append(pairs, pair{
 			first:  e.ConceptURL,
-			second: e.OriginRelationURL,
+			second: e.RelationURL,
 		})
 	}
 	return fmt.Sprintf("%v", pairs)
@@ -72,8 +72,8 @@ type queryTestIndex struct {
 func (queryTestIndex) Put(semix.Token) error { return nil }
 func (queryTestIndex) Close() error          { return nil }
 func (i queryTestIndex) Get(url string, f func(e semix.IndexEntry)) error {
-	f(semix.IndexEntry{ConceptURL: url, OriginRelationURL: ""})
-	f(semix.IndexEntry{ConceptURL: url, OriginRelationURL: "R"})
-	f(semix.IndexEntry{ConceptURL: url, OriginRelationURL: "S"})
+	f(semix.IndexEntry{ConceptURL: url, RelationURL: ""})
+	f(semix.IndexEntry{ConceptURL: url, RelationURL: "R"})
+	f(semix.IndexEntry{ConceptURL: url, RelationURL: "S"})
 	return i.err
 }

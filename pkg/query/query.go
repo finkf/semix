@@ -127,10 +127,10 @@ func (c constraint) String() string {
 // !not & in  -> true
 // not & !in  -> true
 func (c constraint) match(i semix.IndexEntry) bool {
-	if c.not && i.OriginRelationURL == "" {
+	if c.not && i.RelationURL == "" {
 		return false
 	}
-	return c.not != c.in(i.OriginRelationURL)
+	return c.not != c.in(i.RelationURL)
 }
 
 func (c constraint) in(url string) bool {
