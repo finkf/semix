@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// SearchInfo represents the the results of a search.
 type SearchInfo struct {
 	Query   string
 	Subject string
@@ -67,8 +68,11 @@ func lookup(g *semix.Graph, d map[string]*semix.Concept, q string) *semix.Concep
 	if c, ok := d[q]; ok {
 		return c
 	}
-	for _, c := range d {
+	for e, c := range d {
 		if strings.Contains(c.URL(), q) {
+			return c
+		}
+		if strings.Contains(e, q) {
 			return c
 		}
 	}

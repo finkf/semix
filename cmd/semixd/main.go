@@ -34,7 +34,10 @@ func main() {
 	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.Infof("reading RDF-XML")
-	p := rdfxml.NewParser()
+	p := rdfxml.NewParser(
+		rdfxml.WithIgnoreURLs("http://www.w3.org/2004/02/skos/core#narrower"),
+		rdfxml.WithTransitiveURLs("http://www.w3.org/2004/02/skos/core#broader"),
+	)
 	if err := p.ParseFile(file); err != nil {
 		logrus.Fatal(err)
 	}
