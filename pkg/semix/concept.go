@@ -22,6 +22,14 @@ func (c *Concept) ID() int32 {
 	return c.id
 }
 
+func (c *Concept) EdgesLen() int {
+	return len(c.edges)
+}
+
+func (c *Concept) EdgeAt(i int) Edge {
+	return c.edges[i]
+}
+
 func (c *Concept) Edges(f func(Edge)) {
 	for _, e := range c.edges {
 		f(e)

@@ -2,17 +2,19 @@ package semix
 
 import (
 	"context"
-	"io"
 	"io/ioutil"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 )
 
+// StreamToken Wraps either a token or an error
 type StreamToken struct {
 	Token Token
 	Err   error
 }
 
-// TokenStream repsents a strem to read tokens.
+// Stream repsents a stream to read tokens.
 type Stream <-chan StreamToken
 
 // Filter filters all tokens for which f returns true.
@@ -20,21 +22,25 @@ func Filter(ctx context.Context, s Stream) Stream {
 	filterstream := make(chan StreamToken)
 	go func() {
 		defer close(filterstream)
-		select {
-		case <-ctx.Done():
-			return
-		case t, ok := <-s:
-			if !ok {
+		for {
+			select {
+			case <-ctx.Done():
 				return
-			}
-			if t.Token.Concept != nil {
-				filterstream <- t
+			case t, ok := <-s:
+				logrus.Debugf("FILTER: %v %t", t, ok)
+				if !ok {
+					return
+				}
+				if t.Token.Concept != nil {
+					filterstream <- t
+				}
 			}
 		}
 	}()
 	return filterstream
 }
 
+// Take takes no more than n tokens from a stream.
 func Take(ctx context.Context, n int, stream Stream) Stream {
 	takestream := make(chan StreamToken)
 	go func() {
@@ -91,6 +97,7 @@ func Match(ctx context.Context, m Matcher, s Stream) Stream {
 			case <-ctx.Done():
 				return
 			case t, ok := <-s:
+				logrus.Debugf("MATCH %v %t", t, ok)
 				if !ok {
 					return
 				}
@@ -105,52 +112,56 @@ func Match(ctx context.Context, m Matcher, s Stream) Stream {
 	return ms
 }
 
+// TODO: this does not use cancellation. It just insert tokens into the stream.
 func doMatch(s chan StreamToken, t Token, m Matcher) {
 	rest := t.Token
 	ofs := 0
 	for len(rest) > 0 {
 		match := m.Match(rest)
 		if match.Concept == nil {
+			logrus.Debugf("DO_MATCH: %v", match)
 			s <- StreamToken{
 				Token: Token{
 					Token:   rest,
+					Path:    t.Path,
 					Begin:   ofs,
 					End:     ofs + len(rest),
 					Concept: nil,
 				},
-				Err: nil,
 			}
 			rest = ""
 		} else if match.Begin == 0 {
+			logrus.Debugf("DO_MATCH: %v", match)
 			s <- StreamToken{
 				Token: Token{
 					Token:   rest[0:match.End],
+					Path:    t.Path,
 					Begin:   ofs,
 					End:     ofs + match.End,
 					Concept: match.Concept,
 				},
-				Err: nil,
 			}
 			rest = rest[match.End:]
 			ofs += match.End
 		} else {
+			logrus.Debugf("DO_MATCH: %v", match)
 			s <- StreamToken{
 				Token: Token{
 					Token:   rest[0:match.Begin],
+					Path:    t.Path,
 					Begin:   ofs,
 					End:     ofs + match.Begin,
 					Concept: nil,
 				},
-				Err: nil,
 			}
 			s <- StreamToken{
 				Token: Token{
 					Token:   rest[match.Begin:match.End],
+					Path:    t.Path,
 					Begin:   ofs + match.Begin,
 					End:     ofs + match.End,
 					Concept: match.Concept,
 				},
-				Err: nil,
 			}
 			rest = rest[match.End:]
 			ofs += match.End
@@ -158,36 +169,41 @@ func doMatch(s chan StreamToken, t Token, m Matcher) {
 	}
 }
 
-func Read(ctx context.Context, rs ...io.Reader) Stream {
-	rstream := make(chan StreamToken, len(rs))
+// Read reads documents into tokens.
+func Read(ctx context.Context, ds ...Document) Stream {
+	rstream := make(chan StreamToken, len(ds))
 	go func() {
 		defer close(rstream)
 		var wg sync.WaitGroup
-		wg.Add(len(rs))
-		for _, r := range rs {
-			go func(r io.Reader) {
+		wg.Add(len(ds))
+		for _, d := range ds {
+			go func(d Document) {
 				defer wg.Done()
-				token := readToken(r)
+				token := readToken(d)
+				logrus.Debugf("READ %v", token)
 				select {
 				case <-ctx.Done():
 					return
 				case rstream <- token:
+					return
 				}
-			}(r)
+			}(d)
 		}
 		wg.Wait()
 	}()
 	return rstream
 }
 
-func readToken(r io.Reader) StreamToken {
-	bs, err := ioutil.ReadAll(r)
+func readToken(d Document) StreamToken {
+	defer d.Close()
+	bs, err := ioutil.ReadAll(d)
 	if err != nil {
 		return StreamToken{Err: err}
 	}
 	return StreamToken{
 		Token: Token{
 			Token: " " + string(bs) + " ",
+			Path:  d.Path(),
 			Begin: 0,
 			End:   len(bs) + 2,
 		},
