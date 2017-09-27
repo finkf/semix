@@ -124,9 +124,7 @@ func TestGraphLinks(t *testing.T) {
 	for _, tc := range []struct {
 		test  string
 		links []string
-	}{
-	// {tid1, []string{narrower, tid2, tid3, tid4, tid2and4}},
-	} {
+	}{} {
 		t.Run(tc.test, func(t *testing.T) {
 			c, ok := g.FindByURL(tc.test)
 			if !ok || c == nil {
