@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
 	"bitbucket.org/fflo/semix/pkg/semix"
 	"github.com/sirupsen/logrus"
@@ -38,7 +39,7 @@ func main() {
 		logrus.Fatal(err)
 	}
 	g, d := p.Get()
-	i := semix.NewDirIndex(semixdir, 10)
+	i, _ := index.OpenDirIndex(semixdir)
 	dfa := semix.NewDFA(d, g)
 	logrus.Infof("done reading RDF-XML")
 	logrus.Infof("starting the server")
