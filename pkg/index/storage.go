@@ -168,7 +168,7 @@ func readBlock(r io.Reader) ([]dse, error) {
 	return ds, err
 }
 
-// Short var names for smaller gob indices.
+// Short var names for smaller gob entries.
 // S is the string
 // P is the document path
 // B is the start position
