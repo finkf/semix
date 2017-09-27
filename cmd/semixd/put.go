@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/semix"
 	"github.com/sirupsen/logrus"
 )
@@ -20,7 +21,7 @@ type IndexInfo struct {
 	Tokens []TokenInfo
 }
 
-func put(dfa semix.DFA, i semix.Index, w http.ResponseWriter, r *http.Request) {
+func put(dfa semix.DFA, i index.Index, w http.ResponseWriter, r *http.Request) {
 	logrus.Infof("serving request for %s", r.RequestURI)
 	if r.Method != "POST" {
 		logrus.Infof("invalid method: %s", r.Method)
