@@ -49,9 +49,9 @@ func (s dirStorage) Put(url string, es []Entry) error {
 	if len(es) == 0 {
 		return nil
 	}
-	ds := make([]dsentry, len(es))
+	ds := make([]dse, len(es))
 	for i := range es {
-		ds[i] = dsentry{
+		ds[i] = dse{
 			S: es[i].Token,
 			P: es[i].Path,
 			B: es[i].Begin,
@@ -64,7 +64,7 @@ func (s dirStorage) Put(url string, es []Entry) error {
 	return s.write(url, ds)
 }
 
-func (s dirStorage) write(url string, ds []dsentry) error {
+func (s dirStorage) write(url string, ds []dse) error {
 	path := s.path(url)
 	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
 	os, err := os.OpenFile(path, flags, 0666)
@@ -133,7 +133,7 @@ func (s dirStorage) lookup(id int) string {
 	return ""
 }
 
-func writeBlock(w io.Writer, ds []dsentry) error {
+func writeBlock(w io.Writer, ds []dse) error {
 	buffer := new(bytes.Buffer)
 	e := gob.NewEncoder(buffer)
 	if err := e.Encode(ds); err != nil {
@@ -149,7 +149,7 @@ func writeBlock(w io.Writer, ds []dsentry) error {
 	return nil
 }
 
-func readBlock(r io.Reader) ([]dsentry, error) {
+func readBlock(r io.Reader) ([]dse, error) {
 	var header int64
 	if err := binary.Read(r, binary.BigEndian, &header); err != nil {
 		if err == io.EOF {
@@ -163,7 +163,7 @@ func readBlock(r io.Reader) ([]dsentry, error) {
 	}
 	dec := bytes.NewBuffer(buffer)
 	d := gob.NewDecoder(dec)
-	var ds []dsentry
+	var ds []dse
 	err := d.Decode(&ds)
 	return ds, err
 }
@@ -174,7 +174,7 @@ func readBlock(r io.Reader) ([]dsentry, error) {
 // B is the start position
 // E is the end position
 // R is the relation id
-type dsentry struct {
+type dse struct {
 	S, P    string
 	B, E, R int
 }
