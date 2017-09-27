@@ -1,14 +1,30 @@
 package rdfxml
 
 type traits struct {
-	transitive, symmetric map[string]bool
-	splitURL              string
+	transitive, symmetric, ignore map[string]bool
+	splitRelationURL              string
 }
 
 func newTraits() traits {
 	return traits{
-		transitive: make(map[string]bool),
-		symmetric:  make(map[string]bool),
-		splitURL:   "http://bitbucket.org/fflo/semix/pkg/rdfxml/split",
+		transitive:       make(map[string]bool),
+		symmetric:        make(map[string]bool),
+		ignore:           make(map[string]bool),
+		splitRelationURL: "http://bitbucket.org/fflo/semix/pkg/rdfxml/split",
 	}
+}
+
+func (t traits) isTransitiveURL(url string) bool {
+	_, ok := t.transitive[url]
+	return ok
+}
+
+func (t traits) isSymmetricURL(url string) bool {
+	_, ok := t.symmetric[url]
+	return ok
+}
+
+func (t traits) ignoreURL(url string) bool {
+	_, ok := t.ignore[url]
+	return ok
 }

@@ -94,14 +94,16 @@ func TestGraphConcepts(t *testing.T) {
 	g, _ := makeTestParser(t).Get()
 	for _, tc := range []string{tid1, tid2, tid3, tid4, tid2and4, broader, narrower, split} {
 		t.Run(tc, func(t *testing.T) {
-			if g.FindByURL(tc) == nil {
+			if _, ok := g.FindByURL(tc); !ok {
 				t.Fatalf("could not find concept %s", tc)
 			}
-			if url := g.FindByURL(tc).URL(); url != tc {
+			c, _ := g.FindByURL(tc)
+			if url := c.URL(); url != tc {
 				t.Fatalf("expected URL = %s; got %s", tc, url)
 			}
-			if url := g.FindById(g.FindByURL(tc).ID()).URL(); url != tc {
-				t.Fatalf("expected URL = %s; got %s", tc, url)
+
+			if tmp, _ := g.FindById(c.ID()); tmp.URL() != tc {
+				t.Fatalf("expected URL = %s; got %s", tc, tmp.URL())
 			}
 		})
 	}
@@ -126,8 +128,8 @@ func TestGraphLinks(t *testing.T) {
 	// {tid1, []string{narrower, tid2, tid3, tid4, tid2and4}},
 	} {
 		t.Run(tc.test, func(t *testing.T) {
-			c := g.FindByURL(tc.test)
-			if c == nil {
+			c, ok := g.FindByURL(tc.test)
+			if !ok || c == nil {
 				t.Fatalf("could not find concept %s", tc.test)
 			}
 			for i := 1; i < len(tc.links); i++ {
