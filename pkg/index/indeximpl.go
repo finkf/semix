@@ -7,11 +7,11 @@ import (
 )
 
 // DirIndexOpt defines a functional argument setter.
-type DirIndexOpt func(*dirIndex)
+type DirIndexOpt func(*index)
 
 // WithBufferSize sets the optional buffer size of the directory index.
 func WithBufferSize(n int) DirIndexOpt {
-	return func(i *dirIndex) {
+	return func(i *index) {
 		i.n = n
 	}
 }
@@ -28,7 +28,7 @@ func OpenDirIndex(dir string, opts ...DirIndexOpt) (Index, error) {
 	if err != nil {
 		return nil, err
 	}
-	i := &dirIndex{
+	i := &index{
 		storage: storage,
 		n:       DefaultIndexDirBufferSize,
 		buffer:  make(map[string][]Entry),
@@ -53,7 +53,7 @@ type getRequest struct {
 	err chan<- error
 }
 
-type dirIndex struct {
+type index struct {
 	storage Storage
 	buffer  map[string][]Entry
 	cancel  context.CancelFunc
@@ -64,7 +64,7 @@ type dirIndex struct {
 }
 
 // Put puts a token in the index.
-func (i *dirIndex) Put(t semix.Token) error {
+func (i *index) Put(t semix.Token) error {
 	err := make(chan error)
 	i.put <- putRequest{token: t, err: err}
 	return <-err
@@ -72,14 +72,14 @@ func (i *dirIndex) Put(t semix.Token) error {
 
 // Get queries the index for a concept and calls the callback function
 // for each entry in the index.
-func (i *dirIndex) Get(url string, f func(Entry)) error {
+func (i *index) Get(url string, f func(Entry)) error {
 	err := make(chan error)
 	i.get <- getRequest{url: url, f: f, err: err}
 	return <-err
 }
 
 // Close closes the index and writes all buffered entries to disc.
-func (i *dirIndex) Close() error {
+func (i *index) Close() error {
 	i.cancel()
 	close(i.put)
 	close(i.get)
@@ -95,7 +95,7 @@ func (i *dirIndex) Close() error {
 	return nil
 }
 
-func (i *dirIndex) run() {
+func (i *index) run() {
 	for {
 		select {
 		case r, ok := <-i.get:
@@ -112,7 +112,7 @@ func (i *dirIndex) run() {
 	}
 }
 
-func (i *dirIndex) putToken(t semix.Token) error {
+func (i *index) putToken(t semix.Token) error {
 	url := t.Concept.URL()
 	i.buffer[url] = append(i.buffer[url], Entry{
 		ConceptURL: url,
@@ -148,7 +148,7 @@ func (i *dirIndex) putToken(t semix.Token) error {
 	return nil
 }
 
-func (i *dirIndex) getEntries(url string, f func(Entry)) error {
+func (i *index) getEntries(url string, f func(Entry)) error {
 	for _, e := range i.buffer[url] {
 		f(e)
 	}
