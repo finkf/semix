@@ -3,6 +3,7 @@ package semix
 import (
 	"io"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -14,13 +15,13 @@ type Document interface {
 
 // ReaderDocument wraps an io.Reader.
 type ReaderDocument struct {
+	io.Reader
 	path string
-	r    io.Reader
 }
 
 // NewReaderDocument create a new ReaderDocument.
 func NewReaderDocument(path string, r io.Reader) Document {
-	return ReaderDocument{path: path, r: r}
+	return ReaderDocument{r, path}
 }
 
 // NewStringDocument returns a document that reads from a string.
@@ -38,18 +39,15 @@ func (ReaderDocument) Close() error {
 	return nil
 }
 
-// Read implements the io.Reader interface.
-func (d ReaderDocument) Read(b []byte) (int, error) {
-	return d.r.Read(b)
-}
-
 // HTTPDocument is a document that reads from HTTP.
 type HTTPDocument struct {
 	r   io.ReadCloser
 	url string
 }
 
-// NewHTTPDocument create a new HTTPDocument with the given url.
+// NewHTTPDocument creates a new HTTPDocument with the given url.
+// The first call to Read will trigger an http.Get request to be sent.
+// Any errors from this request will be returned in the Read method.
 func NewHTTPDocument(url string) Document {
 	return &HTTPDocument{url: url, r: nil}
 }
@@ -78,4 +76,43 @@ func (d *HTTPDocument) Read(b []byte) (int, error) {
 		d.r = resp.Body
 	}
 	return d.r.Read(b)
+}
+
+// FileDocument wraps an os.File and a path.
+type FileDocument struct {
+	file *os.File
+	path string
+}
+
+// NewFileDocument creates a new FileDocument with the given path.
+// The first call to Read will trigger an os.Open.
+// Any errors from os.Open will be returned in the Read method.
+func NewFileDocument(path string) Document {
+	return &FileDocument{path: path, file: nil}
+}
+
+// Path returns the url of the HTTPDocument.
+func (d *FileDocument) Path() string {
+	return d.path
+}
+
+// Close closes the underlying body of the http GET
+// resoponse of the HTTPDocument.
+func (d *FileDocument) Close() error {
+	if d.file != nil {
+		return d.file.Close()
+	}
+	return nil
+}
+
+// Read implements the io.Reader interface.
+func (d *FileDocument) Read(b []byte) (int, error) {
+	if d.file == nil {
+		is, err := os.Open(d.path)
+		if err != nil {
+			return 0, err
+		}
+		d.file = is
+	}
+	return d.file.Read(b)
 }
