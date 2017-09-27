@@ -7,17 +7,19 @@ func makeDFA(t *testing.T) DFA {
 	graph := NewGraph()
 	graph.Add("match", "x", "y")
 	graph.Add("match two", "x", "y")
+	one, _ := graph.FindByURL("match")
+	two, _ := graph.FindByURL("match two")
 	dictionary := map[string]*Concept{
-		" match ":       graph.FindByURL("match"),
-		" mitch match ": graph.FindByURL("match two"),
+		" match ":       one,
+		" mitch match ": two,
 	}
 	return NewDFA(dictionary, graph)
 }
 
 func TestDFAMatcher(t *testing.T) {
 	dfa := makeDFA(t)
-	c1 := dfa.graph.FindByURL("match")
-	c2 := dfa.graph.FindByURL("match two")
+	c1, _ := dfa.graph.FindByURL("match")
+	c2, _ := dfa.graph.FindByURL("match two")
 	tests := []struct {
 		test string
 		want MatchPos
