@@ -194,7 +194,6 @@ func getCounts(info IndexInfo) []CountPair {
 		counts[t.ConceptURL]++
 		for _, es := range t.Links {
 			for _, url := range es {
-				n++
 				counts[url]++
 			}
 		}
