@@ -1,4 +1,4 @@
-package semix
+package index
 
 import "bitbucket.org/fflo/semix/pkg/semix"
 

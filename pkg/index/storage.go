@@ -1,4 +1,4 @@
-package semix
+package index
 
 import (
 	"bytes"
@@ -16,21 +16,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// IndexStorage puts IndexEntries into files.
-type IndexStorage interface {
+// Storage puts IndexEntries into files.
+type Storage interface {
 	Put(string, []Entry) error
 	Get(string, func(Entry)) error
 	Close() error
 }
 
-type dirIndexStorage struct {
+type dirStorage struct {
 	dir      string
 	register *semix.URLRegister
 }
 
-// OpenDirIndexStorage opens a new IndexStorage.
-func OpenDirIndexStorage(dir string) (IndexStorage, error) {
-	s := dirIndexStorage{dir: dir, register: semix.NewURLRegister()}
+// OpenDirStorage opens a new IndexStorage.
+func OpenDirStorage(dir string) (Storage, error) {
+	s := dirStorage{dir: dir, register: semix.NewURLRegister()}
 	path := s.urlRegisterPath()
 	is, err := os.Open(path)
 	if err != nil {
@@ -40,12 +40,12 @@ func OpenDirIndexStorage(dir string) (IndexStorage, error) {
 	defer is.Close()
 	d := gob.NewDecoder(is)
 	if err := d.Decode(s.register); err != nil {
-		return dirIndexStorage{}, errors.Wrapf(err, "could not decode %q", path)
+		return dirStorage{}, errors.Wrapf(err, "could not decode %q", path)
 	}
 	return s, nil
 }
 
-func (s dirIndexStorage) Put(url string, es []Entry) error {
+func (s dirStorage) Put(url string, es []Entry) error {
 	if len(es) == 0 {
 		return nil
 	}
@@ -67,7 +67,7 @@ func (s dirIndexStorage) Put(url string, es []Entry) error {
 	return s.write(url, ds)
 }
 
-func (s dirIndexStorage) write(url string, ds []dsentry) error {
+func (s dirStorage) write(url string, ds []dsentry) error {
 	path := s.path(url)
 	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
 	os, err := os.OpenFile(path, flags, 0666)
@@ -81,7 +81,7 @@ func (s dirIndexStorage) write(url string, ds []dsentry) error {
 	return nil
 }
 
-func (s dirIndexStorage) Get(url string, f func(Entry)) error {
+func (s dirStorage) Get(url string, f func(Entry)) error {
 	path := s.path(url)
 	is, err := os.Open(path)
 	if err != nil {
@@ -111,7 +111,7 @@ func (s dirIndexStorage) Get(url string, f func(Entry)) error {
 	}
 }
 
-func (s dirIndexStorage) Close() error {
+func (s dirStorage) Close() error {
 	path := s.urlRegisterPath()
 	os, err := os.Create(path)
 	if err != nil {
@@ -122,15 +122,15 @@ func (s dirIndexStorage) Close() error {
 	return e.Encode(s.register)
 }
 
-func (s dirIndexStorage) path(url string) string {
+func (s dirStorage) path(url string) string {
 	return filepath.Join(s.dir, escapeURL(url)+".gob")
 }
 
-func (s dirIndexStorage) urlRegisterPath() string {
+func (s dirStorage) urlRegisterPath() string {
 	return filepath.Join(s.dir, escapeURL("http://bitbucket.org/fflo/semix/url-register")+".gob")
 }
 
-func (s dirIndexStorage) lookup(id int) string {
+func (s dirStorage) lookup(id int) string {
 	if url, ok := s.register.LookupID(id); ok {
 		return url
 	}

@@ -1,4 +1,4 @@
-package semix
+package index
 
 import (
 	"context"
@@ -24,7 +24,7 @@ const (
 // OpenDirIndex opens a directory index at the given directory path with
 // and the given options.
 func OpenDirIndex(dir string, opts ...DirIndexOpt) (Index, error) {
-	storage, err := OpenDirIndexStorage(dir)
+	storage, err := OpenDirStorage(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func OpenDirIndex(dir string, opts ...DirIndexOpt) (Index, error) {
 }
 
 type dirIndex struct {
-	storage IndexStorage
+	storage Storage
 	buffer  map[string][]Entry
 	cancel  context.CancelFunc
 	err     chan error
