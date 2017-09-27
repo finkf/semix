@@ -28,7 +28,6 @@ func OpenDirIndex(dir string, opts ...DirIndexOpt) (Index, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithCancel(context.Background())
 	i := &dirIndex{
 		storage: storage,
 		n:       DefaultIndexDirBufferSize,
@@ -36,12 +35,11 @@ func OpenDirIndex(dir string, opts ...DirIndexOpt) (Index, error) {
 		put:     make(chan semix.Token),
 		get:     make(chan dirIndexQuery),
 		err:     make(chan error),
-		cancel:  cancel,
 	}
 	for _, opt := range opts {
 		opt(i)
 	}
-	go i.run(ctx)
+	go i.run()
 	return i, nil
 }
 
@@ -92,11 +90,9 @@ func (i *dirIndex) Close() error {
 	return nil
 }
 
-func (i *dirIndex) run(ctx context.Context) {
+func (i *dirIndex) run() {
 	for {
 		select {
-		case <-ctx.Done():
-			return
 		case q, ok := <-i.get:
 			if !ok {
 				return
