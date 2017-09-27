@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bitbucket.org/fflo/semix/pkg/semix"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -23,12 +25,12 @@ type IndexStorage interface {
 
 type dirIndexStorage struct {
 	dir      string
-	register *URLRegister
+	register *semix.URLRegister
 }
 
 // OpenDirIndexStorage opens a new IndexStorage.
 func OpenDirIndexStorage(dir string) (IndexStorage, error) {
-	s := dirIndexStorage{dir: dir, register: NewURLRegister()}
+	s := dirIndexStorage{dir: dir, register: semix.NewURLRegister()}
 	path := s.urlRegisterPath()
 	is, err := os.Open(path)
 	if err != nil {

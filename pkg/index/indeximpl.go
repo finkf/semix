@@ -2,6 +2,8 @@ package semix
 
 import (
 	"context"
+
+	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
 // DirIndexOpt defines a functional argument setter.
@@ -31,7 +33,7 @@ func OpenDirIndex(dir string, opts ...DirIndexOpt) (Index, error) {
 		storage: storage,
 		n:       DefaultIndexDirBufferSize,
 		buffer:  make(map[string][]IndexEntry),
-		put:     make(chan Token),
+		put:     make(chan semix.Token),
 		get:     make(chan dirIndexQuery),
 		err:     make(chan error),
 		cancel:  cancel,
@@ -48,7 +50,7 @@ type dirIndex struct {
 	buffer  map[string][]IndexEntry
 	cancel  context.CancelFunc
 	err     chan error
-	put     chan Token
+	put     chan semix.Token
 	get     chan dirIndexQuery
 	dir     string
 	n       int
@@ -60,7 +62,7 @@ type dirIndexQuery struct {
 }
 
 // Put puts a token in the index.
-func (i *dirIndex) Put(t Token) error {
+func (i *dirIndex) Put(t semix.Token) error {
 	i.put <- t
 	return <-i.err
 }
@@ -109,7 +111,7 @@ func (i *dirIndex) run(ctx context.Context) {
 	}
 }
 
-func (i *dirIndex) putToken(t Token) error {
+func (i *dirIndex) putToken(t semix.Token) error {
 	url := t.Concept.URL()
 	i.buffer[url] = append(i.buffer[url], IndexEntry{
 		ConceptURL: url,
@@ -124,7 +126,8 @@ func (i *dirIndex) putToken(t Token) error {
 		}
 		i.buffer[url] = nil
 	}
-	for _, edge := range t.Concept.edges {
+	for j := 0; j < t.Concept.EdgesLen(); j++ {
+		edge := t.Concept.EdgeAt(j)
 		objurl := edge.O.URL()
 		i.buffer[objurl] = append(i.buffer[objurl], IndexEntry{
 			ConceptURL:  objurl,
