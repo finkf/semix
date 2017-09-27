@@ -56,7 +56,7 @@ const (
 func makeTestParser(t *testing.T) *Parser {
 	t.Helper()
 	p := NewParser(
-		WithTransitiveRelations(
+		WithTransitiveURLs(
 			"http://example.org/broader",
 			"http://example.org/narrower"),
 		WithSplitRelationURL("http://example.org/split"))
