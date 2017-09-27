@@ -42,6 +42,38 @@ func New(query string) (Query, error) {
 	return q, nil
 }
 
+// NewFix returns a new query and updates all urls in the query
+// with the given fix function.
+func NewFix(query string, fix func(string) (string, error)) (Query, error) {
+	q, err := New(query)
+	if err != nil {
+		return Query{}, err
+	}
+	q1 := Query{
+		constraint: constraint{
+			set: make(map[string]bool),
+			not: q.constraint.not,
+			all: q.constraint.all,
+		},
+		set: make(map[string]bool),
+	}
+	for url := range q.constraint.set {
+		newurl, err := fix(url)
+		if err != nil {
+			return Query{}, err
+		}
+		q1.constraint.set[newurl] = true
+	}
+	for url := range q.set {
+		newurl, err := fix(url)
+		if err != nil {
+			return Query{}, err
+		}
+		q1.set[newurl] = true
+	}
+	return q1, nil
+}
+
 // Execute executes the query on the given index and returns
 // the slice of the matched IndexEntries.
 func (q Query) Execute(idx index.Index) ([]index.Entry, error) {

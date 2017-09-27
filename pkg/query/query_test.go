@@ -10,7 +10,7 @@ import (
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
-func TestQuery(t *testing.T) {
+func TestQueryExecute(t *testing.T) {
 	tests := []struct {
 		query, want string
 		err         bool
@@ -48,6 +48,38 @@ func TestQuery(t *testing.T) {
 				if err.Error() != "test" {
 					t.Fatalf("expceted error")
 				}
+			}
+		})
+	}
+}
+
+func TestNewQueryFix(t *testing.T) {
+	tests := []struct {
+		query, want string
+		iserr       bool
+	}{
+		{"?({A,B})", "?({AX,BX})", false},
+		{"?(A,B({C,D}))", "?(AX,BX({CX,DX}))", false},
+		{"?A,B({C,D}))", "?({})", true},
+		{"?(A,B-not({C,D}))", "?({})", true},
+		{"?(A,B({C,D-not}))", "?({})", true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.query, func(t *testing.T) {
+			q, err := NewFix(tc.query, func(url string) (string, error) {
+				if len(url) != 1 {
+					return "", errors.New("invalid url: " + url)
+				}
+				return url + "X", nil
+			})
+			if tc.iserr && err == nil {
+				t.Fatalf("expected error")
+			}
+			if !tc.iserr && err != nil {
+				t.Fatalf("got error %v", err)
+			}
+			if str := q.String(); str != tc.want {
+				t.Fatalf("expected %q; got %q", tc.want, str)
 			}
 		})
 	}
