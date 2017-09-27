@@ -132,7 +132,6 @@ func (i *dirIndex) putToken(t semix.Token) error {
 			Path:        t.Path,
 			Token:       t.Token,
 			RelationURL: edge.P.URL(),
-			OriginURL:   url,
 		})
 		if len(i.buffer[objurl]) == i.n {
 			if err := i.storage.Put(objurl, i.buffer[objurl]); err != nil {

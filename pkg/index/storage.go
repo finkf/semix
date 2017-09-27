@@ -57,9 +57,6 @@ func (s dirStorage) Put(url string, es []Entry) error {
 			B: es[i].Begin,
 			E: es[i].End,
 		}
-		if es[i].OriginURL != "" {
-			ds[i].O = s.register.Register(es[i].OriginURL)
-		}
 		if es[i].RelationURL != "" {
 			ds[i].R = s.register.Register(es[i].RelationURL)
 		}
@@ -101,7 +98,6 @@ func (s dirStorage) Get(url string, f func(Entry)) error {
 			f(Entry{
 				ConceptURL:  url,
 				RelationURL: s.lookup(d.R),
-				OriginURL:   s.lookup(d.O),
 				Token:       d.S,
 				Path:        d.P,
 				Begin:       d.B,
@@ -178,10 +174,9 @@ func readBlock(r io.Reader) ([]dsentry, error) {
 // B is the start position
 // E is the end position
 // R is the relation id
-// O is the origin id
 type dsentry struct {
-	S, P       string
-	B, E, R, O int
+	S, P    string
+	B, E, R int
 }
 
 func escapeURL(u string) string {
