@@ -32,9 +32,8 @@ func OpenDirIndex(dir string, opts ...DirIndexOpt) (Index, error) {
 		storage: storage,
 		n:       DefaultIndexDirBufferSize,
 		buffer:  make(map[string][]Entry),
-		put:     make(chan semix.Token),
-		get:     make(chan dirIndexQuery),
-		err:     make(chan error),
+		put:     make(chan putRequest),
+		get:     make(chan getRequest),
 	}
 	for _, opt := range opts {
 		opt(i)
@@ -43,33 +42,40 @@ func OpenDirIndex(dir string, opts ...DirIndexOpt) (Index, error) {
 	return i, nil
 }
 
+type putRequest struct {
+	token semix.Token
+	err   chan<- error
+}
+
+type getRequest struct {
+	url string
+	f   func(Entry)
+	err chan<- error
+}
+
 type dirIndex struct {
 	storage Storage
 	buffer  map[string][]Entry
 	cancel  context.CancelFunc
-	err     chan error
-	put     chan semix.Token
-	get     chan dirIndexQuery
+	put     chan putRequest
+	get     chan getRequest
 	dir     string
 	n       int
 }
 
-type dirIndexQuery struct {
-	f   func(Entry)
-	url string
-}
-
 // Put puts a token in the index.
 func (i *dirIndex) Put(t semix.Token) error {
-	i.put <- t
-	return <-i.err
+	err := make(chan error)
+	i.put <- putRequest{token: t, err: err}
+	return <-err
 }
 
 // Get queries the index for a concept and calls the callback function
 // for each entry in the index.
 func (i *dirIndex) Get(url string, f func(Entry)) error {
-	i.get <- dirIndexQuery{url: url, f: f}
-	return <-i.err
+	err := make(chan error)
+	i.get <- getRequest{url: url, f: f, err: err}
+	return <-err
 }
 
 // Close closes the index and writes all buffered entries to disc.
@@ -77,7 +83,6 @@ func (i *dirIndex) Close() error {
 	i.cancel()
 	close(i.put)
 	close(i.get)
-	close(i.err)
 	defer i.storage.Close()
 	for url, es := range i.buffer {
 		if len(es) == 0 {
@@ -93,16 +98,16 @@ func (i *dirIndex) Close() error {
 func (i *dirIndex) run() {
 	for {
 		select {
-		case q, ok := <-i.get:
+		case r, ok := <-i.get:
 			if !ok {
 				return
 			}
-			i.err <- i.getEntries(q.url, q.f)
-		case t, ok := <-i.put:
+			r.err <- i.getEntries(r.url, r.f)
+		case r, ok := <-i.put:
 			if !ok {
 				return
 			}
-			i.err <- i.putToken(t)
+			r.err <- i.putToken(r.token)
 		}
 	}
 }
