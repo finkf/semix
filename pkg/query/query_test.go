@@ -6,6 +6,7 @@ import (
 	"sort"
 	"testing"
 
+	index "bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -52,7 +53,7 @@ func TestQuery(t *testing.T) {
 	}
 }
 
-func tostring(es []semix.IndexEntry) string {
+func tostring(es []index.Entry) string {
 	type pair struct {
 		first, second string
 	}
@@ -72,9 +73,9 @@ type queryTestIndex struct {
 
 func (queryTestIndex) Put(semix.Token) error { return nil }
 func (queryTestIndex) Close() error          { return nil }
-func (i queryTestIndex) Get(url string, f func(e semix.IndexEntry)) error {
-	f(semix.IndexEntry{ConceptURL: url, RelationURL: ""})
-	f(semix.IndexEntry{ConceptURL: url, RelationURL: "R"})
-	f(semix.IndexEntry{ConceptURL: url, RelationURL: "S"})
+func (i queryTestIndex) Get(url string, f func(e index.Entry)) error {
+	f(index.Entry{ConceptURL: url, RelationURL: ""})
+	f(index.Entry{ConceptURL: url, RelationURL: "R"})
+	f(index.Entry{ConceptURL: url, RelationURL: "S"})
 	return i.err
 }

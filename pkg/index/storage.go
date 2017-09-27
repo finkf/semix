@@ -18,8 +18,8 @@ import (
 
 // IndexStorage puts IndexEntries into files.
 type IndexStorage interface {
-	Put(string, []IndexEntry) error
-	Get(string, func(IndexEntry)) error
+	Put(string, []Entry) error
+	Get(string, func(Entry)) error
 	Close() error
 }
 
@@ -45,7 +45,7 @@ func OpenDirIndexStorage(dir string) (IndexStorage, error) {
 	return s, nil
 }
 
-func (s dirIndexStorage) Put(url string, es []IndexEntry) error {
+func (s dirIndexStorage) Put(url string, es []Entry) error {
 	if len(es) == 0 {
 		return nil
 	}
@@ -81,7 +81,7 @@ func (s dirIndexStorage) write(url string, ds []dsentry) error {
 	return nil
 }
 
-func (s dirIndexStorage) Get(url string, f func(IndexEntry)) error {
+func (s dirIndexStorage) Get(url string, f func(Entry)) error {
 	path := s.path(url)
 	is, err := os.Open(path)
 	if err != nil {
@@ -98,7 +98,7 @@ func (s dirIndexStorage) Get(url string, f func(IndexEntry)) error {
 			return nil
 		}
 		for _, d := range ds {
-			f(IndexEntry{
+			f(Entry{
 				ConceptURL:  url,
 				RelationURL: s.lookup(d.R),
 				OriginURL:   s.lookup(d.O),

@@ -31,7 +31,7 @@ func OpenDirIndex(dir string, opts ...DirIndexOpt) (Index, error) {
 	i := &dirIndex{
 		storage: storage,
 		n:       DefaultIndexDirBufferSize,
-		buffer:  make(map[string][]IndexEntry),
+		buffer:  make(map[string][]Entry),
 		put:     make(chan semix.Token),
 		get:     make(chan dirIndexQuery),
 		err:     make(chan error),
@@ -45,7 +45,7 @@ func OpenDirIndex(dir string, opts ...DirIndexOpt) (Index, error) {
 
 type dirIndex struct {
 	storage IndexStorage
-	buffer  map[string][]IndexEntry
+	buffer  map[string][]Entry
 	cancel  context.CancelFunc
 	err     chan error
 	put     chan semix.Token
@@ -55,7 +55,7 @@ type dirIndex struct {
 }
 
 type dirIndexQuery struct {
-	f   func(IndexEntry)
+	f   func(Entry)
 	url string
 }
 
@@ -67,7 +67,7 @@ func (i *dirIndex) Put(t semix.Token) error {
 
 // Get queries the index for a concept and calls the callback function
 // for each entry in the index.
-func (i *dirIndex) Get(url string, f func(IndexEntry)) error {
+func (i *dirIndex) Get(url string, f func(Entry)) error {
 	i.get <- dirIndexQuery{url: url, f: f}
 	return <-i.err
 }
@@ -109,7 +109,7 @@ func (i *dirIndex) run() {
 
 func (i *dirIndex) putToken(t semix.Token) error {
 	url := t.Concept.URL()
-	i.buffer[url] = append(i.buffer[url], IndexEntry{
+	i.buffer[url] = append(i.buffer[url], Entry{
 		ConceptURL: url,
 		Begin:      t.Begin,
 		End:        t.End,
@@ -125,7 +125,7 @@ func (i *dirIndex) putToken(t semix.Token) error {
 	for j := 0; j < t.Concept.EdgesLen(); j++ {
 		edge := t.Concept.EdgeAt(j)
 		objurl := edge.O.URL()
-		i.buffer[objurl] = append(i.buffer[objurl], IndexEntry{
+		i.buffer[objurl] = append(i.buffer[objurl], Entry{
 			ConceptURL:  objurl,
 			Begin:       t.Begin,
 			End:         t.End,
@@ -144,7 +144,7 @@ func (i *dirIndex) putToken(t semix.Token) error {
 	return nil
 }
 
-func (i *dirIndex) getEntries(url string, f func(IndexEntry)) error {
+func (i *dirIndex) getEntries(url string, f func(Entry)) error {
 	for _, e := range i.buffer[url] {
 		f(e)
 	}

@@ -3,27 +3,27 @@ package query
 import (
 	"sort"
 
-	"bitbucket.org/fflo/semix/pkg/semix"
+	index "bitbucket.org/fflo/semix/pkg/index"
 )
 
 // Execute executes a query on the given index and returns a slice
 // with all the matched IndexEntries.
-func Execute(query string, index semix.Index) ([]semix.IndexEntry, error) {
+func Execute(query string, idx index.Index) ([]index.Entry, error) {
 	q, err := New(query)
 	if err != nil {
 		return nil, err
 	}
-	return q.Execute(index)
+	return q.Execute(idx)
 }
 
 // ExecuteFunc executes a query on the given index.
 // The callback is called for every matched IndexEntry.
-func ExecuteFunc(query string, index semix.Index, f func(semix.IndexEntry)) error {
+func ExecuteFunc(query string, idx index.Index, f func(index.Entry)) error {
 	q, err := New(query)
 	if err != nil {
 		return err
 	}
-	return q.ExecuteFunc(index, f)
+	return q.ExecuteFunc(idx, f)
 }
 
 // Query represents a query.
@@ -44,9 +44,9 @@ func New(query string) (Query, error) {
 
 // Execute executes the query on the given index and returns
 // the slice of the matched IndexEntries.
-func (q Query) Execute(index semix.Index) ([]semix.IndexEntry, error) {
-	var es []semix.IndexEntry
-	err := q.ExecuteFunc(index, func(e semix.IndexEntry) {
+func (q Query) Execute(idx index.Index) ([]index.Entry, error) {
+	var es []index.Entry
+	err := q.ExecuteFunc(idx, func(e index.Entry) {
 		es = append(es, e)
 	})
 	if err != nil {
@@ -57,9 +57,9 @@ func (q Query) Execute(index semix.Index) ([]semix.IndexEntry, error) {
 
 // ExecuteFunc executes the query on an index. The callback function
 // is called for every matched IndexEntry.
-func (q Query) ExecuteFunc(index semix.Index, f func(semix.IndexEntry)) error {
+func (q Query) ExecuteFunc(idx index.Index, f func(index.Entry)) error {
 	for url := range q.set {
-		err := index.Get(url, func(e semix.IndexEntry) {
+		err := idx.Get(url, func(e index.Entry) {
 			if q.constraint.match(e) {
 				f(e)
 			}
@@ -130,7 +130,7 @@ func (c constraint) String() string {
 // !not & !in -> false
 // !not & in  -> true
 // not & !in  -> true
-func (c constraint) match(i semix.IndexEntry) bool {
+func (c constraint) match(i index.Entry) bool {
 	if c.not && i.RelationURL == "" {
 		return false
 	}
