@@ -64,5 +64,8 @@ func (c *Concept) ShortURL() string {
 }
 
 func (c *Concept) String() string {
+	if c.name != "" {
+		return c.name
+	}
 	return c.ShortURL()
 }
