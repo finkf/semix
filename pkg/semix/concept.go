@@ -2,6 +2,7 @@ package semix
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 )
 
@@ -9,6 +10,10 @@ import (
 // links on concept to another concept under a predicate.
 type Edge struct {
 	P, O *Concept
+}
+
+func (e Edge) String() string {
+	return fmt.Sprintf("{%s %s}", e.P.url, e.O.url)
 }
 
 // TODO: do we need this?
