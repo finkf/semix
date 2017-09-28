@@ -148,7 +148,7 @@ func putPost(r *http.Request) ([]byte, int, error) {
 			fmt.Errorf("could not talk to semixd: %v", err)
 	}
 	buffer := new(bytes.Buffer)
-	if err := puttmpl.Execute(buffer, info); err != nil {
+	if err := puttmpl.Execute(buffer, M{"config": config, "data": info}); err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not write html: %v", err)
 	}
