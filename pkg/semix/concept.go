@@ -116,23 +116,32 @@ func (c *Concept) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
-	c.Name = data.Name
-	c.url = data.URL
-	c.id = int32(data.ID)
-	c.edges = make([]Edge, len(data.Edges))
-	for i := range data.Edges {
-		c.edges[i] = Edge{
-			P: &Concept{
-				url:  data.Edges[i].P.URL,
-				id:   int32(data.Edges[i].P.ID),
-				Name: data.Edges[i].P.Name,
-			},
-			O: &Concept{
-				url:  data.Edges[i].O.URL,
-				id:   int32(data.Edges[i].O.ID),
-				Name: data.Edges[i].O.Name,
-			},
+	*c = Concept{
+		Name:  data.Name,
+		url:   data.URL,
+		id:    int32(data.ID),
+		edges: make([]Edge, len(data.Edges)),
+	}
+	// create unique local concepts that users can
+	// use the *Concepts as valid map entries etc.
+	urls := make(map[string]*Concept)
+	urls[c.url] = c // handle self references.
+	for i, edge := range data.Edges {
+		if _, ok := urls[edge.P.URL]; !ok {
+			urls[edge.P.URL] = &Concept{
+				url:  edge.P.URL,
+				id:   int32(edge.P.ID),
+				Name: edge.P.Name,
+			}
 		}
+		if _, ok := urls[edge.O.URL]; !ok {
+			urls[edge.O.URL] = &Concept{
+				url:  edge.O.URL,
+				id:   int32(edge.O.ID),
+				Name: edge.O.Name,
+			}
+		}
+		c.edges[i] = Edge{P: urls[edge.P.URL], O: urls[edge.O.URL]}
 	}
 	return nil
 }
