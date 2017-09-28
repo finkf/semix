@@ -4,25 +4,27 @@
 				<title>Semix Info</title>
 		</head>
 		<body>
+				<a href="/">Home</a>
 				<h1>Semix Info</h1>
-				<h2>Query: {{.Query}}</h2>
-				<h2>URL: <a href="{{.Subject}}">{{.Subject}}</a></h2>
+				{{if .Concept}}
+				<h2>URL: <a href="{{.Concept.URL}}">{{.Concept.URL}}</a></h2>
 				<h2>Entries</h2>
 				<ul>
 						{{range .Entries}}
-						<li><a href="http://localhost:8080/info?q={{.}}">{{.}}</a></li>
+						<li>{{.}}</li>
 						{{end}}
 				</ul>
 				<h2>Links</h2>
 				<ul>
-						{{range $p, $v := .Links}}
-						<li><a href="http://localhost:8080/info?q={{$p}}">{{$p}}</a></li>
+						{{range $p, $o := .Predicates}}
+						<li><a href="http://localhost:8080/info?q={{$p.URL}}">{{$p.String}}</a></li>
 						<ul>
-						{{range $v}}
-						<li><a href="http://localhost:8080/info?q={{.}}">{{.}}</a></li>
+						{{range $o}}
+						<li><a href="http://localhost:8080/info?q={{.URL}}">{{.String}}</a></li>
 						{{end}}
 						</ul>
 						{{end}}
 				</ul>
+				{{end}}
 		</body>
 </html>

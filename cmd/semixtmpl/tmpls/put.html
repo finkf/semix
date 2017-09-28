@@ -22,11 +22,14 @@
 				<h2>Themes</h2>
 				<div id='counts'>
 						<table>
-								{{range .Data.Counts}}
+								{{range $p, $c := .Data.Counts}}
+								<tr><td>{{$p.String}}</td></tr>
+								{{range $c}}
 								<tr>
 										<td><a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a></td>
 										<td>{{.RelativeFrequency}} ({{.N}}/{{.Total}})</td>
 								</tr>
+								{{end}}
 								{{end}}
 						</table>
 				</div>
