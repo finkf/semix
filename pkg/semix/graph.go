@@ -44,6 +44,16 @@ func (g *Graph) FindByID(id int32) (*Concept, bool) {
 	return g.cArr[id-1], true
 }
 
+// ConceptsLen returns the number of concepts in the array.
+func (g *Graph) ConceptsLen() int {
+	return len(g.cArr)
+}
+
+// ConceptAt returns the concept at the given position.
+func (g *Graph) ConceptAt(i int) *Concept {
+	return g.cArr[i]
+}
+
 // Add adds a triple to the graph.
 // It returns a Triple that consits of the according concepts
 // that where created.
