@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -13,19 +14,18 @@ import (
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/net"
 	"bitbucket.org/fflo/semix/pkg/semix"
-	"github.com/sirupsen/logrus"
 )
 
 func put(dfa semix.DFA, i index.Index, w http.ResponseWriter, r *http.Request) {
-	logrus.Infof("serving request for %s", r.RequestURI)
+	log.Printf("serving request for %s", r.RequestURI)
 	if r.Method != "POST" && r.Method != "GET" {
-		logrus.Infof("invalid method: %s", r.Method)
+		log.Printf("invalid method: %s", r.Method)
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
 	doc, err := makeDocumentFromRequest(r)
 	if err != nil {
-		logrus.Infof("could not create document: %v", err)
+		log.Printf("could not create document: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -34,13 +34,13 @@ func put(dfa semix.DFA, i index.Index, w http.ResponseWriter, r *http.Request) {
 	ts := net.Tokens{Tokens: []semix.Token{}} // for json
 	for t := range stream {
 		if t.Err != nil {
-			logrus.Infof("error in stream: %v", t.Err)
+			log.Printf("error in stream: %v", t.Err)
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
 		// logrus.Debugf("token: %s", t.Token)
 		if err := i.Put(t.Token); err != nil {
-			logrus.Infof("could not index token: %v", err)
+			log.Printf("could not index token: %v", err)
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -48,10 +48,10 @@ func put(dfa semix.DFA, i index.Index, w http.ResponseWriter, r *http.Request) {
 	}
 	e := json.NewEncoder(w)
 	if err := e.Encode(&ts); err != nil {
-		logrus.Infof("could not encode json: %v", err)
+		log.Printf("could not encode json: %v", err)
 		http.Error(w, "error", http.StatusInternalServerError)
 	}
-	logrus.Infof("handled %s", r.URL.Path)
+	log.Printf("handled %s", r.URL.Path)
 }
 
 func makeStream(dfa semix.DFA, d semix.Document) (semix.Stream, context.CancelFunc) {
