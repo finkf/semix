@@ -77,11 +77,13 @@ func info(r *http.Request) ([]byte, int, error) {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query q=%v", q)
 	}
-	info, err := get(q[0])
+	var info LookupInfo
+	err := semixdGet(fmt.Sprintf("/search?q=%s", url.QueryEscape(q[0])), &info)
 	if err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not talk to semixd: %v", err)
 	}
+	info.sort()
 	buffer := new(bytes.Buffer)
 	if err := infotmpl.Execute(buffer, info); err != nil {
 		return nil, http.StatusInternalServerError,
@@ -124,18 +126,11 @@ func putGet(r *http.Request) ([]byte, int, error) {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query parameter url=%v", q)
 	}
-	path := config.Semixd + fmt.Sprintf("/put?url=%s", url.QueryEscape(q[0]))
-	res, err := http.Get(path)
-	if err != nil || res.StatusCode != 200 {
+	var info IndexInfo
+	err := semixdGet(fmt.Sprintf("/put?url=%s", url.QueryEscape(q[0])), &info)
+	if err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not talk to semixd: %v", err)
-	}
-	defer res.Body.Close()
-	var info IndexInfo
-	d := json.NewDecoder(res.Body)
-	if err := d.Decode(&info); err != nil {
-		return nil, http.StatusInternalServerError,
-			fmt.Errorf("could not decode json: %v", err)
 	}
 	counts := getCounts(info)
 	buffer := new(bytes.Buffer)
@@ -162,31 +157,7 @@ func putPost(r *http.Request) ([]byte, int, error) {
 	return buffer.Bytes(), http.StatusOK, nil
 }
 
-func get(q string) (LookupInfo, error) {
-	var info LookupInfo
-	req, err := http.NewRequest(http.MethodGet,
-		fmt.Sprintf("http://localhost:6060/search?q=%s", url.PathEscape(q)),
-		nil)
-	if err != nil {
-		return info, err
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		return info, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return info, fmt.Errorf("invalid response code: %d", res.StatusCode)
-	}
-	d := json.NewDecoder(res.Body)
-	if err := d.Decode(&info); err != nil {
-		return info, err
-	}
-	srt(&info)
-	return info, nil
-}
-
-func srt(info *LookupInfo) {
+func (info *LookupInfo) sort() {
 	sort.Strings(info.Entries)
 	for p := range info.Links {
 		sort.Strings(info.Links[p])
@@ -251,4 +222,23 @@ func post(r io.Reader) (IndexInfo, error) {
 		return info, err
 	}
 	return info, nil
+}
+
+func semixdGet(path string, data interface{}) error {
+	url := "http://localhost:6060" + path
+	log.Printf("sending: [GET] %s", url)
+	res, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("could not connect to semixd: %v", err)
+	}
+	defer res.Body.Close()
+	log.Printf("got response: [GET] %s: %s", url, res.Status)
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
+		return fmt.Errorf("invalid response code from semix: %s", res.Status)
+	}
+	err = json.NewDecoder(res.Body).Decode(data)
+	if err != nil {
+		return fmt.Errorf("could not decode response: %v", err)
+	}
+	return nil
 }
