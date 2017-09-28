@@ -31,6 +31,7 @@ func init() {
 var file = os.Getenv("HOME") + "/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"
 
 func main() {
+	index, err := index.OpenDirIndex(semixdir)
 	log.Printf("reading RDF-XML")
 	p := rdfxml.NewParser(
 		rdfxml.WithIgnoreURLs(
@@ -44,19 +45,16 @@ func main() {
 	if err := p.ParseFile(file); err != nil {
 		log.Fatal(err)
 	}
-	g, d := p.Get()
-	i, _ := index.OpenDirIndex(semixdir)
-	dfa := semix.NewDFA(d, g)
+	graph, dictionary := p.Get()
+	if err != nil {
+		log.Fatal(err)
+	}
+	dfa := semix.NewDFA(dictionary, graph)
 	log.Printf("done reading RDF-XML")
 	log.Printf("starting the server")
-	http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
-		search(g, d, w, r)
-	})
-	http.HandleFunc("/put", func(w http.ResponseWriter, r *http.Request) {
-		put(dfa, i, w, r)
-	})
-	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
-		get(dfa, i, w, r)
-	})
+	h := handle{dfa: dfa, g: graph, d: dictionary, i: index}
+	http.HandleFunc("/search", requestFunc(h.search))
+	http.HandleFunc("/put", requestFunc(h.put))
+	http.HandleFunc("/get", requestFunc(h.get))
 	log.Fatalf(http.ListenAndServe(":6060", nil).Error())
 }
