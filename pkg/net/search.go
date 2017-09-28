@@ -40,3 +40,18 @@ func Search(g *semix.Graph, d map[string]*semix.Concept, str string) (*semix.Con
 	}
 	return nil, false
 }
+
+// SearchDictionaryEntries iterates over a dictionary and returns
+// all entries in the dictionary that reference the given concept.
+func SearchDictionaryEntries(d map[string]*semix.Concept, c *semix.Concept) []string {
+	if c == nil || d == nil {
+		return nil
+	}
+	var entries []string
+	for e, cc := range d {
+		if cc.URL() == c.URL() {
+			entries = append(entries, strings.Trim(e, " "))
+		}
+	}
+	return entries
+}
