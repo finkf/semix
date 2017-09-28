@@ -80,15 +80,26 @@ func (c *Concept) String() string {
 
 // link represents an edge as a pair of URLs.
 type link struct {
-	P, O string
+	P struct {
+		URL, Name string
+		ID        int
+	}
+	O struct {
+		URL, Name string
+		ID        int
+	}
 }
 
 // links returns the edges of this concept as pair of URLs.
 func (c *Concept) links() []link {
 	links := make([]link, len(c.edges))
 	for i := range c.edges {
-		links[i].P = c.edges[i].P.url
-		links[i].O = c.edges[i].O.url
+		links[i].P.URL = c.edges[i].P.url
+		links[i].P.Name = c.edges[i].P.Name
+		links[i].P.ID = int(c.edges[i].P.id)
+		links[i].O.URL = c.edges[i].O.url
+		links[i].O.Name = c.edges[i].O.Name
+		links[i].O.ID = int(c.edges[i].O.id)
 	}
 	return links
 }
@@ -111,8 +122,16 @@ func (c *Concept) UnmarshalJSON(b []byte) error {
 	c.edges = make([]Edge, len(data.Edges))
 	for i := range data.Edges {
 		c.edges[i] = Edge{
-			P: NewConcept(data.Edges[i].P),
-			O: NewConcept(data.Edges[i].O),
+			P: &Concept{
+				url:  data.Edges[i].P.URL,
+				id:   int32(data.Edges[i].P.ID),
+				Name: data.Edges[i].P.Name,
+			},
+			O: &Concept{
+				url:  data.Edges[i].O.URL,
+				id:   int32(data.Edges[i].O.ID),
+				Name: data.Edges[i].O.Name,
+			},
 		}
 	}
 	return nil
