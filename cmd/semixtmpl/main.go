@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"sort"
 
 	"bitbucket.org/fflo/semix/pkg/net"
 )
@@ -47,6 +46,7 @@ func main() {
 	http.HandleFunc("/index", requestFunc(index))
 	http.HandleFunc("/info", requestFunc(info))
 	http.HandleFunc("/put", requestFunc(put))
+	log.Printf("starting the server")
 	log.Fatalf(http.ListenAndServe(":8080", nil).Error())
 }
 
@@ -78,13 +78,12 @@ func info(r *http.Request) ([]byte, int, error) {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query q=%v", q)
 	}
-	var info LookupInfo
+	var info net.ConceptInfo
 	err := semixdGet(fmt.Sprintf("/search?q=%s", url.QueryEscape(q[0])), &info)
 	if err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not talk to semixd: %v", err)
 	}
-	info.sort()
 	buffer := new(bytes.Buffer)
 	if err := infotmpl.Execute(buffer, info); err != nil {
 		return nil, http.StatusInternalServerError,
@@ -141,7 +140,6 @@ func putGet(r *http.Request) ([]byte, int, error) {
 		Data:   info,
 	}
 	buffer := new(bytes.Buffer)
-	log.Printf("%v", info)
 	if err := puttmpl.Execute(buffer, data); err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not write html: %v", err)
@@ -164,13 +162,6 @@ func putPost(r *http.Request) ([]byte, int, error) {
 	}
 	log.Printf("served request for %s", r.RequestURI)
 	return buffer.Bytes(), http.StatusOK, nil
-}
-
-func (info *LookupInfo) sort() {
-	sort.Strings(info.Entries)
-	for p := range info.Links {
-		sort.Strings(info.Links[p])
-	}
 }
 
 func semixdPost(path string, r io.Reader, data interface{}) error {
