@@ -43,9 +43,9 @@ func main() {
 	puttmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/put.html"))
 	indextmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/index.html"))
 	client = &http.Client{}
-	http.HandleFunc("/", index)
+	http.HandleFunc("/", requestFunc(index))
 	http.HandleFunc("/info", requestFunc(info))
-	http.HandleFunc("/put", put)
+	http.HandleFunc("/put", requestFunc(put))
 	log.Fatalf(http.ListenAndServe(":8080", nil).Error())
 }
 
@@ -54,6 +54,7 @@ func requestFunc(h func(*http.Request) ([]byte, int, error)) func(http.ResponseW
 		data, status, err := h(r)
 		if err != nil {
 			log.Printf("error: %v", err)
+			w.Header()["Content-Type"] = []string{"text/plain", "charset=utf-8"}
 			http.Error(w, err.Error(), status)
 			return
 		}
@@ -79,7 +80,7 @@ func info(r *http.Request) ([]byte, int, error) {
 	info, err := get(q[0])
 	if err != nil {
 		return nil, http.StatusInternalServerError,
-			fmt.Errorf("could not connect to semixd: %v", err)
+			fmt.Errorf("could not talk to semixd: %v", err)
 	}
 	buffer := new(bytes.Buffer)
 	if err := infotmpl.Execute(buffer, info); err != nil {
@@ -90,80 +91,75 @@ func info(r *http.Request) ([]byte, int, error) {
 	return buffer.Bytes(), http.StatusOK, nil
 }
 
-func index(w http.ResponseWriter, req *http.Request) {
-	log.Printf("serving request for %s", req.RequestURI)
-	if req.Method != "GET" {
-		log.Printf("invalid method: %s", req.Method)
-		http.Error(w, "not a GET request", http.StatusBadRequest)
-		return
+func index(r *http.Request) ([]byte, int, error) {
+	log.Printf("serving request for %s", r.RequestURI)
+	if r.Method != "GET" {
+		return nil, http.StatusForbidden,
+			fmt.Errorf("invalid request method: %s", r.Method)
 	}
-	if err := indextmpl.Execute(w, M{"config": config}); err != nil {
-		log.Printf("could not load info: %v", err)
-		http.Error(w, "could not load info: %v", http.StatusInternalServerError)
-		return
+	buffer := new(bytes.Buffer)
+	if err := indextmpl.Execute(buffer, M{"config": config}); err != nil {
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not write html: %v", err)
 	}
-	log.Printf("served request for %s", req.RequestURI)
+	return buffer.Bytes(), http.StatusOK, nil
 }
 
-func put(w http.ResponseWriter, req *http.Request) {
-	log.Printf("serving request for %s", req.RequestURI)
-	switch req.Method {
+func put(r *http.Request) ([]byte, int, error) {
+	log.Printf("serving request for %s", r.RequestURI)
+	switch r.Method {
 	case "POST":
-		putPost(w, req)
+		return putPost(r)
 	case "GET":
-		putGet(w, req)
+		return putGet(r)
 	default:
-		log.Printf("invalid method: %s", req.Method)
-		http.Error(w, "not a POST or GET request", http.StatusBadRequest)
+		return nil, http.StatusForbidden,
+			fmt.Errorf("invalid request method: %s", r.Method)
 	}
 }
 
-func putGet(w http.ResponseWriter, req *http.Request) {
-	q := req.URL.Query()["url"]
+func putGet(r *http.Request) ([]byte, int, error) {
+	q := r.URL.Query()["url"]
 	if len(q) != 1 {
-		log.Printf("invalid query parameter url=%v", q)
-		http.Error(w, "bad request", http.StatusBadRequest)
-		return
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query parameter url=%v", q)
 	}
 	path := config.Semixd + fmt.Sprintf("/put?url=%s", url.QueryEscape(q[0]))
 	res, err := http.Get(path)
 	if err != nil || res.StatusCode != 200 {
-		log.Printf("could not get %q: %v (%s)", path, err, res.Status)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not talk to semixd: %v", err)
 	}
 	defer res.Body.Close()
 	var info IndexInfo
 	d := json.NewDecoder(res.Body)
 	if err := d.Decode(&info); err != nil {
-		log.Printf("could not decode json: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not decode json: %v", err)
 	}
 	counts := getCounts(info)
-	log.Printf("counts: %d", len(counts))
-	if err := puttmpl.Execute(w, M{"config": config, "data": info, "counts": counts}); err != nil {
-		log.Printf("could not execute template: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
+	buffer := new(bytes.Buffer)
+	if err := puttmpl.Execute(buffer, M{"config": config, "data": info, "counts": counts}); err != nil {
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not write html: %v", err)
 	}
-	log.Printf("served request for %s", req.RequestURI)
+	log.Printf("served request for %s", r.RequestURI)
+	return buffer.Bytes(), http.StatusOK, nil
 }
 
-func putPost(w http.ResponseWriter, req *http.Request) {
-	info, err := post(req.Body)
+func putPost(r *http.Request) ([]byte, int, error) {
+	info, err := post(r.Body)
 	if err != nil {
-		log.Printf("could not load info: %v", err)
-		http.Error(w, "could not load info", http.StatusInternalServerError)
-		return
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not talk to semixd: %v", err)
 	}
-	log.Printf("got %d tokens", len(info.Tokens))
-	if err := puttmpl.Execute(w, info); err != nil {
-		log.Printf("could not execute template: %v", err)
-		http.Error(w, "could nto execute template", http.StatusInternalServerError)
-		return
+	buffer := new(bytes.Buffer)
+	if err := puttmpl.Execute(buffer, info); err != nil {
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not write html: %v", err)
 	}
-	log.Printf("served request for %s", req.RequestURI)
+	log.Printf("served request for %s", r.RequestURI)
+	return buffer.Bytes(), http.StatusOK, nil
 }
 
 func get(q string) (LookupInfo, error) {
