@@ -42,6 +42,7 @@ func main() {
 	puttmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/put.html"))
 	indextmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/index.html"))
 	http.HandleFunc("/", requestFunc(index))
+	http.HandleFunc("/index", requestFunc(index))
 	http.HandleFunc("/info", requestFunc(info))
 	http.HandleFunc("/put", requestFunc(put))
 	log.Fatalf(http.ListenAndServe(":8080", nil).Error())
