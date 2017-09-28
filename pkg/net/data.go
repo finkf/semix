@@ -6,36 +6,64 @@ import (
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
+// ConceptInfo holds information about a concept.
+type ConceptInfo struct {
+	Concept *semix.Concept
+	Entries []string
+}
+
+// Predicates returns a map of the targets ordered by the predicates.
+func (info ConceptInfo) Predicates() map[*semix.Concept][]*semix.Concept {
+	m := make(map[*semix.Concept][]*semix.Concept)
+	if info.Concept == nil {
+		return m
+	}
+	info.Concept.Edges(func(edge semix.Edge) {
+		m[edge.P] = append(m[edge.P], edge.O)
+	})
+	return m
+}
+
 // Tokens represents an array of tokens.
 type Tokens struct {
 	Tokens []semix.Token
 }
 
-// Counts returns a sorted slice of Counts.
-func (ts Tokens) Counts() []Count {
+// Counts returns a sorted slice of Counts ordered by the according predicates.
+func (ts Tokens) Counts() map[*semix.Concept][]Count {
 	urls := make(map[string]*semix.Concept)
-	m := make(map[string]int)
+	register := func(c *semix.Concept) *semix.Concept {
+		if _, ok := urls[c.URL()]; !ok {
+			urls[c.URL()] = c
+		}
+		return urls[c.URL()]
+	}
+	m := make(map[*semix.Concept]map[*semix.Concept]int)
 	var n int
 	for _, t := range ts.Tokens {
-		if _, ok := urls[t.Concept.URL()]; !ok {
-			urls[t.Concept.URL()] = t.Concept
-		}
-		m[t.Concept.URL()]++
-		t.Concept.Edges(func(edge semix.Edge) {
-			m[edge.O.URL()]++
-			if _, ok := urls[edge.O.URL()]; !ok {
-				urls[edge.O.URL()] = edge.O
-			}
-		})
 		n++
+		preds := make(map[*semix.Concept]bool)
+		t.Concept.Edges(func(edge semix.Edge) {
+			if m[register(edge.P)] == nil {
+				m[register(edge.P)] = make(map[*semix.Concept]int)
+			}
+			m[register(edge.P)][register(edge.O)]++
+			preds[register(edge.P)] = true
+		})
+		for p := range preds {
+			m[p][register(t.Concept)]++
+		}
 	}
-	counts := make([]Count, 0, len(m))
-	for url, count := range m {
-		counts = append(counts, Count{Concept: urls[url], Total: n, N: count})
+	counts := make(map[*semix.Concept][]Count, len(m))
+	for p := range m {
+		for o, count := range m[p] {
+			c := Count{Concept: o, Total: n, N: count}
+			counts[p] = append(counts[p], c)
+		}
+		sort.Slice(counts[p], func(i, j int) bool {
+			return counts[p][i].N > counts[p][j].N
+		})
 	}
-	sort.Slice(counts, func(i, j int) bool {
-		return counts[i].N > counts[j].N
-	})
 	return counts
 }
 
