@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -43,35 +44,50 @@ func main() {
 	indextmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/index.html"))
 	client = &http.Client{}
 	http.HandleFunc("/", index)
-	http.HandleFunc("/info", info)
+	http.HandleFunc("/info", requestFunc(info))
 	http.HandleFunc("/put", put)
 	log.Fatalf(http.ListenAndServe(":8080", nil).Error())
 }
 
-func info(w http.ResponseWriter, req *http.Request) {
-	log.Printf("serving request for %s", req.RequestURI)
-	if req.Method != "GET" {
-		log.Printf("invalid method: %s", req.Method)
-		http.Error(w, "not a GET request", http.StatusBadRequest)
-		return
+func requestFunc(h func(*http.Request) ([]byte, int, error)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data, status, err := h(r)
+		if err != nil {
+			log.Printf("error: %v", err)
+			http.Error(w, err.Error(), status)
+			return
+		}
+		w.WriteHeader(status)
+		w.Header()["Content-Type"] = []string{"text/html", "charset=utf-8"}
+		if _, err := w.Write(data); err != nil {
+			log.Printf("could not write response: %v", err)
+		}
 	}
-	q := req.URL.Query()["q"]
+}
+
+func info(r *http.Request) ([]byte, int, error) {
+	log.Printf("serving request for %s", r.RequestURI)
+	if r.Method != "GET" {
+		return nil, http.StatusForbidden,
+			fmt.Errorf("invalid request method: %s", r.Method)
+	}
+	q := r.URL.Query()["q"]
 	if len(q) != 1 {
-		log.Printf("invalid query: %v", q)
-		http.Error(w, "invalid query paramters", http.StatusBadRequest)
-		return
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query q=%v", q)
 	}
 	info, err := get(q[0])
 	if err != nil {
-		log.Printf("could not load info: %v", err)
-		http.Error(w, "could not find info", http.StatusNotFound)
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not connect to semixd: %v", err)
 	}
-	if err := infotmpl.Execute(w, info); err != nil {
-		log.Printf("could not load info: %v", err)
-		http.Error(w, "could not load info: %v", http.StatusInternalServerError)
-		return
+	buffer := new(bytes.Buffer)
+	if err := infotmpl.Execute(buffer, info); err != nil {
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not write html: %v", err)
 	}
-	log.Printf("served request for %s", req.RequestURI)
+	log.Printf("served request for %s", r.RequestURI)
+	return buffer.Bytes(), http.StatusOK, nil
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
