@@ -32,7 +32,6 @@ var (
 	infotmpl  *template.Template
 	puttmpl   *template.Template
 	indextmpl *template.Template
-	client    *http.Client
 	config    Config
 )
 
@@ -42,7 +41,6 @@ func main() {
 	infotmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/info.html"))
 	puttmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/put.html"))
 	indextmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/index.html"))
-	client = &http.Client{}
 	http.HandleFunc("/", requestFunc(index))
 	http.HandleFunc("/info", requestFunc(info))
 	http.HandleFunc("/put", requestFunc(put))
@@ -143,7 +141,8 @@ func putGet(r *http.Request) ([]byte, int, error) {
 }
 
 func putPost(r *http.Request) ([]byte, int, error) {
-	info, err := post(r.Body)
+	var info IndexInfo
+	err := semixdPost("/put", r.Body, &info)
 	if err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not talk to semixd: %v", err)
@@ -203,25 +202,23 @@ type IndexInfo struct {
 	Tokens []TokenInfo
 }
 
-func post(r io.Reader) (IndexInfo, error) {
-	var info IndexInfo
-	req, err := http.NewRequest(http.MethodPost, config.Semixd+"/put", r)
+func semixdPost(path string, r io.Reader, data interface{}) error {
+	url := "http://localhost:6060" + path
+	log.Printf("sending: [POST] %s", url)
+	res, err := http.Post(url, "text/plain", r)
 	if err != nil {
-		return info, err
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		return info, err
+		return fmt.Errorf("could not [POST] %s: %v", url, err)
 	}
 	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return info, fmt.Errorf("invalid response code: %d", res.StatusCode)
+	log.Printf("response: [POST] %s: %s", url, res.Status)
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
+		return fmt.Errorf("invalid invalid response code [POST] %s: %s", url, res.Status)
 	}
-	d := json.NewDecoder(res.Body)
-	if err := d.Decode(&info); err != nil {
-		return info, err
+	err = json.NewDecoder(res.Body).Decode(data)
+	if err != nil {
+		return fmt.Errorf("could not decode response: %v", err)
 	}
-	return info, nil
+	return nil
 }
 
 func semixdGet(path string, data interface{}) error {
@@ -229,12 +226,12 @@ func semixdGet(path string, data interface{}) error {
 	log.Printf("sending: [GET] %s", url)
 	res, err := http.Get(url)
 	if err != nil {
-		return fmt.Errorf("could not connect to semixd: %v", err)
+		return fmt.Errorf("could not [GET] %s: %v", url, err)
 	}
 	defer res.Body.Close()
-	log.Printf("got response: [GET] %s: %s", url, res.Status)
+	log.Printf("response: [GET] %s: %s", url, res.Status)
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return fmt.Errorf("invalid response code from semix: %s", res.Status)
+		return fmt.Errorf("invalid invalid response code [GET] %s: %s", url, res.Status)
 	}
 	err = json.NewDecoder(res.Body).Decode(data)
 	if err != nil {
