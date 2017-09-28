@@ -102,7 +102,7 @@ func TestGraphConcepts(t *testing.T) {
 				t.Fatalf("expected URL = %s; got %s", tc, url)
 			}
 
-			if tmp, _ := g.FindById(c.ID()); tmp.URL() != tc {
+			if tmp, _ := g.FindByID(c.ID()); tmp.URL() != tc {
 				t.Fatalf("expected URL = %s; got %s", tc, tmp.URL())
 			}
 		})

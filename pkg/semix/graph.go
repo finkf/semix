@@ -30,8 +30,8 @@ func (g *Graph) FindByURL(str string) (*Concept, bool) {
 	return nil, false
 }
 
-// FindById searches a concept by its ID.
-func (g *Graph) FindById(id int32) (*Concept, bool) {
+// FindByID searches a concept by its ID.
+func (g *Graph) FindByID(id int32) (*Concept, bool) {
 	if id == 0 {
 		return nil, false
 	}

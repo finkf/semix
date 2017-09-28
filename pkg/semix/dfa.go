@@ -37,7 +37,7 @@ func (d DFA) Final(s uint32) (*Concept, bool) {
 	if !final {
 		return nil, false
 	}
-	if c, ok := d.graph.FindById(data); ok {
+	if c, ok := d.graph.FindByID(data); ok {
 		return c, true
 	}
 	return nil, false
