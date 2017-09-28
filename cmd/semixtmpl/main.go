@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+
+	"bitbucket.org/fflo/semix/pkg/net"
 )
 
 // LookupInfo is some info
@@ -125,15 +127,22 @@ func putGet(r *http.Request) ([]byte, int, error) {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query parameter url=%v", q)
 	}
-	var info IndexInfo
+	var info net.Tokens
 	err := semixdGet(fmt.Sprintf("/put?url=%s", url.QueryEscape(q[0])), &info)
 	if err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not talk to semixd: %v", err)
 	}
-	counts := getCounts(info)
+	data := struct {
+		Config Config
+		Data   net.Tokens
+	}{
+		Config: config,
+		Data:   info,
+	}
 	buffer := new(bytes.Buffer)
-	if err := puttmpl.Execute(buffer, M{"config": config, "data": info, "counts": counts}); err != nil {
+	log.Printf("%v", info)
+	if err := puttmpl.Execute(buffer, data); err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not write html: %v", err)
 	}
@@ -142,7 +151,7 @@ func putGet(r *http.Request) ([]byte, int, error) {
 }
 
 func putPost(r *http.Request) ([]byte, int, error) {
-	var info IndexInfo
+	var info net.Tokens
 	err := semixdPost("/put", r.Body, &info)
 	if err != nil {
 		return nil, http.StatusInternalServerError,
@@ -162,45 +171,6 @@ func (info *LookupInfo) sort() {
 	for p := range info.Links {
 		sort.Strings(info.Links[p])
 	}
-}
-
-type CountPair struct {
-	Freq float32
-	URL  string
-}
-
-func getCounts(info IndexInfo) []CountPair {
-	counts := make(map[string]int)
-	var n int
-	for _, t := range info.Tokens {
-		n++
-		counts[t.ConceptURL]++
-		for _, es := range t.Links {
-			for _, url := range es {
-				counts[url]++
-			}
-		}
-	}
-	var list []CountPair
-	for url, c := range counts {
-		list = append(list, CountPair{URL: url, Freq: float32(c) / float32(n)})
-	}
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].Freq > list[j].Freq
-	})
-	return list
-}
-
-// TokenInfo is used for the templates.
-type TokenInfo struct {
-	Token, ConceptURL, Path string
-	Begin, End              int
-	Links                   map[string][]string
-}
-
-// IndexInfo is a list of TokenInfo.
-type IndexInfo struct {
-	Tokens []TokenInfo
 }
 
 func semixdPost(path string, r io.Reader, data interface{}) error {

@@ -11,19 +11,10 @@ import (
 	"time"
 
 	"bitbucket.org/fflo/semix/pkg/index"
+	"bitbucket.org/fflo/semix/pkg/net"
 	"bitbucket.org/fflo/semix/pkg/semix"
 	"github.com/sirupsen/logrus"
 )
-
-type TokenInfo struct {
-	Token, ConceptURL, Path string
-	Begin, End              int
-	Links                   map[string][]string
-}
-
-type IndexInfo struct {
-	Tokens []TokenInfo
-}
 
 func put(dfa semix.DFA, i index.Index, w http.ResponseWriter, r *http.Request) {
 	logrus.Infof("serving request for %s", r.RequestURI)
@@ -40,7 +31,7 @@ func put(dfa semix.DFA, i index.Index, w http.ResponseWriter, r *http.Request) {
 	}
 	stream, cancel := makeStream(dfa, doc)
 	defer cancel()
-	info := IndexInfo{Tokens: []TokenInfo{}} // for json
+	ts := net.Tokens{Tokens: []semix.Token{}} // for json
 	for t := range stream {
 		if t.Err != nil {
 			logrus.Infof("error in stream: %v", t.Err)
@@ -53,22 +44,10 @@ func put(dfa semix.DFA, i index.Index, w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
-		token := TokenInfo{
-			Token:      t.Token.Token,
-			ConceptURL: t.Token.Concept.URL(),
-			Path:       t.Token.Path,
-			Begin:      t.Token.Begin,
-			End:        t.Token.End,
-			Links:      make(map[string][]string),
-		}
-		for i := 0; i < t.Token.Concept.EdgesLen(); i++ {
-			edge := t.Token.Concept.EdgeAt(i)
-			token.Links[edge.P.URL()] = append(token.Links[edge.P.URL()], edge.O.URL())
-		}
-		info.Tokens = append(info.Tokens, token)
+		ts.Tokens = append(ts.Tokens, t.Token)
 	}
 	e := json.NewEncoder(w)
-	if err := e.Encode(&info); err != nil {
+	if err := e.Encode(&ts); err != nil {
 		logrus.Infof("could not encode json: %v", err)
 		http.Error(w, "error", http.StatusInternalServerError)
 	}

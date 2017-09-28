@@ -9,19 +9,25 @@
 				<h2>Results</h2>
 				<div id='result-table'>
 						<table>
-								{{range .data.Tokens}}
+								{{range .Data.Tokens}}
 								<tr>
 										<td> {{.Token}} ({{.Begin}},{{.End}}) </td>
-										<td> <a href="/info?q={{.ConceptURL}}">{{.ConceptURL}}</a> </td>
-										<td> <a href="{{.Path}}">{{.Path}}</a> </td>
+										<td> <a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a> </td>
+										<td> <a target="_blank" href="{{.Path}}">{{.Path}}</a> </td>
 								</tr>
 								{{end}}
 						</table>
 				</div>
+				<h2>Themes</h2>
 				<div id='counts'>
-						{{range .counts}}
-						<p><a href="/info?q={{.URL}}">{{.URL}}</a> {{.Freq}}</p>
-						{{end}}
+						<table>
+								{{range .Data.Counts}}
+								<tr>
+										<td><a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a></td>
+										<td>{{.RelativeFrequency}} ({{.N}}/{{.Total}})</td>
+								</tr>
+								{{end}}
+						</table>
 				</div>
 		</body>
 </html>
