@@ -1,6 +1,9 @@
 package semix
 
-import "strings"
+import (
+	"encoding/json"
+	"strings"
+)
 
 // Edge represents an edge in the concept graph that
 // links on concept to another concept under a predicate.
@@ -68,4 +71,62 @@ func (c *Concept) String() string {
 		return c.name
 	}
 	return c.ShortURL()
+}
+
+// link represents an edge as a pair of URLs.
+type link struct {
+	P, O string
+}
+
+// links returns the edges of this concept as pair of URLs.
+func (c *Concept) links() []link {
+	links := make([]link, len(c.edges))
+	for i := range c.edges {
+		links[i].P = c.edges[i].P.url
+		links[i].O = c.edges[i].O.url
+	}
+	return links
+}
+
+// UnmarshalJSON reads the concept from json.
+// Since the edges are written as pairs of URLs,
+// it is not possible to recreate the whole concept using json.
+func (c *Concept) UnmarshalJSON(b []byte) error {
+	var data struct {
+		URL, Name string
+		ID        int
+		Edges     []link
+	}
+	if err := json.Unmarshal(b, &data); err != nil {
+		return err
+	}
+	c.name = data.Name
+	c.url = data.URL
+	c.id = int32(data.ID)
+	c.edges = make([]Edge, len(data.Edges))
+	for i := range data.Edges {
+		c.edges[i] = Edge{
+			P: NewConcept(data.Edges[i].P),
+			O: NewConcept(data.Edges[i].O),
+		}
+	}
+	return nil
+}
+
+// MarshalJSON writes the concept to json.
+// To avoid writting the whole graph of the concepts,
+// the edges of the concept are written as pairs of URLs
+// and recursive links are omitted.
+func (c *Concept) MarshalJSON() ([]byte, error) {
+	data := struct {
+		URL, Name string
+		ID        int
+		Edges     []link
+	}{
+		URL:   c.url,
+		Name:  c.name,
+		ID:    int(c.id),
+		Edges: c.links(),
+	}
+	return json.Marshal(data)
 }
