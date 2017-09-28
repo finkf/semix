@@ -72,6 +72,7 @@ func WithIgnoreURLs(urls ...string) ParserOpt {
 type Parser struct {
 	dictionary map[string]string
 	relations  map[string]map[triple]bool
+	names      map[string]string
 	traits     traits
 }
 
@@ -80,6 +81,7 @@ func NewParser(args ...ParserOpt) *Parser {
 	p := &Parser{
 		dictionary: make(map[string]string),
 		relations:  make(map[string]map[triple]bool),
+		names:      make(map[string]string),
 		traits:     newTraits(),
 	}
 	for _, arg := range args {
@@ -131,7 +133,10 @@ func (p *Parser) Get() (*semix.Graph, map[string]*semix.Concept) {
 			p.relations[r] = calculateTransitiveClosure(ts)
 		}
 		for t := range p.relations[r] {
-			g.Add(t.s, t.p, t.o)
+			triple := g.Add(t.s, t.p, t.o)
+			if name, ok := p.names[t.s]; ok {
+				triple.S.Name = name
+			}
 		}
 	}
 	d := make(map[string]*semix.Concept, len(p.dictionary))
@@ -161,6 +166,8 @@ func (p *Parser) add(c Concept) error {
 			return err
 		}
 	}
+	// add the prefLabel as name for this subject.
+	p.names[s] = c.PrefLabel
 	return nil
 }
 

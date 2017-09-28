@@ -24,7 +24,7 @@ var splitRelation = &Concept{url: "[split]"}
 // a list of edges and an unique ID.
 // TODO: do we need the ID?
 type Concept struct {
-	url, name string
+	url, Name string
 	edges     []Edge
 	id        int32
 }
@@ -72,8 +72,8 @@ func (c *Concept) ShortURL() string {
 }
 
 func (c *Concept) String() string {
-	if c.name != "" {
-		return c.name
+	if c.Name != "" {
+		return c.Name
 	}
 	return c.ShortURL()
 }
@@ -105,7 +105,7 @@ func (c *Concept) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
-	c.name = data.Name
+	c.Name = data.Name
 	c.url = data.URL
 	c.id = int32(data.ID)
 	c.edges = make([]Edge, len(data.Edges))
@@ -129,7 +129,7 @@ func (c *Concept) MarshalJSON() ([]byte, error) {
 		Edges     []link
 	}{
 		URL:   c.url,
-		Name:  c.name,
+		Name:  c.Name,
 		ID:    int(c.id),
 		Edges: c.links(),
 	}
