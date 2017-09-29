@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+		<head>
+				<title>Semix Put</title>
+				<style> th, td {padding: 5px;} </style>
+		</head>
+		<body>
+				<a href="/">Home</a>
+				<h1>Semix Put</h1>
+				<h2>Results</h2>
+				<div id='result-table'>
+						<table>
+								{{range .Data.Tokens}}
+								<tr>
+										<td> {{.Token}} ({{.Begin}},{{.End}}) </td>
+										<td> <a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a> </td>
+										<td> <a target="_blank" href="{{.Path}}">{{.Path}}</a> </td>
+								</tr>
+								{{end}}
+						</table>
+				</div>
+				<h2>Themes</h2>
+				<div id='counts'>
+						<table>
+								{{range $p, $c := .Data.Counts}}
+								<tr><td>{{$p.String}}</td></tr>
+								{{range $c}}
+								<tr>
+										<td><a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a></td>
+										<td>{{printf "%.2f" .RelativeFrequency}} ({{.N}}/{{.Total}})</td>
+								</tr>
+								{{end}}
+								{{end}}
+						</table>
+				</div>
+		</body>
+</html>

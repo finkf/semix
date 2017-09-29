@@ -4,8 +4,6 @@ import (
 	"context"
 	"io/ioutil"
 	"sync"
-
-	"github.com/sirupsen/logrus"
 )
 
 // StreamToken Wraps either a token or an error
@@ -27,7 +25,7 @@ func Filter(ctx context.Context, s Stream) Stream {
 			case <-ctx.Done():
 				return
 			case t, ok := <-s:
-				logrus.Debugf("FILTER: %v %t", t, ok)
+				// logrus.Debugf("FILTER: %v %t", t, ok)
 				if !ok {
 					return
 				}
@@ -97,7 +95,7 @@ func Match(ctx context.Context, m Matcher, s Stream) Stream {
 			case <-ctx.Done():
 				return
 			case t, ok := <-s:
-				logrus.Debugf("MATCH %v %t", t, ok)
+				// logrus.Debugf("MATCH %v %t", t, ok)
 				if !ok {
 					return
 				}
@@ -119,7 +117,7 @@ func doMatch(s chan StreamToken, t Token, m Matcher) {
 	for len(rest) > 0 {
 		match := m.Match(rest)
 		if match.Concept == nil {
-			logrus.Debugf("DO_MATCH: %v", match)
+			// logrus.Debugf("DO_MATCH: %v", match)
 			s <- StreamToken{
 				Token: Token{
 					Token:   rest,
@@ -131,7 +129,7 @@ func doMatch(s chan StreamToken, t Token, m Matcher) {
 			}
 			rest = ""
 		} else if match.Begin == 0 {
-			logrus.Debugf("DO_MATCH: %v", match)
+			// logrus.Debugf("DO_MATCH: %v", match)
 			s <- StreamToken{
 				Token: Token{
 					Token:   rest[0:match.End],
@@ -144,7 +142,7 @@ func doMatch(s chan StreamToken, t Token, m Matcher) {
 			rest = rest[match.End:]
 			ofs += match.End
 		} else {
-			logrus.Debugf("DO_MATCH: %v", match)
+			// logrus.Debugf("DO_MATCH: %v", match)
 			s <- StreamToken{
 				Token: Token{
 					Token:   rest[0:match.Begin],
@@ -180,7 +178,7 @@ func Read(ctx context.Context, ds ...Document) Stream {
 			go func(d Document) {
 				defer wg.Done()
 				token := readToken(d)
-				logrus.Debugf("READ %v", token)
+				// logrus.Debugf("READ %v", token)
 				select {
 				case <-ctx.Done():
 					return

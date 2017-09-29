@@ -37,12 +37,12 @@ type ParserOpt func(*Parser)
 // Set this to the empty string to disable splitting of multiple defined strings.
 func WithSplitRelationURL(url string) ParserOpt {
 	return func(p *Parser) {
-		p.traits.splitURL = url
+		p.traits.splitRelationURL = url
 	}
 }
 
-// WithTransitiveRelations sets the URLs of the transitive relations.
-func WithTransitiveRelations(urls ...string) ParserOpt {
+// WithTransitiveURLs sets the URLs of the transitive relations.
+func WithTransitiveURLs(urls ...string) ParserOpt {
 	return func(p *Parser) {
 		for _, url := range urls {
 			p.traits.transitive[url] = true
@@ -50,11 +50,20 @@ func WithTransitiveRelations(urls ...string) ParserOpt {
 	}
 }
 
-// WithSymmetricRelations sets the URLs of the symmetric relations.
-func WithSymmetricRelations(urls ...string) ParserOpt {
+// WithSymmetricURLs sets the URLs of the symmetric relations.
+func WithSymmetricURLs(urls ...string) ParserOpt {
 	return func(p *Parser) {
 		for _, url := range urls {
 			p.traits.symmetric[url] = true
+		}
+	}
+}
+
+// WithIgnoreURLs specifies URLs of relations that should be ignored.
+func WithIgnoreURLs(urls ...string) ParserOpt {
+	return func(p *Parser) {
+		for _, url := range urls {
+			p.traits.ignore[url] = true
 		}
 	}
 }
@@ -63,6 +72,7 @@ func WithSymmetricRelations(urls ...string) ParserOpt {
 type Parser struct {
 	dictionary map[string]string
 	relations  map[string]map[triple]bool
+	names      map[string]string
 	traits     traits
 }
 
@@ -71,6 +81,7 @@ func NewParser(args ...ParserOpt) *Parser {
 	p := &Parser{
 		dictionary: make(map[string]string),
 		relations:  make(map[string]map[triple]bool),
+		names:      make(map[string]string),
 		traits:     newTraits(),
 	}
 	for _, arg := range args {
@@ -112,14 +123,27 @@ func (p *Parser) Parse(r io.Reader) error {
 func (p *Parser) Get() (*semix.Graph, map[string]*semix.Concept) {
 	g := semix.NewGraph()
 	for r, ts := range p.relations {
-		p.relations[r] = calculateTransitiveClosure(ts)
+		if p.traits.ignoreURL(r) {
+			continue
+		}
+		if p.traits.isSymmetricURL(r) {
+			p.relations[r] = calculateSymmetricClosure(ts)
+		}
+		if p.traits.isTransitiveURL(r) {
+			p.relations[r] = calculateTransitiveClosure(ts)
+		}
 		for t := range p.relations[r] {
-			g.Add(t.s, t.p, t.o)
+			triple := g.Add(t.s, t.p, t.o)
+			if name, ok := p.names[t.s]; ok {
+				triple.S.Name = name
+			}
 		}
 	}
 	d := make(map[string]*semix.Concept, len(p.dictionary))
 	for str, url := range p.dictionary {
-		d[str] = g.FindByURL(url)
+		if c, ok := g.FindByURL(url); ok {
+			d[str] = c
+		}
 	}
 	return g, d
 }
@@ -142,6 +166,8 @@ func (p *Parser) add(c Concept) error {
 			return err
 		}
 	}
+	// add the prefLabel as name for this subject.
+	p.names[s] = c.PrefLabel
 	return nil
 }
 
@@ -151,18 +177,18 @@ func (p *Parser) addLabel(l, url string) error {
 	}
 	l = " " + l + " "
 	if uurl, ok := p.dictionary[l]; ok && url != uurl {
-		if p.traits.splitURL == "" {
+		if p.traits.splitRelationURL == "" {
 			return fmt.Errorf("multiple strings for: %q", l)
 		}
 		spliturl := p.split(url, uurl)
 		// logrus.Infof("split: {%q %q}", spliturl, p.traits.splitURL)
 		p.dictionary[l] = spliturl
 		// logrus.Infof("adding triple: %v", triple{s: spliturl, p: p.traits.splitURL, o: url})
-		if err := p.addTriple(triple{s: spliturl, p: p.traits.splitURL, o: url}); err != nil {
+		if err := p.addTriple(triple{s: spliturl, p: p.traits.splitRelationURL, o: url}); err != nil {
 			return err
 		}
 		// logrus.Infof("adding triple: %v", triple{s: spliturl, p: p.traits.splitURL, o: uurl})
-		if err := p.addTriple(triple{s: spliturl, p: p.traits.splitURL, o: uurl}); err != nil {
+		if err := p.addTriple(triple{s: spliturl, p: p.traits.splitRelationURL, o: uurl}); err != nil {
 			return err
 		}
 		return nil
