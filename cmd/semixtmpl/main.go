@@ -216,7 +216,7 @@ func semixdPost(path string, ctype string, r io.Reader, data interface{}) error 
 	defer res.Body.Close()
 	log.Printf("response: [POST] %s: %s", url, res.Status)
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return fmt.Errorf("invalid invalid response code [POST] %s: %s", url, res.Status)
+		return fmt.Errorf("invalid response code [POST] %s: %s", url, res.Status)
 	}
 	err = json.NewDecoder(res.Body).Decode(data)
 	if err != nil {
@@ -235,7 +235,7 @@ func semixdGet(path string, data interface{}) error {
 	defer res.Body.Close()
 	log.Printf("response: [GET] %s: %s", url, res.Status)
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return fmt.Errorf("invalid invalid response code [GET] %s: %s", url, res.Status)
+		return fmt.Errorf("invalid response code [GET] %s: %s", url, res.Status)
 	}
 	err = json.NewDecoder(res.Body).Decode(data)
 	if err != nil {
