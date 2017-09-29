@@ -13,6 +13,7 @@ import (
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/net"
+	"bitbucket.org/fflo/semix/pkg/query"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -97,7 +98,39 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 
 func (h handle) get(r *http.Request) (interface{}, int, error) {
 	log.Printf("serving request for %s", r.RequestURI)
-	return nil, http.StatusInternalServerError, fmt.Errorf("not implemented")
+	if r.Method != http.MethodGet {
+		return nil, http.StatusForbidden,
+			fmt.Errorf("invalid method: %s", r.Method)
+	}
+	if len(r.URL.Query()["q"]) != 1 {
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query parameter q=%v", r.URL.Query()["q"])
+	}
+	q, err := query.NewFix(r.URL.Query()["q"][0], func(arg string) (string, error) {
+		c, ok := net.Search(h.g, h.d, arg)
+		if !ok {
+			return "", fmt.Errorf("cannot find %q", arg)
+		}
+		return c.URL(), nil
+	})
+	if err != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)
+	}
+	es, err := q.Execute(h.i)
+	if err != nil {
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not execute query %q: %v", q, err)
+	}
+	var ts net.Tokens
+	for _, e := range es {
+		t, err := net.NewTokenFromEntry(h.g, e)
+		if err != nil {
+			return nil, http.StatusInternalServerError,
+				fmt.Errorf("cannot convert %v: %v", e, err)
+		}
+		ts.Tokens = append(ts.Tokens, t)
+	}
+	return ts, http.StatusOK, nil
 }
 
 func (h handle) makeStream(d semix.Document) (semix.Stream, context.CancelFunc) {
