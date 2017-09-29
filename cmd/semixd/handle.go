@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 
 	"bitbucket.org/fflo/semix/pkg/index"
@@ -118,12 +119,13 @@ func makeDocument(r *http.Request) (semix.Document, error) {
 		}
 		return semix.NewHTTPDocument(url[0]), nil
 	case http.MethodPost:
-		path := time.Now().Format("2006-01-02:15-04-05")
-		str, err := ioutil.ReadAll(r.Body)
+		err := r.ParseForm()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not parse post form: %v", err)
 		}
-		log.Printf("str: %s", str)
-		return semix.NewStringDocument(string(str), path), nil
+		path := time.Now().Format("2006-01-02:15-04-05")
+		str := " " + strings.Join(r.PostForm["text"], " ") + " "
+		str = regexp.MustCompile(`\s+`).ReplaceAllLiteralString(str, " ")
+		return semix.NewStringDocument(path, str), nil
 	}
 }
