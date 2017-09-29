@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/net"
 )
@@ -150,7 +151,11 @@ func putGet(r *http.Request) ([]byte, int, error) {
 
 func putPost(r *http.Request) ([]byte, int, error) {
 	var info net.Tokens
-	err := semixdPost("/put", r.Body, &info)
+	ctype := "text/plain"
+	if len(r.Header["Content-Type"]) > 0 {
+		ctype = strings.Join(r.Header["Content-Type"], ",")
+	}
+	err := semixdPost("/put", ctype, r.Body, &info)
 	if err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not talk to semixd: %v", err)
@@ -164,10 +169,10 @@ func putPost(r *http.Request) ([]byte, int, error) {
 	return buffer.Bytes(), http.StatusOK, nil
 }
 
-func semixdPost(path string, r io.Reader, data interface{}) error {
+func semixdPost(path string, ctype string, r io.Reader, data interface{}) error {
 	url := "http://localhost:6060" + path
 	log.Printf("sending: [POST] %s", url)
-	res, err := http.Post(url, "text/plain", r)
+	res, err := http.Post(url, ctype, r)
 	if err != nil {
 		return fmt.Errorf("could not [POST] %s: %v", url, err)
 	}
