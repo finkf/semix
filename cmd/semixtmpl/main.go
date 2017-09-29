@@ -34,6 +34,7 @@ var (
 	infotmpl  *template.Template
 	puttmpl   *template.Template
 	indextmpl *template.Template
+	gettmpl   *template.Template
 	config    Config
 )
 
@@ -43,12 +44,14 @@ func main() {
 	infotmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/info.html"))
 	puttmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/put.html"))
 	indextmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/index.html"))
+	gettmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/get.html"))
 	http.HandleFunc("/", requestFunc(index))
 	http.HandleFunc("/index", requestFunc(index))
 	http.HandleFunc("/info", requestFunc(info))
 	http.HandleFunc("/put", requestFunc(put))
+	http.HandleFunc("/get", requestFunc(get))
 	log.Printf("starting the server")
-	log.Fatalf(http.ListenAndServe(":8080", nil).Error())
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func requestFunc(h func(*http.Request) ([]byte, int, error)) func(http.ResponseWriter, *http.Request) {
@@ -105,6 +108,33 @@ func index(r *http.Request) ([]byte, int, error) {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not write html: %v", err)
 	}
+	log.Printf("served request for %s", r.RequestURI)
+	return buffer.Bytes(), http.StatusOK, nil
+}
+
+func get(r *http.Request) ([]byte, int, error) {
+	log.Printf("serving request for %s", r.RequestURI)
+	if r.Method != http.MethodGet {
+		return nil, http.StatusForbidden,
+			fmt.Errorf("invalid request method %s", r.Method)
+	}
+	q := r.URL.Query()["q"]
+	if len(q) != 1 {
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query parameter q=%v", q)
+	}
+	var ts net.Tokens
+	err := semixdGet(fmt.Sprintf("/get?q=%s", url.QueryEscape(q[0])), &ts)
+	if err != nil {
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not talk to semixd: %v", err)
+	}
+	buffer := new(bytes.Buffer)
+	if err := gettmpl.Execute(buffer, ts); err != nil {
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not write html: %v", err)
+	}
+	log.Printf("served request for %s", r.RequestURI)
 	return buffer.Bytes(), http.StatusOK, nil
 }
 
@@ -186,7 +216,7 @@ func semixdPost(path string, ctype string, r io.Reader, data interface{}) error 
 	defer res.Body.Close()
 	log.Printf("response: [POST] %s: %s", url, res.Status)
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return fmt.Errorf("invalid invalid response code [POST] %s: %s", url, res.Status)
+		return fmt.Errorf("invalid response code [POST] %s: %s", url, res.Status)
 	}
 	err = json.NewDecoder(res.Body).Decode(data)
 	if err != nil {
@@ -205,7 +235,7 @@ func semixdGet(path string, data interface{}) error {
 	defer res.Body.Close()
 	log.Printf("response: [GET] %s: %s", url, res.Status)
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return fmt.Errorf("invalid invalid response code [GET] %s: %s", url, res.Status)
+		return fmt.Errorf("invalid response code [GET] %s: %s", url, res.Status)
 	}
 	err = json.NewDecoder(res.Body).Decode(data)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
+	"fmt"
 	"io"
 	"net/url"
 	"os"
@@ -11,9 +12,6 @@ import (
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/semix"
-
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // Storage puts IndexEntries into files.
@@ -40,7 +38,7 @@ func OpenDirStorage(dir string) (Storage, error) {
 	defer is.Close()
 	d := gob.NewDecoder(is)
 	if err := d.Decode(s.register); err != nil {
-		return dirStorage{}, errors.Wrapf(err, "could not decode %q", path)
+		return dirStorage{}, fmt.Errorf("could not decod %q: %v", path, err)
 	}
 	return s, nil
 }
@@ -69,11 +67,11 @@ func (s dirStorage) write(url string, ds []dse) error {
 	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
 	os, err := os.OpenFile(path, flags, 0666)
 	if err != nil {
-		return errors.Wrapf(err, "could not open %q", path)
+		return fmt.Errorf("could not open %q: %v", path, err)
 	}
 	defer os.Close()
 	if err := writeBlock(os, ds); err != nil {
-		return errors.Wrapf(err, "could not encode to %q", path)
+		return fmt.Errorf("could not encode %q: %v", path, err)
 	}
 	return nil
 }
@@ -81,15 +79,17 @@ func (s dirStorage) write(url string, ds []dse) error {
 func (s dirStorage) Get(url string, f func(Entry)) error {
 	path := s.path(url)
 	is, err := os.Open(path)
+	if os.IsNotExist(err) { // nothing in the index
+		return nil
+	}
 	if err != nil {
-		return errors.Wrapf(err, "could not open %q", path)
+		return fmt.Errorf("could not open %q: %v", path, err)
 	}
 	defer is.Close()
 	for {
 		ds, err := readBlock(is)
-		logrus.Infof("BLOCK: %v (%v)", ds, err)
 		if err != nil {
-			return errors.Wrapf(err, "could not decode %q", path)
+			return fmt.Errorf("could not decode %q: %v", path, err)
 		}
 		if len(ds) == 0 {
 			return nil
@@ -111,7 +111,7 @@ func (s dirStorage) Close() error {
 	path := s.urlRegisterPath()
 	os, err := os.Create(path)
 	if err != nil {
-		return errors.Wrapf(err, "could not write %q", path)
+		return fmt.Errorf("cannot write %q: %v", path, err)
 	}
 	defer os.Close()
 	e := gob.NewEncoder(os)

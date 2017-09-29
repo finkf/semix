@@ -5,17 +5,24 @@
 		</head>
 		<body>
 				<h1>Semix</h1>
-				<h2>Concept info</h2>
-				<div id='info'>
-						<form id='search-info-form' method='get' action='{{.config.Self}}/info'>
-								<input id='search-info-input-text' type='text' placeholder='search concepts'
+				<h2>Query index</h2>
+				<form id='query-index-form' method='get' action='/get'>
+						<input id='query-index-input-text' type='text' placeholder='Query'
 								name='q' required>
+						<input id='query-index-input-button' type='submit' value='query'>
+
+				</form>
+				<h2>Search concepts</h2>
+				<div id='info'>
+						<form id='search-info-form' method='get' action='/info'>
+								<input id='search-info-input-text' type='text' placeholder='search concepts'
+										name='q' required>
 								<input id='search-info-input-button' type='submit' value='search'>
 						</form>
 				</div>
 				<h2>Put into index</h2>
 				<div id='put-url'>
-						<form id='put-url-form' method='get' action='{{.config.Self}}/put'>
+						<form id='put-url-form' method='get' action='/put'>
 								<input id='put-url-input-text' type='text' placeholder='put url'
 								name='url' required>
 								<input id='put-url-input-button' type='submit' value='put url'>

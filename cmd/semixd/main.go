@@ -31,7 +31,13 @@ func init() {
 var file = os.Getenv("HOME") + "/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"
 
 func main() {
-	index, err := index.OpenDirIndex(semixdir)
+	index, err := index.OpenDirIndex(
+		semixdir,
+		index.WithBufferSize(5),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Printf("reading RDF-XML")
 	p := rdfxml.NewParser(
 		rdfxml.WithIgnoreURLs(

@@ -1,8 +1,10 @@
 package net
 
 import (
+	"fmt"
 	"sort"
 
+	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -76,4 +78,19 @@ type Count struct {
 // RelativeFrequency calculates the relative frequency of a count.
 func (c Count) RelativeFrequency() float32 {
 	return float32(c.N) / float32(c.Total)
+}
+
+// NewTokenFromEntry creates a semix.Token from an index.Entry
+func NewTokenFromEntry(g *semix.Graph, e index.Entry) (semix.Token, error) {
+	c, ok := g.FindByURL(e.ConceptURL)
+	if !ok {
+		return semix.Token{}, fmt.Errorf("invalid url %q", e.ConceptURL)
+	}
+	return semix.Token{
+		Token:   e.Token,
+		Path:    e.Path,
+		Begin:   e.Begin,
+		End:     e.End,
+		Concept: c,
+	}, nil
 }
