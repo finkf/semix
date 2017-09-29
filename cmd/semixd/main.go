@@ -31,7 +31,7 @@ func init() {
 var file = os.Getenv("HOME") + "/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"
 
 func main() {
-	index, err := index.OpenDirIndex(
+	index, err := index.New(
 		semixdir,
 		index.WithBufferSize(5),
 	)
