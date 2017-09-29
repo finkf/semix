@@ -27,7 +27,7 @@
 								{{range $c}}
 								<tr>
 										<td><a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a></td>
-										<td>{{.RelativeFrequency}} ({{.N}}/{{.Total}})</td>
+										<td>{{printf "%.2f" .RelativeFrequency}} ({{.N}}/{{.Total}})</td>
 								</tr>
 								{{end}}
 								{{end}}
