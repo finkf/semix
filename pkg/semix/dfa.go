@@ -2,10 +2,10 @@ package semix
 
 import (
 	"bytes"
+	"log"
 	"sort"
 
 	"bitbucket.org/fflo/sparsetable"
-	"github.com/sirupsen/logrus"
 )
 
 // DFA is a simple wrapper around a sparsetable.DFA.
@@ -51,7 +51,7 @@ func newSparseTableDFA(d map[string]*Concept) *sparsetable.DFA {
 	var pairs []pair
 	for str, c := range d {
 		if c.ID() == 0 {
-			logrus.Fatalf("concept %s: invalid id=%d for: %q", c.URL(), c.ID(), str)
+			log.Fatalf("concept %s: invalid id=%d for: %q", c.URL(), c.ID(), str)
 		}
 		pairs = append(pairs, pair{id: c.ID(), str: str})
 	}
@@ -61,7 +61,7 @@ func newSparseTableDFA(d map[string]*Concept) *sparsetable.DFA {
 	b := sparsetable.NewBuilder()
 	for _, p := range pairs {
 		if err := b.Add(p.str, p.id); err != nil {
-			logrus.Fatalf("could not add %v: %v", p, err)
+			log.Fatalf("could not add %v: %v", p, err)
 		}
 	}
 	return b.Build()

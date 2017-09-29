@@ -181,13 +181,13 @@ func (p *Parser) addLabel(l, url string) error {
 			return fmt.Errorf("multiple strings for: %q", l)
 		}
 		spliturl := p.split(url, uurl)
-		// logrus.Infof("split: {%q %q}", spliturl, p.traits.splitURL)
+		// log.Printf("split: {%q %q}", spliturl, p.traits.splitURL)
 		p.dictionary[l] = spliturl
-		// logrus.Infof("adding triple: %v", triple{s: spliturl, p: p.traits.splitURL, o: url})
+		// log.Printf("adding triple: %v", triple{s: spliturl, p: p.traits.splitURL, o: url})
 		if err := p.addTriple(triple{s: spliturl, p: p.traits.splitRelationURL, o: url}); err != nil {
 			return err
 		}
-		// logrus.Infof("adding triple: %v", triple{s: spliturl, p: p.traits.splitURL, o: uurl})
+		// log.Printf("adding triple: %v", triple{s: spliturl, p: p.traits.splitURL, o: uurl})
 		if err := p.addTriple(triple{s: spliturl, p: p.traits.splitRelationURL, o: uurl}); err != nil {
 			return err
 		}
