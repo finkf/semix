@@ -21,9 +21,9 @@ const (
 	DefaultIndexDirBufferSize = 1024
 )
 
-// OpenDirIndex opens a directory index at the given directory path with
+// New opens a directory index at the given directory path with
 // and the given options.
-func OpenDirIndex(dir string, opts ...DirIndexOpt) (Index, error) {
+func New(dir string, opts ...DirIndexOpt) (Index, error) {
 	storage, err := OpenDirStorage(dir)
 	if err != nil {
 		return nil, err

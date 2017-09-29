@@ -11,7 +11,7 @@ type DFAMatcher struct {
 func (m DFAMatcher) Match(str string) MatchPos {
 	for i := 0; i < len(str); {
 		pos, c, _ := m.matchFromHere(str[i:])
-		// logrus.Debugf("match from here %q:{%d %s}", str[i:], pos, c)
+		// log.Printf("match from here %q:{%d %s}", str[i:], pos, c)
 		if c != nil {
 			return MatchPos{Concept: c, Begin: i + 1, End: i + pos}
 		}
