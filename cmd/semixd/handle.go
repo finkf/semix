@@ -132,7 +132,10 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 }
 
 func (h handle) makeStream(d semix.Document) semix.Stream {
-	return semix.Filter(semix.Match(semix.DFAMatcher{DFA: h.dfa}, semix.Read(d)))
+	return semix.Filter(
+		semix.Match(semix.DFAMatcher{DFA: h.dfa},
+			semix.Normalize(
+				semix.Read(d))))
 }
 
 func makeDocument(r *http.Request) (semix.Document, error) {
