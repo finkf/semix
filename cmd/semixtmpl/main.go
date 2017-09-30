@@ -59,12 +59,12 @@ func requestFunc(h func(*http.Request) ([]byte, int, error)) func(http.ResponseW
 		data, status, err := h(r)
 		if err != nil {
 			log.Printf("error: %v", err)
-			w.Header()["Content-Type"] = []string{"text/plain", "charset=utf-8"}
+			w.Header()["Content-Type"] = []string{"text/plain; charset=utf-8"}
 			http.Error(w, err.Error(), status)
 			return
 		}
 		w.WriteHeader(status)
-		w.Header()["Content-Type"] = []string{"text/html", "charset=utf-8"}
+		w.Header()["Content-Type"] = []string{"text/html; charset=utf-8"}
 		if _, err := w.Write(data); err != nil {
 			log.Printf("could not write response: %v", err)
 		}
