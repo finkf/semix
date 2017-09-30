@@ -1,8 +1,8 @@
 package semix
 
 import (
-	"context"
 	"io/ioutil"
+	"regexp"
 	"sync"
 )
 
@@ -15,94 +15,51 @@ type StreamToken struct {
 // Stream repsents a stream to read tokens.
 type Stream <-chan StreamToken
 
-// Filter filters all tokens for which f returns true.
-func Filter(ctx context.Context, s Stream) Stream {
-	filterstream := make(chan StreamToken)
+// Filter discards all tokens that do not match a concept.
+func Filter(s Stream) Stream {
+	fstream := make(chan StreamToken)
 	go func() {
-		defer close(filterstream)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case t, ok := <-s:
-				// log.Printf("FILTER: %v %t", t, ok)
-				if !ok {
-					return
-				}
-				if t.Token.Concept != nil {
-					filterstream <- t
-				}
+		defer close(fstream)
+		for t := range s {
+			if t.Err == nil && t.Token.Concept == nil {
+				continue
 			}
+			fstream <- t
 		}
 	}()
-	return filterstream
+	return fstream
 }
 
-// Take takes no more than n tokens from a stream.
-func Take(ctx context.Context, n int, stream Stream) Stream {
-	takestream := make(chan StreamToken)
+// Normalize normalizes the token input.
+// It prepends and appends one ' ' character to the token.
+// All sequences of one or more unicode punctuation or unicode whitespaces
+// are replaced by exactly one whitespace character ' '.
+func Normalize(s Stream) Stream {
+	nstream := make(chan StreamToken)
 	go func() {
-		defer close(takestream)
-		for i := 0; i < n; i++ {
-			select {
-			case <-ctx.Done():
-				return
-			case t, ok := <-stream:
-				if !ok {
-					return
-				}
-				takestream <- t
+		defer close(nstream)
+		for t := range s {
+			if t.Err == nil {
+				t.Token.Token = regexp.MustCompile(`(\s|\pP|\pS)+`).
+					ReplaceAllLiteralString(" "+t.Token.Token+" ", " ")
 			}
+			nstream <- t
 		}
 	}()
-	return takestream
+	return nstream
 }
 
-func Repeat(ctx context.Context, tokens ...string) Stream {
-	rs := make(chan StreamToken)
-	go doRepeat(ctx, rs, tokens...)
-	return rs
-}
-
-func doRepeat(ctx context.Context, rs chan StreamToken, tokens ...string) {
-	defer close(rs)
-	for {
-		for _, token := range tokens {
-			t := StreamToken{
-				Token: Token{
-					Token:   token,
-					Concept: nil,
-					Begin:   0,
-					End:     len(token),
-				},
-				Err: nil,
-			}
-			select {
-			case <-ctx.Done():
-				return
-			case rs <- t:
-			}
-		}
-	}
-}
-
-func Match(ctx context.Context, m Matcher, s Stream) Stream {
-	ms := make(chan StreamToken, 2)
+// Match matches concepts in the stream and splits the tokens accordingly.
+// So one token ' text <match> text ' is split into ' text ',
+// '<match>' and ' text '.
+func Match(m Matcher, s Stream) Stream {
+	ms := make(chan StreamToken, 2) // matcher will put 2 token into the stream.
 	go func() {
 		defer close(ms)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case t, ok := <-s:
-				// log.Printf("MATCH %v %t", t, ok)
-				if !ok {
-					return
-				}
-				if t.Err != nil {
-					ms <- t
-					continue
-				}
+		for t := range s {
+			if t.Err != nil {
+				ms <- t
+			} else {
 				doMatch(ms, t.Token, m)
 			}
 		}
@@ -110,7 +67,6 @@ func Match(ctx context.Context, m Matcher, s Stream) Stream {
 	return ms
 }
 
-// TODO: this does not use cancellation. It just insert tokens into the stream.
 func doMatch(s chan StreamToken, t Token, m Matcher) {
 	rest := t.Token
 	ofs := 0
@@ -168,23 +124,16 @@ func doMatch(s chan StreamToken, t Token, m Matcher) {
 }
 
 // Read reads documents into tokens.
-func Read(ctx context.Context, ds ...Document) Stream {
+func Read(ds ...Document) Stream {
 	rstream := make(chan StreamToken, len(ds))
 	go func() {
-		defer close(rstream)
 		var wg sync.WaitGroup
+		defer close(rstream)
 		wg.Add(len(ds))
 		for _, d := range ds {
 			go func(d Document) {
 				defer wg.Done()
-				token := readToken(d)
-				// log.Printf("READ %v", token)
-				select {
-				case <-ctx.Done():
-					return
-				case rstream <- token:
-					return
-				}
+				rstream <- readToken(d)
 			}(d)
 		}
 		wg.Wait()
@@ -200,7 +149,7 @@ func readToken(d Document) StreamToken {
 	}
 	return StreamToken{
 		Token: Token{
-			Token: " " + string(bs) + " ",
+			Token: string(bs),
 			Path:  d.Path(),
 			Begin: 0,
 			End:   len(bs) + 2,
