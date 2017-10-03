@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -85,6 +86,22 @@ func TestFilterStream(t *testing.T) {
 			checkStream(t, tc, cancel, Filter(ctx, Match(ctx, testm{}, Read(ctx, ds...))))
 		})
 	}
+}
+
+func TestStreamCancel(t *testing.T) {
+	ds := makeTestDocuments("A,B,C,D")
+	ctx, cancel := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		wg.Wait()
+		s := Filter(ctx, Match(ctx, testm{}, Normalize(ctx, Read(ctx, ds...))))
+		for token := range s {
+			t.Fatalf("sould not read token %v", token)
+		}
+	}()
+	cancel()
+	wg.Done()
 }
 
 func checkStream(
