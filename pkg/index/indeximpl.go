@@ -113,39 +113,17 @@ func (i *index) run() {
 }
 
 func (i *index) putToken(t semix.Token) error {
-	url := t.Concept.URL()
-	i.buffer[url] = append(i.buffer[url], Entry{
-		ConceptURL: url,
-		Begin:      t.Begin,
-		End:        t.End,
-		Path:       t.Path,
-		Token:      t.Token,
-	})
-	if len(i.buffer[url]) == i.n {
-		if err := i.storage.Put(url, i.buffer[url]); err != nil {
-			return err
-		}
-		i.buffer[url] = nil
-	}
-	for j := 0; j < t.Concept.EdgesLen(); j++ {
-		edge := t.Concept.EdgeAt(j)
-		objurl := edge.O.URL()
-		i.buffer[objurl] = append(i.buffer[objurl], Entry{
-			ConceptURL:  objurl,
-			Begin:       t.Begin,
-			End:         t.End,
-			Path:        t.Path,
-			Token:       t.Token,
-			RelationURL: edge.P.URL(),
-		})
-		if len(i.buffer[objurl]) == i.n {
-			if err := i.storage.Put(objurl, i.buffer[objurl]); err != nil {
+	return putAll(t, func(e Entry) error {
+		url := e.ConceptURL
+		i.buffer[url] = append(i.buffer[url], e)
+		if len(i.buffer[url]) == i.n {
+			if err := i.storage.Put(url, i.buffer[url]); err != nil {
 				return err
 			}
-			i.buffer[objurl] = nil
+			i.buffer[url] = nil
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func (i *index) getEntries(url string, f func(Entry)) error {
@@ -153,4 +131,67 @@ func (i *index) getEntries(url string, f func(Entry)) error {
 		f(e)
 	}
 	return i.storage.Get(url, f)
+}
+
+// NewMapIndex create a new in memory index, that uses
+// a simple map of Entry slices for storage.
+func NewMapIndex() Index {
+	return &mapIndex{index: make(map[string][]Entry)}
+}
+
+type mapIndex struct {
+	index map[string][]Entry
+}
+
+func (i *mapIndex) Put(t semix.Token) error {
+	return putAll(t, func(e Entry) error {
+		url := e.ConceptURL
+		i.index[url] = append(i.index[url], e)
+		return nil
+	})
+}
+
+func (i *mapIndex) Get(url string, f func(Entry)) error {
+	for _, e := range i.index[url] {
+		f(e)
+	}
+	return nil
+}
+
+func (i *mapIndex) Close() error {
+	return nil
+}
+
+// putAll converts a semix.Token to an Entry and
+// calls the callback function recursively for all
+// connected concepts.
+func putAll(t semix.Token, f func(Entry) error) error {
+	url := t.Concept.URL()
+	err := f(Entry{
+		ConceptURL: url,
+		Begin:      t.Begin,
+		End:        t.End,
+		Path:       t.Path,
+		Token:      t.Token,
+	})
+	if err != nil {
+		return err
+	}
+	n := t.Concept.EdgesLen()
+	for i := 0; i < n; i++ {
+		edge := t.Concept.EdgeAt(i)
+		objurl := edge.O.URL()
+		err := f(Entry{
+			ConceptURL:  objurl,
+			Begin:       t.Begin,
+			End:         t.End,
+			Path:        t.Path,
+			Token:       t.Token,
+			RelationURL: edge.P.URL(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
