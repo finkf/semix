@@ -1,6 +1,7 @@
 package semix
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -20,7 +21,8 @@ func TestReadStream(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
 			ds := makeTestDocuments(tc.test)
-			checkStream(t, tc, Read(ds...))
+			ctx, cancel := context.WithCancel(context.Background())
+			checkStream(t, tc, cancel, Read(ctx, ds...))
 		})
 	}
 }
@@ -39,7 +41,8 @@ func TestNormalizerStream(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
 			ds := makeTestDocuments(tc.test)
-			checkStream(t, tc, Normalize(Read(ds...)))
+			ctx, cancel := context.WithCancel(context.Background())
+			checkStream(t, tc, cancel, Normalize(ctx, Read(ctx, ds...)))
 		})
 	}
 }
@@ -60,7 +63,8 @@ func TestMatcherStream(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
 			ds := makeTestDocuments(tc.test)
-			checkStream(t, tc, Match(testm{}, Read(ds...)))
+			ctx, cancel := context.WithCancel(context.Background())
+			checkStream(t, tc, cancel, Match(ctx, testm{}, Read(ctx, ds...)))
 		})
 	}
 }
@@ -77,7 +81,8 @@ func TestFilterStream(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
 			ds := makeTestDocuments(tc.test)
-			checkStream(t, tc, Filter(Match(testm{}, Read(ds...))))
+			ctx, cancel := context.WithCancel(context.Background())
+			checkStream(t, tc, cancel, Filter(ctx, Match(ctx, testm{}, Read(ctx, ds...))))
 		})
 	}
 }
@@ -88,10 +93,11 @@ func checkStream(
 		test, want string
 		iserr      bool
 	},
+	cancel context.CancelFunc,
 	s Stream,
 ) {
 	t.Helper()
-	res, err := stream2string(s)
+	res, err := stream2string(cancel, s)
 	if tc.iserr && err == nil {
 		t.Fatalf("expceted error; got %q %v", res, err)
 	}
@@ -125,7 +131,8 @@ func equals(t, w string) bool {
 	return true
 }
 
-func stream2string(s Stream) (string, error) {
+func stream2string(cancel context.CancelFunc, s Stream) (string, error) {
+	defer cancel()
 	var strs []string
 	for t := range s {
 		if t.Err != nil {
