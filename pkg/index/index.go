@@ -9,7 +9,7 @@ import (
 // Entry denotes a public available index entry
 type Entry struct {
 	ConceptURL, Path, Token, RelationURL string
-	Begin, End                           int
+	Begin, End, K                        int
 }
 
 // Putter represents a simple interface to put tokens into an index.
