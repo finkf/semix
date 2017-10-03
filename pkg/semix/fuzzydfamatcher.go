@@ -1,6 +1,9 @@
 package semix
 
-import "math"
+import (
+	"log"
+	"math"
+)
 
 // FuzzyDFAMatcher uses a FuzzyDFA to search for matches in a string.
 type FuzzyDFAMatcher struct {
@@ -20,12 +23,16 @@ func (m FuzzyDFAMatcher) Match(str string) MatchPos {
 				if pos <= 0 {
 					return
 				}
+				if c == nil {
+					panic("nil concept")
+				}
+				log.Printf("%q final state k=%d pos=(%d %d) url=%s", str[i:], k, i, i+pos, c.URL())
 				pos--
 				isws := str[i+pos] == ' '
 				if savepos == 0 && isws {
 					savepos = pos
 				}
-				set.insert(fuzzypos{c: c, l: k, s: i, e: i + pos, isws: isws})
+				set.insert(fuzzypos{c: c, l: k, s: i + 1, e: i + pos, isws: isws})
 			})
 			if len(set.m) > 0 {
 				return set.makeMatch()
@@ -57,6 +64,9 @@ func (m *matchset) makeMatch() MatchPos {
 				left = p.s
 			}
 		}
+	}
+	if len(ps) == 0 {
+		return MatchPos{}
 	}
 	return MatchPos{Begin: left, End: m.longest, Concept: makeFuzzyConcept(ps)}
 }
