@@ -25,7 +25,7 @@ func (m FuzzyDFAMatcher) Match(str string) MatchPos {
 				if savepos == 0 && isws {
 					savepos = pos
 				}
-				set.insert(fuzzypos{c: c, k: k, s: i, e: i + pos, isws: isws})
+				set.insert(fuzzypos{c: c, l: k, s: i, e: i + pos, isws: isws})
 			})
 			if len(set.m) > 0 {
 				return set.makeMatch()
@@ -37,7 +37,7 @@ func (m FuzzyDFAMatcher) Match(str string) MatchPos {
 }
 
 type fuzzypos struct {
-	k, s, e int
+	l, s, e int
 	isws    bool
 	c       *Concept
 }
@@ -72,7 +72,7 @@ func makeFuzzyConcept(ps []fuzzypos) *Concept {
 	default:
 		c := NewConcept("http://bitbucket.org/fflo/semix/pkg/fuzzy-concept")
 		for _, p := range ps {
-			c.edges = append(c.edges, Edge{P: fuzzyPredicate, O: p.c, K: p.k})
+			c.edges = append(c.edges, Edge{P: fuzzyPredicate, O: p.c, L: p.l})
 		}
 		return c
 	}
@@ -90,10 +90,10 @@ func (m *matchset) insert(p fuzzypos) {
 }
 
 func selectFuzzypos(o, n fuzzypos) fuzzypos {
-	if n.k < o.k {
+	if n.l < o.l {
 		return n
 	}
-	if o.k < n.k {
+	if o.l < n.l {
 		return o
 	}
 	if o.e == n.e { // does not matter

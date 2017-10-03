@@ -10,11 +10,11 @@ import (
 // links on concept to another concept with a predicate and a Levenshtein distance.
 type Edge struct {
 	P, O *Concept
-	K    int
+	L    int
 }
 
 func (e Edge) String() string {
-	return fmt.Sprintf("{%s %s %d}", e.P.url, e.O.url, e.K)
+	return fmt.Sprintf("{%s %s %d}", e.P.url, e.O.url, e.L)
 }
 
 // TODO: do we need this?
@@ -95,7 +95,7 @@ type link struct {
 		URL, Name string
 		ID        int
 	}
-	K int
+	L int
 }
 
 // links returns the edges of this concept as pair of URLs.
@@ -108,7 +108,7 @@ func (c *Concept) links() []link {
 		links[i].O.URL = c.edges[i].O.url
 		links[i].O.Name = c.edges[i].O.Name
 		links[i].O.ID = int(c.edges[i].O.id)
-		links[i].K = c.edges[i].K
+		links[i].L = c.edges[i].L
 	}
 	return links
 }
