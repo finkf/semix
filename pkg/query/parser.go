@@ -1,9 +1,8 @@
 package query
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 type parserError string
@@ -31,7 +30,7 @@ func (p *Parser) Parse() (q Query, err error) {
 	lexer := NewLexer(p.query)
 	ls, err := lexer.Lex()
 	if err != nil {
-		return Query{}, errors.Wrapf(err, "invalid query %q", p.query)
+		return Query{}, fmt.Errorf("invalid query %q: %v", p.query, err)
 	}
 	p.lexemes = ls
 	return p.parseQueryExp(), nil
