@@ -17,7 +17,7 @@ pipelines:
           - REPO=bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}
           - go get -v ${REPO}/pkg/{semix,index,query,rdfxml}
           - go build -v ${REPO}/pkg/{semix,index,query,rdfxml}
-          - go test -v ${REPO}/pkg/{semix,index,query,rdfxml}
+          - go test -race -cover -v ${REPO}/pkg/{semix,index,query,rdfxml}
             ##          - cd "${PACKAGE_PATH}/pkg/semix"
             ##          - go get -v
             ##          - go build -v
