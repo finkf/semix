@@ -58,7 +58,6 @@ func (m *matchset) makeMatch() MatchPos {
 			}
 		}
 	}
-	// TODO: handle errors
 	return MatchPos{Begin: left, End: m.longest, Concept: makeFuzzyConcept(ps)}
 }
 
@@ -73,7 +72,7 @@ func makeFuzzyConcept(ps []fuzzypos) *Concept {
 	default:
 		c := NewConcept("http://bitbucket.org/fflo/semix/pkg/fuzzy-concept")
 		for _, p := range ps {
-			c.edges = append(c.edges, Edge{P: fuzzyPredicate, O: p.c})
+			c.edges = append(c.edges, Edge{P: fuzzyPredicate, O: p.c, K: p.k})
 		}
 		return c
 	}

@@ -7,13 +7,14 @@ import (
 )
 
 // Edge represents an edge in the concept graph that
-// links on concept to another concept under a predicate.
+// links on concept to another concept with a predicate and a Levenshtein distance.
 type Edge struct {
 	P, O *Concept
+	K    int
 }
 
 func (e Edge) String() string {
-	return fmt.Sprintf("{%s %s}", e.P.url, e.O.url)
+	return fmt.Sprintf("{%s %s %d}", e.P.url, e.O.url, e.K)
 }
 
 // TODO: do we need this?
