@@ -25,3 +25,7 @@ pipelines:
           - go get -v
           - go build -v
           - go test -v
+          - cd "${PACKAGE_PATH}/pkg/index"
+          - go get -v
+          - go build -v
+          - go test -v
