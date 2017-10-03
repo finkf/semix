@@ -1,6 +1,7 @@
 package semix
 
 import (
+	"context"
 	"io/ioutil"
 	"regexp"
 	"sync"
@@ -16,34 +17,52 @@ type StreamToken struct {
 type Stream <-chan StreamToken
 
 // Filter discards all tokens that do not match a concept.
-func Filter(s Stream) Stream {
+func Filter(ctx context.Context, s Stream) Stream {
 	fstream := make(chan StreamToken)
 	go func() {
 		defer close(fstream)
-		for t := range s {
-			if t.Err == nil && t.Token.Concept == nil {
-				continue
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case t, ok := <-s:
+				if !ok {
+					return
+				}
+				if t.Err == nil && t.Token.Concept == nil {
+					continue
+				}
+				fstream <- t
 			}
-			fstream <- t
 		}
 	}()
 	return fstream
 }
 
+var normalizeRegexp = regexp.MustCompile(`(\s|\pP|\pS)+`)
+
 // Normalize normalizes the token input.
 // It prepends and appends one ' ' character to the token.
 // All sequences of one or more unicode punctuation or unicode whitespaces
 // are replaced by exactly one whitespace character ' '.
-func Normalize(s Stream) Stream {
+func Normalize(ctx context.Context, s Stream) Stream {
 	nstream := make(chan StreamToken)
 	go func() {
 		defer close(nstream)
-		for t := range s {
-			if t.Err == nil {
-				t.Token.Token = regexp.MustCompile(`(\s|\pP|\pS)+`).
-					ReplaceAllLiteralString(" "+t.Token.Token+" ", " ")
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case t, ok := <-s:
+				if !ok {
+					return
+				}
+				if t.Err == nil {
+					t.Token.Token = normalizeRegexp.
+						ReplaceAllLiteralString(" "+t.Token.Token+" ", " ")
+				}
+				nstream <- t
 			}
-			nstream <- t
 		}
 	}()
 	return nstream
@@ -52,79 +71,93 @@ func Normalize(s Stream) Stream {
 // Match matches concepts in the stream and splits the tokens accordingly.
 // So one token ' text <match> text ' is split into ' text ',
 // '<match>' and ' text '.
-func Match(m Matcher, s Stream) Stream {
+func Match(ctx context.Context, m Matcher, s Stream) Stream {
 	ms := make(chan StreamToken, 2) // matcher will put 2 token into the stream.
 	go func() {
 		defer close(ms)
-		for t := range s {
-			if t.Err != nil {
-				ms <- t
-			} else {
-				doMatch(ms, t.Token, m)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case t, ok := <-s:
+				if !ok {
+					return
+				}
+				if t.Err != nil || t.Token.Concept != nil {
+					ms <- t
+				}
+				doMatch(ctx, ms, t.Token, m)
 			}
 		}
 	}()
 	return ms
 }
 
-func doMatch(s chan StreamToken, t Token, m Matcher) {
+func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
 	rest := t.Token
 	ofs := 0
 	for len(rest) > 0 {
+		// // check for cancel
+		// select {
+		// case <-ctx.Done():
+		// 	return
+		// default:
+		// }
 		match := m.Match(rest)
 		if match.Concept == nil {
-			// log.Printf("DO_MATCH: %v", match)
-			s <- StreamToken{
-				Token: Token{
-					Token:   rest,
-					Path:    t.Path,
-					Begin:   ofs,
-					End:     ofs + len(rest),
-					Concept: nil,
-				},
-			}
+			putMatches(ctx, s, Token{
+				Token:   rest,
+				Path:    t.Path,
+				Begin:   ofs,
+				End:     ofs + len(rest),
+				Concept: nil,
+			})
 			rest = ""
 		} else if match.Begin == 0 {
 			// log.Printf("DO_MATCH: %v", match)
-			s <- StreamToken{
-				Token: Token{
-					Token:   rest[0:match.End],
-					Path:    t.Path,
-					Begin:   ofs,
-					End:     ofs + match.End,
-					Concept: match.Concept,
-				},
-			}
+			putMatches(ctx, s, Token{
+				Token:   rest[0:match.End],
+				Path:    t.Path,
+				Begin:   ofs,
+				End:     ofs + match.End,
+				Concept: match.Concept,
+			})
 			rest = rest[match.End:]
 			ofs += match.End
 		} else {
 			// log.Printf("DO_MATCH: %v", match)
-			s <- StreamToken{
-				Token: Token{
-					Token:   rest[0:match.Begin],
-					Path:    t.Path,
-					Begin:   ofs,
-					End:     ofs + match.Begin,
-					Concept: nil,
-				},
-			}
-			s <- StreamToken{
-				Token: Token{
+			putMatches(ctx, s, Token{
+				Token:   rest[0:match.Begin],
+				Path:    t.Path,
+				Begin:   ofs,
+				End:     ofs + match.Begin,
+				Concept: nil,
+			},
+				Token{
 					Token:   rest[match.Begin:match.End],
 					Path:    t.Path,
 					Begin:   ofs + match.Begin,
 					End:     ofs + match.End,
 					Concept: match.Concept,
-				},
-			}
+				})
 			rest = rest[match.End:]
 			ofs += match.End
 		}
 	}
 }
 
+func putMatches(ctx context.Context, out chan StreamToken, ts ...Token) {
+	for _, t := range ts {
+		select {
+		case <-ctx.Done():
+			return
+		case out <- StreamToken{Token: t}:
+		}
+	}
+}
+
 // Read reads documents into tokens.
-func Read(ds ...Document) Stream {
+func Read(ctx context.Context, ds ...Document) Stream {
 	rstream := make(chan StreamToken, len(ds))
 	go func() {
 		var wg sync.WaitGroup
@@ -133,7 +166,11 @@ func Read(ds ...Document) Stream {
 		for _, d := range ds {
 			go func(d Document) {
 				defer wg.Done()
-				rstream <- readToken(d)
+				select {
+				case <-ctx.Done():
+					return
+				case rstream <- readToken(d):
+				}
 			}(d)
 		}
 		wg.Wait()
