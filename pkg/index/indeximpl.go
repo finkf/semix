@@ -136,14 +136,14 @@ func (i *index) getEntries(url string, f func(Entry)) error {
 // NewMapIndex create a new in memory index, that uses
 // a simple map of Entry slices for storage.
 func NewMapIndex() Index {
-	return &mapIndex{index: make(map[string][]Entry)}
+	return mapIndex{index: make(map[string][]Entry)}
 }
 
 type mapIndex struct {
 	index map[string][]Entry
 }
 
-func (i *mapIndex) Put(t semix.Token) error {
+func (i mapIndex) Put(t semix.Token) error {
 	return putAll(t, func(e Entry) error {
 		url := e.ConceptURL
 		i.index[url] = append(i.index[url], e)
@@ -151,14 +151,14 @@ func (i *mapIndex) Put(t semix.Token) error {
 	})
 }
 
-func (i *mapIndex) Get(url string, f func(Entry)) error {
+func (i mapIndex) Get(url string, f func(Entry)) error {
 	for _, e := range i.index[url] {
 		f(e)
 	}
 	return nil
 }
 
-func (i *mapIndex) Close() error {
+func (i mapIndex) Close() error {
 	return nil
 }
 
