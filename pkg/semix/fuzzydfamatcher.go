@@ -26,7 +26,8 @@ func (m FuzzyDFAMatcher) Match(str string) MatchPos {
 				if c == nil {
 					panic("nil concept")
 				}
-				log.Printf("%q final state k=%d pos=(%d %d) url=%s", str[i:], k, i, i+pos, c.URL())
+				log.Printf("%q final state k=%d pos=(%d %d) url=%s",
+					str[i:], k, i, i+pos, c.URL())
 				pos--
 				isws := str[i+pos] == ' '
 				if savepos == 0 && isws {
@@ -68,25 +69,15 @@ func (m *matchset) makeMatch() MatchPos {
 	if len(ps) == 0 {
 		return MatchPos{}
 	}
-	return MatchPos{Begin: left, End: m.longest, Concept: makeFuzzyConcept(ps)}
+	c := NewConcept("http://bitbucket.org/fflo/semix/pkg/fuzzy-concept")
+	c.ambiguous = true
+	for _, p := range ps {
+		c.edges = append(c.edges, Edge{P: fuzzyPredicate, O: p.c, L: p.l})
+	}
+	return MatchPos{Begin: left, End: m.longest, Concept: c}
 }
 
 var fuzzyPredicate = NewConcept("http://bitbucket.org/fflo/semix/pkg/semix/fuzzy-predicate")
-
-func makeFuzzyConcept(ps []fuzzypos) *Concept {
-	switch len(ps) {
-	case 0:
-		return nil
-	case 1:
-		return ps[0].c
-	default:
-		c := NewConcept("http://bitbucket.org/fflo/semix/pkg/fuzzy-concept")
-		for _, p := range ps {
-			c.edges = append(c.edges, Edge{P: fuzzyPredicate, O: p.c, L: p.l})
-		}
-		return c
-	}
-}
 
 func (m *matchset) insert(p fuzzypos) {
 	if _, ok := m.m[p.c]; !ok {
