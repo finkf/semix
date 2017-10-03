@@ -13,14 +13,16 @@ func TestJSONMarshalling(t *testing.T) {
 		url, name string
 		es        []string
 		id        int32
+		a         bool
 	}{
-		{url: "A", name: "A-name", id: 42, es: nil},
+		{url: "A", name: "A-name", id: 42, es: nil, a: false},
+		{url: "A", name: "A-name", id: 42, es: nil, a: true},
 		{url: "A", name: "A-name", id: 38, es: []string{"B", "C"}},
 		{url: "A", name: "A-name", id: 38, es: []string{"B", "C", "B", "D"}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.url, func(t *testing.T) {
-			c := &Concept{url: tc.url, Name: tc.name, id: tc.id}
+			c := &Concept{url: tc.url, Name: tc.name, id: tc.id, ambiguous: tc.a}
 			// add edges
 			for i := 0; i < len(tc.es); i += 2 {
 				p := &Concept{url: tc.es[i], Name: tc.es[i] + "-name", id: rand.Int31()}
@@ -35,8 +37,8 @@ func TestJSONMarshalling(t *testing.T) {
 			if err := json.NewDecoder(buffer).Decode(d); err != nil {
 				t.Fatalf("could not decode concept: %v", err)
 			}
-			cstr := fmt.Sprintf("{%s %s %d %v}", c.url, c.Name, c.id, c.edges)
-			dstr := fmt.Sprintf("{%s %s %d %v}", d.url, d.Name, d.id, d.edges)
+			cstr := fmt.Sprintf("{%s %s %d %v %t}", c.url, c.Name, c.id, c.edges, c.ambiguous)
+			dstr := fmt.Sprintf("{%s %s %d %v %t}", d.url, d.Name, d.id, d.edges, c.ambiguous)
 			if dstr != cstr {
 				t.Fatalf("expceted %s; got %s", cstr, dstr)
 			}

@@ -28,6 +28,7 @@ type Concept struct {
 	url, Name string
 	edges     []Edge
 	id        int32
+	ambiguous bool
 }
 
 // NewConcept create a new Concept with the given URL.
@@ -62,6 +63,11 @@ func (c *Concept) URL() string {
 	return c.url
 }
 
+// Ambiguous returns if the concept is ambiguous or not.
+func (c *Concept) Ambiguous() bool {
+	return c.ambiguous
+}
+
 // ShortURL returns a short version of the URL of this concept.
 // The short URL is not necessarily unique.
 func (c *Concept) ShortURL() string {
@@ -89,6 +95,7 @@ type link struct {
 		URL, Name string
 		ID        int
 	}
+	K int
 }
 
 // links returns the edges of this concept as pair of URLs.
@@ -101,6 +108,7 @@ func (c *Concept) links() []link {
 		links[i].O.URL = c.edges[i].O.url
 		links[i].O.Name = c.edges[i].O.Name
 		links[i].O.ID = int(c.edges[i].O.id)
+		links[i].K = c.edges[i].K
 	}
 	return links
 }
@@ -113,15 +121,17 @@ func (c *Concept) UnmarshalJSON(b []byte) error {
 		URL, Name string
 		ID        int
 		Edges     []link
+		Ambiguous bool
 	}
 	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
 	*c = Concept{
-		Name:  data.Name,
-		url:   data.URL,
-		id:    int32(data.ID),
-		edges: make([]Edge, len(data.Edges)),
+		Name:      data.Name,
+		url:       data.URL,
+		id:        int32(data.ID),
+		edges:     make([]Edge, len(data.Edges)),
+		ambiguous: data.Ambiguous,
 	}
 	// create unique local concepts that users can
 	// use the *Concepts as valid map entries etc.
@@ -156,11 +166,13 @@ func (c *Concept) MarshalJSON() ([]byte, error) {
 		URL, Name string
 		ID        int
 		Edges     []link
+		Ambiguous bool
 	}{
-		URL:   c.url,
-		Name:  c.Name,
-		ID:    int(c.id),
-		Edges: c.links(),
+		URL:       c.url,
+		Name:      c.Name,
+		ID:        int(c.id),
+		Edges:     c.links(),
+		Ambiguous: c.Ambiguous(),
 	}
 	return json.Marshal(data)
 }
