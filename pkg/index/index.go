@@ -24,8 +24,8 @@ type Index interface {
 	Close() error
 }
 
-// Stream reads all tokens from a given stream into an index.
-func Stream(ctx context.Context, index Putter, s semix.Stream) semix.Stream {
+// Put reads all tokens from a given stream into an index.
+func Put(ctx context.Context, index Putter, s semix.Stream) semix.Stream {
 	istream := make(chan semix.StreamToken)
 	go func() {
 		defer close(istream)

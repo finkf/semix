@@ -28,7 +28,7 @@ func TestIndex(t *testing.T) {
 			defer cancel()
 			i := NewMapIndex()
 			d := semix.NewStringDocument(tc.test, tc.test)
-			s := Stream(ctx, i,
+			s := Put(ctx, i,
 				semix.Filter(ctx,
 					semix.Match(ctx, m,
 						semix.Normalize(ctx,

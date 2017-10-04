@@ -131,7 +131,7 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 
 func (h handle) makeIndexStream(d semix.Document) (semix.Stream, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background())
-	s := index.Stream(ctx, h.i,
+	s := index.Put(ctx, h.i,
 		semix.Filter(ctx,
 			semix.Match(ctx, semix.DFAMatcher{DFA: h.dfa},
 				semix.Normalize(ctx,
