@@ -16,6 +16,7 @@ type lexerError string
 // LexemTypes
 const (
 	LexemeIdent   = 0
+	LexemeNumber  = '1'
 	LexemeLeft    = '<'
 	LexemeRight   = '>'
 	LexemeQuest   = '?'
@@ -94,11 +95,21 @@ func (l *Lexer) nextLexeme() (Lexeme, bool) {
 	case c == '\'' || c == '"':
 		l.next()
 		return l.parseQuotedIdent(c), false
+	case unicode.IsDigit(rune(c)):
+		return l.parseNumber(), false
 	case c == 0:
 		return Lexeme{}, true
 	default:
 		return l.parseIdent(), false
 	}
+}
+
+func (l *Lexer) parseNumber() Lexeme {
+	spos := l.pos
+	for unicode.IsDigit(rune(l.peek())) {
+		l.next()
+	}
+	return Lexeme{Typ: LexemeNumber, Str: l.str[spos:l.pos]}
 }
 
 func (l *Lexer) parseQuotedIdent(q byte) Lexeme {

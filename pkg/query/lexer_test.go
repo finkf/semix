@@ -15,6 +15,8 @@ func TestLexer(t *testing.T) {
 		{`?(>R{"()?{}<>",B})`, "[? ( > R { ()?{}<> , B } )]", false},
 		{`?(> R { "quot ed" , A } )`, "[? ( > R { quot ed , A } )]", false},
 		{`?(<{ident1 ident2`, "[? ( < { ident1 ident2]", false},
+		{`?1005(<{ident1 ident2`, "[? 1005 ( < { ident1 ident2]", false},
+		{`?(<{ident1 ident2 1000`, "[? ( < { ident1 ident2 1000]", false},
 		{`?(>R{"Missing quote, A})`, "[]", true},
 		{"", "[]", false},
 	}
