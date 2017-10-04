@@ -18,6 +18,8 @@ pipelines:
           - go get -v ${REPO}/pkg/{semix,index,query,rdfxml}
           - go build -v ${REPO}/pkg/{semix,index,query,rdfxml}
           - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml}
+          - go get -v ${REPO}/cmd/{semixd,semixtmpl}
+          - go build -v ${REPO}/cmd/{semixd,semixtmpl}
             ##          - cd "${PACKAGE_PATH}/pkg/semix"
             ##          - go get -v
             ##          - go build -v
