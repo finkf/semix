@@ -89,12 +89,15 @@ func (m *matchset) insert(p fuzzypos) {
 }
 
 func selectFuzzypos(o, n fuzzypos) fuzzypos {
+	// Select the position with the smaller error.
 	if n.l < o.l {
 		return n
 	}
 	if o.l < n.l {
 		return o
 	}
+	// Both positions have the same error.
+	// Choose the larger match.
 	if o.e == n.e { // does not matter
 		return o
 	}
