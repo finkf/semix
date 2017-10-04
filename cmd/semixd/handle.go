@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -78,7 +79,8 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("bad document: %v", err)
 	}
-	stream := h.makeStream(doc)
+	stream, cancel := h.makeStream(doc)
+	defer cancel()
 	ts := net.Tokens{Tokens: []semix.Token{}} // for json
 	for t := range stream {
 		if t.Err != nil {
@@ -131,11 +133,13 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 	return ts, http.StatusOK, nil
 }
 
-func (h handle) makeStream(d semix.Document) semix.Stream {
-	return semix.Filter(
-		semix.Match(semix.DFAMatcher{DFA: h.dfa},
-			semix.Normalize(
-				semix.Read(d))))
+func (h handle) makeStream(d semix.Document) (semix.Stream, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(context.Background())
+	s := semix.Filter(ctx,
+		semix.Match(ctx, semix.DFAMatcher{DFA: h.dfa},
+			semix.Normalize(ctx,
+				semix.Read(ctx, d))))
+	return s, cancel
 }
 
 func makeDocument(r *http.Request) (semix.Document, error) {
