@@ -7,7 +7,7 @@ import (
 )
 
 // FuzzyDFA is a simple wrapper around a sparsetable.FuzzyDFA.
-// It maps the ids of the underlying sparsetable.DFA to Concepts.
+// It maps the ids of the underlying sparsetable.DFA to the according Concepts.
 type FuzzyDFA struct {
 	dfa   *sparsetable.FuzzyDFA
 	graph *Graph

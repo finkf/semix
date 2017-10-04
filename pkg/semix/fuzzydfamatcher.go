@@ -1,7 +1,6 @@
 package semix
 
 import (
-	"log"
 	"math"
 )
 
@@ -19,14 +18,13 @@ func (m FuzzyDFAMatcher) Match(str string) MatchPos {
 		var savepos int
 		set := &matchset{m: make(map[*Concept]fuzzypos)}
 		for m.DFA.Delta(s, func(k, pos int, c *Concept) {
+			// log.Printf("%q final state k=%d pos=(%d %d) url=%s", str[i:], k, i, i+pos, c.URL())
 			if pos <= 0 {
 				return
 			}
 			if c == nil {
 				panic("nil concept")
 			}
-			log.Printf("%q final state k=%d pos=(%d %d) url=%s",
-				str[i:], k, i, i+pos, c.URL())
 			pos--
 			isws := str[i+pos] == ' '
 			if savepos == 0 && isws {
@@ -34,6 +32,7 @@ func (m FuzzyDFAMatcher) Match(str string) MatchPos {
 			}
 			set.insert(fuzzypos{c: c, l: k, s: i + 1, e: i + pos, isws: isws})
 		}) {
+			// log.Printf("stack: %v", *s)
 		}
 		if len(set.m) > 0 {
 			return set.makeMatch()

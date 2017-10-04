@@ -2,6 +2,7 @@ package semix
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 )
 
@@ -11,23 +12,29 @@ func TestFuzzyDFAMatcher(t *testing.T) {
 		k          int
 	}{
 		{"", "{<nil> 0 0}", 3},
-		// {" ", "{<nil> 0 0}", 3},
-		// {" ", "{<nil> 0 0}", 3},
-		// {" ", MatchPos{}, 3},
-		// {"  ", MatchPos{}, 3},
-		// {" nothing to find ", MatchPos{}, 3},
+		{" ", "{<nil> 0 0}", 3},
+		{" ", "{<nil> 0 0}", 3},
 		{" match ", "{fuzzy-concept [{fuzzy-predicate match 0}] 1 6}", 0},
-		/*
-			{" here is the match ", MatchPos{Begin: 13, End: 18, Concept: c1}, 1},
-			{" another match is here ", MatchPos{Begin: 9, End: 14, Concept: c1}, 1},
-			{" here is mitch match ", MatchPos{Begin: 9, End: 20, Concept: c2}, 1},
-			{" mitch match ", MatchPos{Begin: 1, End: 12, Concept: c2}, 1},
-			{" mitch mitch match ", MatchPos{Begin: 7, End: 18, Concept: c2}, 1},
-		*/
+		{" match ", "{fuzzy-concept [{fuzzy-predicate match 0}] 1 6}", 3},
+		{" mxtch ", "{<nil> 0 0}", 0},
+		{" mxtch ", "{fuzzy-concept [{fuzzy-predicate match 1}] 1 6}", 3},
+		{" mxtch bbbxxx ", "{fuzzy-concept [{fuzzy-predicate match 1}] 1 6}", 3},
+		{" mxtch bbxxx ", "{fuzzy-concept [{fuzzy-predicate match 1}] 1 6}", 3},
+		{" mxtch bxxx ", "{fuzzy-concept [{fuzzy-predicate match 1}] 1 6}", 3},
+		{" mxtch bbb ", "{fuzzy-concept [{fuzzy-predicate match 1}] 1 10}", 3},
+		{" XXXXXX mxtch ", "{fuzzy-concept [{fuzzy-predicate match 1}] 8 13}", 3},
+		{" mxtch XXXXXX ", "{fuzzy-concept [{fuzzy-predicate match 1}] 1 6}", 3},
+		{" XXXXXX mxtch XXXXXX ", "{fuzzy-concept [{fuzzy-predicate match 1}] 8 13}", 3},
+		{" mxtch mxtch ", "{fuzzy-concept [{fuzzy-predicate match two 2}] 1 12}", 3},
+		{" hxt ", "{fuzzy-concept [{fuzzy-predicate hit 2} {fuzzy-predicate hit two 1}] 1 4}", 3},
+		{" XXXXXXXX XXXXXXXX XXXXXXXX ", "{<nil> 0 0}", 3},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
 			m := makeFuzzyDFAMatcher(t, tc.k)
+			if k := m.DFA.MaxError(); k != tc.k {
+				t.Errorf("expected k=%d; got %d", tc.k, k)
+			}
 			match := m.Match(tc.test)
 			if str := fuzzyConceptToString(t, match); str != tc.want {
 				t.Errorf("expeceted pos = %q; got %q", tc.want, str)
@@ -41,9 +48,14 @@ func makeFuzzyDFAMatcher(t *testing.T, k int) FuzzyDFAMatcher {
 	graph := NewGraph()
 	t1 := graph.Add("match", "x", "y")
 	t2 := graph.Add("match two", "x", "y")
+	t3 := graph.Add("hit", "x", "y")
+	t4 := graph.Add("hit two", "x", "y")
 	dictionary := map[string]*Concept{
 		" match ":       t1.S,
+		" match bbb ":   t1.S,
 		" mitch match ": t2.S,
+		" hitt ":        t3.S,
+		" hot ":         t4.S,
 	}
 	return FuzzyDFAMatcher{
 		NewFuzzyDFA(k, NewDFA(dictionary, graph)),
@@ -63,6 +75,9 @@ func fuzzyConceptToString(t *testing.T, m MatchPos) string {
 }
 
 func fuzzyEdgeToString(es []Edge) string {
+	sort.Slice(es, func(i, j int) bool {
+		return es[i].O.URL() < es[j].O.URL()
+	})
 	str := "["
 	for i, e := range es {
 		if i > 0 {
