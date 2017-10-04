@@ -1,9 +1,5 @@
 package semix
 
-import (
-	"math"
-)
-
 // FuzzyDFAMatcher uses a FuzzyDFA to search for matches in a string.
 type FuzzyDFAMatcher struct {
 	DFA FuzzyDFA
@@ -35,7 +31,7 @@ func (m FuzzyDFAMatcher) Match(str string) MatchPos {
 			// log.Printf("stack: %v", *s)
 		}
 		if len(set.m) > 0 {
-			return set.makeMatch()
+			return set.makeMatchPos()
 		}
 		i = next(i, savepos, str)
 	}
@@ -53,19 +49,20 @@ type matchset struct {
 	m       map[*Concept]fuzzypos
 }
 
-func (m *matchset) makeMatch() MatchPos {
+func (m *matchset) makeMatchPos() MatchPos {
 	var ps []fuzzypos
-	left := math.MaxInt64
+	var left int
 	for _, p := range m.m {
 		if m.longest == p.e {
 			ps = append(ps, p)
-			if p.s < left {
-				left = p.s
-			}
+			left = p.s
 		}
 	}
 	if len(ps) == 0 {
 		return MatchPos{}
+	}
+	if len(ps) == 1 && ps[0].l == 0 { // one direct hit without an error
+		return MatchPos{Begin: left, End: m.longest, Concept: ps[0].c}
 	}
 	c := NewConcept("http://bitbucket.org/fflo/semix/pkg/fuzzy-concept")
 	c.ambiguous = true
