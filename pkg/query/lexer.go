@@ -53,7 +53,7 @@ func (l *Lexer) Lex() (ls []Lexeme, err error) {
 		}
 	}()
 	for {
-		lexeme, done := l.nextLexem()
+		lexeme, done := l.nextLexeme()
 		if done {
 			return ls, nil
 		}
@@ -84,7 +84,7 @@ func (l *Lexer) skip() {
 	}
 }
 
-func (l *Lexer) nextLexem() (Lexeme, bool) {
+func (l *Lexer) nextLexeme() (Lexeme, bool) {
 	l.skip()
 	c := l.peek()
 	switch {
