@@ -162,10 +162,17 @@ func (i mapIndex) Close() error {
 	return nil
 }
 
-// putAll converts a semix.Token to an Entry and
+func putAll(t semix.Token, f func(Entry) error) error {
+	if t.Concept.Ambiguous() {
+		return putAllAmbiguous(t, f)
+	}
+	return putAllWithError(t, 0, f)
+}
+
+// putAllWithError converts a semix.Token to an Entry and
 // calls the callback function recursively for all
 // connected concepts.
-func putAll(t semix.Token, f func(Entry) error) error {
+func putAllWithError(t semix.Token, k int, f func(Entry) error) error {
 	url := t.Concept.URL()
 	err := f(Entry{
 		ConceptURL: url,
@@ -173,6 +180,7 @@ func putAll(t semix.Token, f func(Entry) error) error {
 		End:        t.End,
 		Path:       t.Path,
 		Token:      t.Token,
+		K:          k,
 	})
 	if err != nil {
 		return err
@@ -188,8 +196,26 @@ func putAll(t semix.Token, f func(Entry) error) error {
 			Path:        t.Path,
 			Token:       t.Token,
 			RelationURL: edge.P.URL(),
+			K:           k,
 		})
 		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// putAllAmbiguous handles tokens with ambiguous concepts.
+func putAllAmbiguous(t semix.Token, f func(Entry) error) error {
+	c := t.Concept
+	if !c.Ambiguous() {
+		panic("putAllAmbiguous called with non ambiguous concept")
+	}
+	n := c.EdgesLen()
+	for i := 0; i < n; i++ {
+		e := c.EdgeAt(i)
+		t.Concept = e.O
+		if err := putAllWithError(t, e.L, f); err != nil {
 			return err
 		}
 	}
