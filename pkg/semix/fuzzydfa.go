@@ -27,12 +27,12 @@ func (d FuzzyDFA) MaxError() int {
 }
 
 // Initial returns the initial state of this FuzzyDFA.
-func (d FuzzyDFA) Initial(str string) sparsetable.FuzzyStack {
+func (d FuzzyDFA) Initial(str string) *sparsetable.FuzzyStack {
 	return d.dfa.Initial(str)
 }
 
 // Delta executes one fuzzy transition in this FuzzyDFA.
-func (d FuzzyDFA) Delta(s sparsetable.FuzzyStack, f func(int, int, *Concept)) sparsetable.FuzzyStack {
+func (d FuzzyDFA) Delta(s *sparsetable.FuzzyStack, f func(int, int, *Concept)) bool {
 	return d.dfa.Delta(s, func(k, pos int, id int32) {
 		c, ok := d.graph.FindByID(id)
 		if !ok {
