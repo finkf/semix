@@ -3,6 +3,7 @@ package query
 import (
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 type parserError string
@@ -38,10 +39,19 @@ func (p *Parser) Parse() (q Query, err error) {
 
 func (p *Parser) parseQueryExp() Query {
 	p.eat(LexemeQuest)
+	var k int
+	if p.peek().Typ == LexemeNumber { // parse optional number after `?`
+		l := p.eat(LexemeNumber)
+		tmp, err := strconv.ParseInt(l.Str, 10, 32)
+		if err != nil {
+			panic("not a number: " + l.Str)
+		}
+		k = int(tmp)
+	}
 	p.eat(LexemeOBrace)
 	c, s := p.parseConstraint()
 	p.eat(LexemeCBrace)
-	return Query{set: s, constraint: c}
+	return Query{set: s, constraint: c, l: k}
 }
 
 func (p *Parser) parseConstraint() (constraint, set) {

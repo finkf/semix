@@ -15,11 +15,13 @@ func TestParser(t *testing.T) {
 		{"?(!A, B({C, D}))", "?(!A,B({C,D}))", false},
 		{"?(*({C, D}))", "?(*({C,D}))", false},
 		{"?(!*({C, D}))", "?(!*({C,D}))", false},
+		{"?10(!*({C, D}))", "?10(!*({C,D}))", false},
 		{"", Query{}.String(), true},
 		{"?(", Query{}.String(), true},
 		{"?({}({}", Query{}.String(), true},
 		{"?{}({})", Query{}.String(), true},
 		{"?({'A, B}({C, D}))", Query{}.String(), true},
+		{"?({'A, 10, B}({C, D}))", Query{}.String(), true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.query, func(t *testing.T) {
