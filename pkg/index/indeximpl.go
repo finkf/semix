@@ -180,7 +180,7 @@ func putAllWithError(t semix.Token, k int, f func(Entry) error) error {
 		End:        t.End,
 		Path:       t.Path,
 		Token:      t.Token,
-		K:          k,
+		L:          k,
 	})
 	if err != nil {
 		return err
@@ -196,7 +196,7 @@ func putAllWithError(t semix.Token, k int, f func(Entry) error) error {
 			Path:        t.Path,
 			Token:       t.Token,
 			RelationURL: edge.P.URL(),
-			K:           k,
+			L:           k,
 		})
 		if err != nil {
 			return err
