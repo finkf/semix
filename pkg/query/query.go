@@ -94,7 +94,7 @@ func (q Query) Execute(idx index.Index) ([]index.Entry, error) {
 func (q Query) ExecuteFunc(idx index.Index, f func(index.Entry)) error {
 	for url := range q.set {
 		err := idx.Get(url, func(e index.Entry) {
-			if q.constraint.match(e) {
+			if e.L <= q.l && q.constraint.match(e) {
 				f(e)
 			}
 		})

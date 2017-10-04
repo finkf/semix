@@ -14,23 +14,28 @@ func TestQueryExecute(t *testing.T) {
 	tests := []struct {
 		query, want string
 		err         bool
+		k           int
 	}{
-		{"?(*({A}))", "[{A R} {A S}]", false},
-		{"?(R,S({A}))", "[{A R} {A S}]", false},
-		{"?(S({A}))", "[{A S}]", false},
-		{"?(!S({A}))", "[{A R}]", false},
-		{"?({A})", "[{A }]", false},
-		{"?(*({A,B}))", "[{A R} {A S} {B R} {B S}]", false},
-		{"?(R,S({A,B}))", "[{A R} {A S} {B R} {B S}]", false},
-		{"?(S({A,B}))", "[{A S} {B S}]", false},
-		{"?(!S({A,B}))", "[{A R} {B R}]", false},
-		{"?({A,B})", "[{A } {B }]", false},
-		{"?(}({A,B}))", "[]", true},
-		{"?({A,B}({C,D}))", "[]", true},
+		{"?(*({A}))", "[{A R} {A S}]", false, 0},
+		{"?(R,S({A}))", "[{A R} {A S}]", false, 0},
+		{"?(S({A}))", "[{A S}]", false, 0},
+		{"?(!S({A}))", "[{A R}]", false, 0},
+		{"?({A})", "[{A }]", false, 0},
+		{"?(*({A,B}))", "[{A R} {A S} {B R} {B S}]", false, 0},
+		{"?(R,S({A,B}))", "[{A R} {A S} {B R} {B S}]", false, 0},
+		{"?0(R,S({A,B}))", "[{A R} {A S} {B R} {B S}]", false, 0},
+		{"?1(R,S({A,B}))", "[]", false, 2},
+		{"?2(R,S({A,B}))", "[{A R} {A S} {B R} {B S}]", false, 2},
+		{"?3(R,S({A,B}))", "[{A R} {A S} {B R} {B S}]", false, 2},
+		{"?(S({A,B}))", "[{A S} {B S}]", false, 0},
+		{"?(!S({A,B}))", "[{A R} {B R}]", false, 0},
+		{"?({A,B})", "[{A } {B }]", false, 0},
+		{"?(}({A,B}))", "[]", true, 0},
+		{"?({A,B}({C,D}))", "[]", true, 0},
 	}
 	for _, tc := range tests {
 		t.Run(tc.query, func(t *testing.T) {
-			es, err := Execute(tc.query, queryTestIndex{})
+			es, err := Execute(tc.query, queryTestIndex{k: tc.k})
 			if tc.err && err == nil {
 				t.Fatalf("expected error")
 			}
@@ -43,7 +48,7 @@ func TestQueryExecute(t *testing.T) {
 			if str := tostring(es); str != tc.want {
 				t.Fatalf("expected %q; got %q", tc.want, str)
 			}
-			_, err = Execute(tc.query, queryTestIndex{errors.New("test")})
+			_, err = Execute(tc.query, queryTestIndex{err: errors.New("test")})
 			if !tc.err {
 				if err.Error() != "test" {
 					t.Fatalf("expceted error")
@@ -101,13 +106,14 @@ func tostring(es []index.Entry) string {
 
 type queryTestIndex struct {
 	err error
+	k   int
 }
 
 func (queryTestIndex) Put(semix.Token) error { return nil }
 func (queryTestIndex) Close() error          { return nil }
 func (i queryTestIndex) Get(url string, f func(e index.Entry)) error {
-	f(index.Entry{ConceptURL: url, RelationURL: ""})
-	f(index.Entry{ConceptURL: url, RelationURL: "R"})
-	f(index.Entry{ConceptURL: url, RelationURL: "S"})
+	f(index.Entry{ConceptURL: url, RelationURL: "", L: i.k})
+	f(index.Entry{ConceptURL: url, RelationURL: "R", L: i.k})
+	f(index.Entry{ConceptURL: url, RelationURL: "S", L: i.k})
 	return i.err
 }
