@@ -79,17 +79,13 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("bad document: %v", err)
 	}
-	stream, cancel := h.makeStream(doc)
+	stream, cancel := h.makeIndexStream(doc)
 	defer cancel()
 	ts := net.Tokens{Tokens: []semix.Token{}} // for json
 	for t := range stream {
 		if t.Err != nil {
 			return nil, http.StatusInternalServerError,
-				fmt.Errorf("bad document: %v", err)
-		}
-		if err := h.i.Put(t.Token); err != nil {
-			return nil, http.StatusInternalServerError,
-				fmt.Errorf("cannot index token %q: %v", t.Token, err)
+				fmt.Errorf("cannot index document: %v", err)
 		}
 		ts.Tokens = append(ts.Tokens, t.Token)
 	}
@@ -133,12 +129,13 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 	return ts, http.StatusOK, nil
 }
 
-func (h handle) makeStream(d semix.Document) (semix.Stream, context.CancelFunc) {
+func (h handle) makeIndexStream(d semix.Document) (semix.Stream, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background())
-	s := semix.Filter(ctx,
-		semix.Match(ctx, semix.DFAMatcher{DFA: h.dfa},
-			semix.Normalize(ctx,
-				semix.Read(ctx, d))))
+	s := index.Stream(ctx, h.i,
+		semix.Filter(ctx,
+			semix.Match(ctx, semix.DFAMatcher{DFA: h.dfa},
+				semix.Normalize(ctx,
+					semix.Read(ctx, d)))))
 	return s, cancel
 }
 
