@@ -15,9 +15,9 @@ func (m FuzzyDFAMatcher) Match(str []byte) MatchPos {
 		set := &matchset{m: make(map[*Concept]fuzzypos)}
 		for m.DFA.Delta(s, func(k, pos int, c *Concept) {
 			// skip garbage matches
-			if c == nil || isGarbage(k, i, pos) {
-				return
-			}
+			// if c == nil || isGarbage(k, i, pos) {
+			// 	return
+			// }
 			pos--
 			isws := str[i+pos] == ' '
 			if savepos == 0 && isws {
@@ -116,8 +116,8 @@ func selectFuzzypos(o, n fuzzypos) fuzzypos {
 // len >= 6 -> max k = 2
 // len >= 9 -> max k = 3
 // ...
-func isGarbage(k, start, end int) bool {
-	len := end - start // we do not care if start < end
-	res := len < 3*k
-	return res
-}
+// func isGarbage(k, start, end int) bool {
+// 	len := end - start // we do not care if start < end
+// 	res := len < 3*k
+// 	return res
+// }
