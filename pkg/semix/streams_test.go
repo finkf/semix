@@ -1,7 +1,6 @@
 package semix
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"strings"
@@ -181,8 +180,8 @@ func (errDoc) Read([]byte) (int, error) { return 0, errors.New("errdoc") }
 
 type testm struct{}
 
-func (testm) Match(str []byte) MatchPos {
-	i := bytes.Index(str, []byte("match"))
+func (testm) Match(str string) MatchPos {
+	i := strings.Index(str, string("match"))
 	if i < 0 {
 		return MatchPos{End: len("match")}
 	}

@@ -14,14 +14,6 @@ import (
 	"bitbucket.org/fflo/semix/pkg/net"
 )
 
-// LookupInfo is some info
-type LookupInfo struct {
-	Query   string
-	Subject string
-	Links   map[string][]string
-	Entries []string
-}
-
 // M is the map of data for the templates.
 type M map[string]interface{}
 

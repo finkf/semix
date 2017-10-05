@@ -3,6 +3,7 @@ package semix
 import (
 	"context"
 	"io/ioutil"
+	"log"
 	"regexp"
 	"sync"
 )
@@ -58,10 +59,8 @@ func Normalize(ctx context.Context, s Stream) Stream {
 					return
 				}
 				if t.Err == nil {
-					t.Token.Token = append([]byte{' '}, t.Token.Token...)
-					t.Token.Token = append(t.Token.Token, ' ')
 					t.Token.Token = normalizeRegexp.
-						ReplaceAllLiteral(t.Token.Token, []byte{' '})
+						ReplaceAllLiteralString(" "+t.Token.Token+" ", " ")
 				}
 				nstream <- t
 			}
@@ -87,8 +86,9 @@ func Match(ctx context.Context, m Matcher, s Stream) Stream {
 				}
 				if t.Err != nil || t.Token.Concept != nil {
 					ms <- t
+				} else {
+					doMatch(ctx, ms, t.Token, m)
 				}
-				doMatch(ctx, ms, t.Token, m)
 			}
 		}
 	}()
@@ -96,8 +96,12 @@ func Match(ctx context.Context, m Matcher, s Stream) Stream {
 }
 
 func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
+	if t.Concept != nil {
+		panic("t.Token.Concept != nil")
+	}
 	rest := t.Token
-	ofs := 0
+	ofs := t.Begin
+	log.Printf("### MATCHING TOKEN %v", t)
 	for len(rest) > 0 {
 		// // check for cancel
 		// select {
@@ -106,6 +110,7 @@ func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
 		// default:
 		// }
 		match := m.Match(rest)
+		log.Printf("match: %v", match)
 		if match.Concept == nil {
 			putMatches(ctx, s, Token{
 				Token:   rest,
@@ -114,7 +119,7 @@ func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
 				End:     ofs + len(rest),
 				Concept: nil,
 			})
-			rest = nil
+			rest = ""
 		} else if match.Begin == 0 {
 			// log.Printf("DO_MATCH: %v", match)
 			putMatches(ctx, s, Token{
@@ -154,6 +159,7 @@ func putMatches(ctx context.Context, out chan StreamToken, ts ...Token) {
 		case <-ctx.Done():
 			return
 		case out <- StreamToken{Token: t}:
+			log.Printf("put token: %v", t)
 		}
 	}
 }
@@ -188,7 +194,7 @@ func readToken(d Document) StreamToken {
 	}
 	return StreamToken{
 		Token: Token{
-			Token: bs,
+			Token: string(bs),
 			Path:  d.Path(),
 			Begin: 0,
 			End:   len(bs) + 2,

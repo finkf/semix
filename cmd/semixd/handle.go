@@ -81,23 +81,13 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 	}
 	stream, cancel := h.makeIndexStream(doc)
 	defer cancel()
-	ts := net.Tokens{Tokens: []semix.Token{}} // for json
+	ts := net.Tokens{Tokens: []net.Token{}} // for json
 	for t := range stream {
 		if t.Err != nil {
 			return nil, http.StatusInternalServerError,
 				fmt.Errorf("cannot index document: %v", err)
 		}
-		ts.Tokens = append(ts.Tokens, t.Token)
-		if t.Token.Concept.Ambiguous() {
-			c := t.Token.Concept
-			str := t.Token.Token
-			for i := 0; i < c.EdgesLen(); i++ {
-				e := c.EdgeAt(i)
-				t.Token.Concept = e.O
-				t.Token.Token = append(str, []byte(fmt.Sprintf(" (L=%d)", e.L))...)
-				ts.Tokens = append(ts.Tokens, t.Token)
-			}
-		}
+		ts.Tokens = append(ts.Tokens, net.NewTokens(t.Token)...)
 	}
 	return ts, http.StatusCreated, nil
 }

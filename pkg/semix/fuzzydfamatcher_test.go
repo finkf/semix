@@ -2,7 +2,6 @@ package semix
 
 import (
 	"fmt"
-	"log"
 	"sort"
 	"testing"
 )
@@ -37,8 +36,8 @@ func TestFuzzyDFAMatcher(t *testing.T) {
 			if k := m.DFA.MaxError(); k != tc.k {
 				t.Errorf("expected k=%d; got %d", tc.k, k)
 			}
-			match := m.Match([]byte(tc.test))
-			log.Printf("match: %v", match)
+			match := m.Match(string(tc.test))
+			// log.Printf("match: %v", match)
 			if str := fuzzyConceptToString(t, match, tc.ambiguous); str != tc.want {
 				t.Errorf("expeceted pos = %q; got %q", tc.want, str)
 			}

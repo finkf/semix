@@ -27,7 +27,7 @@ func (d FuzzyDFA) MaxError() int {
 }
 
 // Initial returns the initial state of this FuzzyDFA.
-func (d FuzzyDFA) Initial(str []byte) *sparsetable.FuzzyStack {
+func (d FuzzyDFA) Initial(str string) *sparsetable.FuzzyStack {
 	return d.dfa.Initial(str)
 }
 

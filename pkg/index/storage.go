@@ -175,8 +175,7 @@ func readBlock(r io.Reader) ([]dse, error) {
 // E is the end position
 // R is the relation id
 type dse struct {
-	S       []byte
-	P       string
+	S, P    string
 	B, E, R int
 }
 

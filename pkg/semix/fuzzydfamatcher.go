@@ -8,16 +8,16 @@ type FuzzyDFAMatcher struct {
 // Match returns the MatchPos of the first encountered entry in the DFA.
 // The MatchPos denotes the first encountered concept in the string or nil
 // nothing could be matched.
-func (m FuzzyDFAMatcher) Match(str []byte) MatchPos {
+func (m FuzzyDFAMatcher) Match(str string) MatchPos {
 	for i := 0; i < len(str); {
 		s := m.DFA.Initial(str[i:])
 		var savepos int
 		set := &matchset{m: make(map[*Concept]fuzzypos)}
 		for m.DFA.Delta(s, func(k, pos int, c *Concept) {
 			// skip garbage matches
-			// if c == nil || isGarbage(k, i, pos) {
-			// 	return
-			// }
+			if c == nil || isGarbage(k, i, pos) {
+				return
+			}
 			pos--
 			isws := str[i+pos] == ' '
 			if savepos == 0 && isws {
@@ -112,12 +112,11 @@ func selectFuzzypos(o, n fuzzypos) fuzzypos {
 	return o
 }
 
-// len >= 3 -> max k = 1
-// len >= 6 -> max k = 2
-// len >= 9 -> max k = 3
-// ...
-// func isGarbage(k, start, end int) bool {
-// 	len := end - start // we do not care if start < end
-// 	res := len < 3*k
-// 	return res
-// }
+func isGarbage(k, start, end int) bool {
+	// res := (end - start) < 6
+	// // log.Printf("garbage: %d = %t", end-start, res)
+	// return res
+	len := end - start - 2 // we do not care if start < end
+	res := len < 3*k
+	return res
+}
