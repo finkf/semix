@@ -1,10 +1,14 @@
 package semix
 
 import (
+	"bytes"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
 // Document defines an interface for readeable documents.
@@ -73,7 +77,15 @@ func (d *HTTPDocument) Read(b []byte) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		d.r = resp.Body
+		if strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
+			htmlReader, err := NewHTMLDocument(d.url, resp.Body)
+			if err != nil {
+				return 0, err
+			}
+			d.r = htmlReader
+		} else {
+			d.r = resp.Body
+		}
 	}
 	return d.r.Read(b)
 }
@@ -115,4 +127,35 @@ func (d *FileDocument) Read(b []byte) (int, error) {
 		d.file = is
 	}
 	return d.file.Read(b)
+}
+
+// NewHTMLDocument returns a new HTML Document reader or
+// an error if the parsing of the HTML failed.
+func NewHTMLDocument(path string, r io.Reader) (Document, error) {
+	z := html.NewTokenizer(r)
+	var str string
+	var tag string
+loop:
+	for {
+		switch z.Next() {
+		case html.ErrorToken:
+			if z.Err() != io.EOF {
+				return nil, z.Err()
+			}
+			break loop
+		case html.StartTagToken:
+			tmp, _ := z.TagName()
+			tag = string(tmp)
+		case html.EndTagToken:
+			tag = ""
+		case html.TextToken:
+			log.Printf("tag: %v", tag)
+			switch string(tag) {
+			case "div", "p", "b", "h1", "h2", "h3", "li", "a", "span", "td", "th":
+				str += " " + string(z.Text())
+			}
+		}
+	}
+	log.Printf("text: %v", str)
+	return NewReaderDocument(path, bytes.NewBufferString(str)), nil
 }
