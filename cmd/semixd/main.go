@@ -62,5 +62,6 @@ func main() {
 	http.HandleFunc("/search", requestFunc(h.search))
 	http.HandleFunc("/put", requestFunc(h.put))
 	http.HandleFunc("/get", requestFunc(h.get))
+	http.HandleFunc("/ctx", requestFunc(h.ctx))
 	log.Fatalf(http.ListenAndServe(":6060", nil).Error())
 }

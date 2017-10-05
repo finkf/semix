@@ -3,7 +3,6 @@ package semix
 import (
 	"context"
 	"io/ioutil"
-	"log"
 	"regexp"
 	"sync"
 )
@@ -101,7 +100,7 @@ func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
 	}
 	rest := t.Token
 	ofs := t.Begin
-	log.Printf("### MATCHING TOKEN %v", t)
+	// log.Printf("### MATCHING TOKEN %v", t)
 	for len(rest) > 0 {
 		// // check for cancel
 		// select {
@@ -110,7 +109,7 @@ func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
 		// default:
 		// }
 		match := m.Match(rest)
-		log.Printf("match: %v", match)
+		// log.Printf("match: %v", match)
 		if match.Concept == nil {
 			putMatches(ctx, s, Token{
 				Token:   rest,
@@ -159,7 +158,7 @@ func putMatches(ctx context.Context, out chan StreamToken, ts ...Token) {
 		case <-ctx.Done():
 			return
 		case out <- StreamToken{Token: t}:
-			log.Printf("put token: %v", t)
+			// log.Printf("put token: %v", t)
 		}
 	}
 }

@@ -132,3 +132,9 @@ func NewTokenFromEntry(g *semix.Graph, e index.Entry) (Token, error) {
 		Concept: c,
 	}, nil
 }
+
+// Context specifies the context of a match
+type Context struct {
+	Before, Match, After, URL string
+	Begin, End, Len           int
+}
