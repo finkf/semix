@@ -88,6 +88,16 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 				fmt.Errorf("cannot index document: %v", err)
 		}
 		ts.Tokens = append(ts.Tokens, t.Token)
+		if t.Token.Concept.Ambiguous() {
+			c := t.Token.Concept
+			str := t.Token.Token
+			for i := 0; i < c.EdgesLen(); i++ {
+				e := c.EdgeAt(i)
+				t.Token.Concept = e.O
+				t.Token.Token = str + fmt.Sprintf(" (L=%d)", e.L)
+				ts.Tokens = append(ts.Tokens, t.Token)
+			}
+		}
 	}
 	return ts, http.StatusCreated, nil
 }
@@ -133,9 +143,10 @@ func (h handle) makeIndexStream(d semix.Document) (semix.Stream, context.CancelF
 	ctx, cancel := context.WithCancel(context.Background())
 	s := index.Put(ctx, h.i,
 		semix.Filter(ctx,
-			semix.Match(ctx, semix.DFAMatcher{DFA: h.dfa},
-				semix.Normalize(ctx,
-					semix.Read(ctx, d)))))
+			semix.Match(ctx, semix.FuzzyDFAMatcher{DFA: semix.NewFuzzyDFA(3, h.dfa)},
+				semix.Match(ctx, semix.DFAMatcher{DFA: h.dfa},
+					semix.Normalize(ctx,
+						semix.Read(ctx, d))))))
 	return s, cancel
 }
 
