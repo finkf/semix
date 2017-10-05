@@ -8,7 +8,7 @@ type FuzzyDFAMatcher struct {
 // Match returns the MatchPos of the first encountered entry in the DFA.
 // The MatchPos denotes the first encountered concept in the string or nil
 // nothing could be matched.
-func (m FuzzyDFAMatcher) Match(str string) MatchPos {
+func (m FuzzyDFAMatcher) Match(str []byte) MatchPos {
 	for i := 0; i < len(str); {
 		s := m.DFA.Initial(str[i:])
 		var savepos int

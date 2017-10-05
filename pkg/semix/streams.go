@@ -58,8 +58,10 @@ func Normalize(ctx context.Context, s Stream) Stream {
 					return
 				}
 				if t.Err == nil {
+					t.Token.Token = append([]byte{' '}, t.Token.Token...)
+					t.Token.Token = append(t.Token.Token, ' ')
 					t.Token.Token = normalizeRegexp.
-						ReplaceAllLiteralString(" "+t.Token.Token+" ", " ")
+						ReplaceAllLiteral(t.Token.Token, []byte{' '})
 				}
 				nstream <- t
 			}
@@ -112,7 +114,7 @@ func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
 				End:     ofs + len(rest),
 				Concept: nil,
 			})
-			rest = ""
+			rest = nil
 		} else if match.Begin == 0 {
 			// log.Printf("DO_MATCH: %v", match)
 			putMatches(ctx, s, Token{
@@ -186,7 +188,7 @@ func readToken(d Document) StreamToken {
 	}
 	return StreamToken{
 		Token: Token{
-			Token: string(bs),
+			Token: bs,
 			Path:  d.Path(),
 			Begin: 0,
 			End:   len(bs) + 2,

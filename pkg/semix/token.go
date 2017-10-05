@@ -7,9 +7,10 @@ import (
 // Token denotes a  token in an input document. It holds the according Concept
 // or nil and its position in the input document.
 type Token struct {
-	Token, Path string
-	Concept     *Concept
-	Begin, End  int
+	Token      []byte
+	Path       string
+	Concept    *Concept
+	Begin, End int
 }
 
 // String returns the string representation of a token.

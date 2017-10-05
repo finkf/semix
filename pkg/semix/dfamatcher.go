@@ -8,7 +8,7 @@ type DFAMatcher struct {
 // Match returns the MatchPos of the first encountered entry in the DFA.
 // The MatchPos denotes the first encountered concept in the string or nil
 // nothing could be matched.
-func (m DFAMatcher) Match(str string) MatchPos {
+func (m DFAMatcher) Match(str []byte) MatchPos {
 	for i := 0; i < len(str); {
 		pos, c, _ := m.matchFromHere(str[i:])
 		// log.Printf("match from here %q:{%d %s}", str[i:], pos, c)
@@ -20,7 +20,7 @@ func (m DFAMatcher) Match(str string) MatchPos {
 	return MatchPos{}
 }
 
-func next(i, pos int, str string) int {
+func next(i, pos int, str []byte) int {
 	if pos > 0 {
 		return i + pos
 	}
@@ -32,7 +32,7 @@ func next(i, pos int, str string) int {
 	return len(str)
 }
 
-func (m DFAMatcher) matchFromHere(str string) (int, *Concept, bool) {
+func (m DFAMatcher) matchFromHere(str []byte) (int, *Concept, bool) {
 	s := m.DFA.Initial()
 	var concept *Concept
 	var pos int

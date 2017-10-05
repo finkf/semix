@@ -16,7 +16,7 @@ type MatchPos struct {
 // Matcher is a simple interface for searching a concept in a string.
 type Matcher interface {
 	// Match returns the MatchPos of the next concept in the given string.
-	Match(string) MatchPos
+	Match([]byte) MatchPos
 }
 
 // RegexMatcher uses a regex to search for a match in a string.
@@ -26,8 +26,8 @@ type RegexMatcher struct {
 }
 
 // Match returns the MatchPos of the first occurence of the regex.
-func (m RegexMatcher) Match(str string) MatchPos {
-	pos := m.Re.FindStringIndex(str)
+func (m RegexMatcher) Match(str []byte) MatchPos {
+	pos := m.Re.FindIndex(str)
 	if pos == nil {
 		return MatchPos{}
 	}

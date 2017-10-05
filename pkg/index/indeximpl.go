@@ -174,12 +174,13 @@ func putAll(t semix.Token, f func(Entry) error) error {
 // connected concepts.
 func putAllWithError(t semix.Token, k int, f func(Entry) error) error {
 	url := t.Concept.URL()
+	str := string(t.Token)
 	err := f(Entry{
 		ConceptURL: url,
 		Begin:      t.Begin,
 		End:        t.End,
 		Path:       t.Path,
-		Token:      t.Token,
+		Token:      str,
 		L:          k,
 	})
 	if err != nil {
@@ -194,7 +195,7 @@ func putAllWithError(t semix.Token, k int, f func(Entry) error) error {
 			Begin:       t.Begin,
 			End:         t.End,
 			Path:        t.Path,
-			Token:       t.Token,
+			Token:       str,
 			RelationURL: edge.P.URL(),
 			L:           k,
 		})

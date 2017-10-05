@@ -35,7 +35,7 @@ func TestDFAMatcher(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
 			m := DFAMatcher{DFA: dfa}
-			if pos := m.Match(tc.test); pos != tc.want {
+			if pos := m.Match([]byte(tc.test)); pos != tc.want {
 				t.Errorf("expeceted pos = %v; got %v", tc.want, pos)
 			}
 		})
