@@ -133,7 +133,7 @@ func (d *FileDocument) Read(b []byte) (int, error) {
 // an error if the parsing of the HTML failed.
 func NewHTMLDocument(path string, r io.Reader) (Document, error) {
 	z := html.NewTokenizer(r)
-	var str string
+	var bs []byte
 	var tag string
 loop:
 	for {
@@ -152,10 +152,11 @@ loop:
 			log.Printf("tag: %v", tag)
 			switch string(tag) {
 			case "div", "p", "b", "h1", "h2", "h3", "li", "a", "span", "td", "th":
-				str += " " + string(z.Text())
+				bs = append(bs, ' ')
+				bs = append(bs, z.Text()...)
 			}
 		}
 	}
-	log.Printf("text: %v", str)
-	return NewReaderDocument(path, bytes.NewBufferString(str)), nil
+	log.Printf("text: %v", bs)
+	return NewReaderDocument(path, bytes.NewBuffer(bs)), nil
 }
