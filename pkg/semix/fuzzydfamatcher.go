@@ -118,5 +118,6 @@ func selectFuzzypos(o, n fuzzypos) fuzzypos {
 // ...
 func isGarbage(k, start, end int) bool {
 	len := end - start // we do not care if start < end
-	return len < 3*k
+	res := len < 3*k
+	return res
 }
