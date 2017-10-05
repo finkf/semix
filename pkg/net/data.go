@@ -87,7 +87,7 @@ func NewTokenFromEntry(g *semix.Graph, e index.Entry) (semix.Token, error) {
 		return semix.Token{}, fmt.Errorf("invalid url %q", e.ConceptURL)
 	}
 	return semix.Token{
-		Token:   e.Token,
+		Token:   []byte(e.Token),
 		Path:    e.Path,
 		Begin:   e.Begin,
 		End:     e.End,
