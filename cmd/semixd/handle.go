@@ -94,7 +94,7 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 			for i := 0; i < c.EdgesLen(); i++ {
 				e := c.EdgeAt(i)
 				t.Token.Concept = e.O
-				t.Token.Token = str + fmt.Sprintf(" (L=%d)", e.L)
+				t.Token.Token = append(str, []byte(fmt.Sprintf(" (L=%d)", e.L))...)
 				ts.Tokens = append(ts.Tokens, t.Token)
 			}
 		}
