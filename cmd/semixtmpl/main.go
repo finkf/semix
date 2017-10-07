@@ -14,14 +14,6 @@ import (
 	"bitbucket.org/fflo/semix/pkg/net"
 )
 
-// LookupInfo is some info
-type LookupInfo struct {
-	Query   string
-	Subject string
-	Links   map[string][]string
-	Entries []string
-}
-
 // M is the map of data for the templates.
 type M map[string]interface{}
 
@@ -39,7 +31,7 @@ var (
 )
 
 func main() {
-	config.Self = "http://localhost:8080"
+	config.Self = "http://localhost:8181"
 	config.Semixd = "http://localhost:6060"
 	infotmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/info.html"))
 	puttmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/put.html"))
@@ -51,7 +43,7 @@ func main() {
 	http.HandleFunc("/put", requestFunc(put))
 	http.HandleFunc("/get", requestFunc(get))
 	log.Printf("starting the server")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8181", nil))
 }
 
 func requestFunc(h func(*http.Request) ([]byte, int, error)) func(http.ResponseWriter, *http.Request) {

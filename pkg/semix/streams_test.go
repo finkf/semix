@@ -155,7 +155,7 @@ func stream2string(cancel context.CancelFunc, s Stream) (string, error) {
 		if t.Err != nil {
 			return "", t.Err
 		}
-		strs = append(strs, t.Token.Token)
+		strs = append(strs, string(t.Token.Token))
 	}
 	return strings.Join(strs, ","), nil
 }
@@ -181,7 +181,7 @@ func (errDoc) Read([]byte) (int, error) { return 0, errors.New("errdoc") }
 type testm struct{}
 
 func (testm) Match(str string) MatchPos {
-	i := strings.Index(str, "match")
+	i := strings.Index(str, string("match"))
 	if i < 0 {
 		return MatchPos{End: len("match")}
 	}

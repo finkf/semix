@@ -8,7 +8,7 @@ import (
 
 // Entry denotes a public available index entry
 type Entry struct {
-	ConceptURL, Path, Token, RelationURL string
+	ConceptURL, Path, RelationURL, Token string
 	Begin, End, L                        int
 }
 

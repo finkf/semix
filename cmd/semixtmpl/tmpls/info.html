@@ -17,10 +17,10 @@
 				<h2>Links</h2>
 				<ul>
 						{{range $p, $o := .Predicates}}
-						<li><a href="http://localhost:8080/info?q={{$p.URL}}">{{$p.String}}</a></li>
+						<li><a href="/info?q={{$p.URL}}">{{$p.String}}</a></li>
 						<ul>
 						{{range $o}}
-						<li><a href="http://localhost:8080/info?q={{.URL}}">{{.String}}</a></li>
+						<li><a href="/info?q={{.URL}}">{{.String}}</a></li>
 						{{end}}
 						</ul>
 						{{end}}

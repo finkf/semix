@@ -81,13 +81,13 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 	}
 	stream, cancel := h.makeIndexStream(doc)
 	defer cancel()
-	ts := net.Tokens{Tokens: []semix.Token{}} // for json
+	ts := net.Tokens{Tokens: []net.Token{}} // for json
 	for t := range stream {
 		if t.Err != nil {
 			return nil, http.StatusInternalServerError,
 				fmt.Errorf("cannot index document: %v", err)
 		}
-		ts.Tokens = append(ts.Tokens, t.Token)
+		ts.Tokens = append(ts.Tokens, net.NewTokens(t.Token)...)
 	}
 	return ts, http.StatusCreated, nil
 }
@@ -133,9 +133,10 @@ func (h handle) makeIndexStream(d semix.Document) (semix.Stream, context.CancelF
 	ctx, cancel := context.WithCancel(context.Background())
 	s := index.Put(ctx, h.i,
 		semix.Filter(ctx,
-			semix.Match(ctx, semix.DFAMatcher{DFA: h.dfa},
-				semix.Normalize(ctx,
-					semix.Read(ctx, d)))))
+			semix.Match(ctx, semix.FuzzyDFAMatcher{DFA: semix.NewFuzzyDFA(3, h.dfa)},
+				semix.Match(ctx, semix.DFAMatcher{DFA: h.dfa},
+					semix.Normalize(ctx,
+						semix.Read(ctx, d))))))
 	return s, cancel
 }
 
