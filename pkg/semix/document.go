@@ -133,7 +133,7 @@ func (d *FileDocument) Read(b []byte) (int, error) {
 func NewHTMLDocument(path string, r io.Reader) (Document, error) {
 	z := html.NewTokenizer(r)
 	var bs []byte
-	var tag string
+	var tags tags
 loop:
 	for {
 		switch z.Next() {
@@ -144,18 +144,34 @@ loop:
 			break loop
 		case html.StartTagToken:
 			tmp, _ := z.TagName()
-			tag = string(tmp)
+			tags.push(string(tmp))
 		case html.EndTagToken:
-			tag = ""
+			tags.pop()
 		case html.TextToken:
-			// log.Printf("tag: %v", tag)
-			switch string(tag) {
-			case "div", "p", "b", "h1", "h2", "h3", "li", "a", "span", "td", "th":
+			switch string(tags.back()) {
+			case "p", "b", "h1", "h2", "h3", "li", "a", "span", "td", "th":
+				txt := z.Text()
 				bs = append(bs, ' ')
-				bs = append(bs, z.Text()...)
+				bs = append(bs, txt...)
 			}
 		}
 	}
-	// log.Printf("text: %v", bs)
 	return NewReaderDocument(path, bytes.NewBuffer(bs)), nil
+}
+
+type tags []string
+
+func (t *tags) push(str string) {
+	*t = append(*t, str)
+}
+func (t *tags) pop() {
+	if len(*t) > 0 {
+		*t = (*t)[0 : len(*t)-1]
+	}
+}
+func (t tags) back() string {
+	if len(t) <= 0 {
+		return ""
+	}
+	return t[len(t)-1]
 }

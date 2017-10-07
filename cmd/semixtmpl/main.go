@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -27,6 +28,7 @@ var (
 	puttmpl   *template.Template
 	indextmpl *template.Template
 	gettmpl   *template.Template
+	ctxtmpl   *template.Template
 	config    Config
 )
 
@@ -37,11 +39,13 @@ func main() {
 	puttmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/put.html"))
 	indextmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/index.html"))
 	gettmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/get.html"))
+	ctxtmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/ctx.html"))
 	http.HandleFunc("/", requestFunc(index))
 	http.HandleFunc("/index", requestFunc(index))
 	http.HandleFunc("/info", requestFunc(info))
 	http.HandleFunc("/put", requestFunc(put))
 	http.HandleFunc("/get", requestFunc(get))
+	http.HandleFunc("/ctx", requestFunc(ctx))
 	log.Printf("starting the server")
 	log.Fatal(http.ListenAndServe(":8181", nil))
 }
@@ -123,6 +127,33 @@ func get(r *http.Request) ([]byte, int, error) {
 	}
 	buffer := new(bytes.Buffer)
 	if err := gettmpl.Execute(buffer, ts); err != nil {
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not write html: %v", err)
+	}
+	log.Printf("served request for %s", r.RequestURI)
+	return buffer.Bytes(), http.StatusOK, nil
+}
+
+func ctx(r *http.Request) ([]byte, int, error) {
+	log.Printf("serving request for %s", r.RequestURI)
+	if r.Method != http.MethodGet {
+		return nil, http.StatusForbidden,
+			fmt.Errorf("invalid request method %s", r.Method)
+	}
+	var ctx net.Context
+	err := semixdGet(
+		fmt.Sprintf("/ctx?url=%s&b=%s&e=%s&n=%s",
+			url.QueryEscape(r.URL.Query().Get("url")),
+			url.QueryEscape(r.URL.Query().Get("b")),
+			url.QueryEscape(r.URL.Query().Get("e")),
+			url.QueryEscape(r.URL.Query().Get("n"))),
+		&ctx)
+	if err != nil {
+		return nil, http.StatusBadRequest,
+			errors.New("invalid query parameters")
+	}
+	buffer := new(bytes.Buffer)
+	if err := ctxtmpl.Execute(buffer, ctx); err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not write html: %v", err)
 	}

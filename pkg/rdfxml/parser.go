@@ -132,10 +132,18 @@ func (p *Parser) Get() (*semix.Graph, map[string]*semix.Concept) {
 		if p.traits.isTransitiveURL(r) {
 			p.relations[r] = calculateTransitiveClosure(ts)
 		}
+		// insert triples into graph and set names of URL's.
 		for t := range p.relations[r] {
 			triple := g.Add(t.s, t.p, t.o)
-			if name, ok := p.names[t.s]; ok {
-				triple.S.Name = name
+			if triple.S.Name == "" {
+				if name, ok := p.names[t.s]; ok {
+					triple.S.Name = name
+				}
+			}
+			if triple.O.Name == "" {
+				if name, ok := p.names[t.o]; ok {
+					triple.O.Name = name
+				}
 			}
 		}
 	}
@@ -188,10 +196,7 @@ func (p *Parser) addLabel(l, url string) error {
 			return err
 		}
 		// log.Printf("adding triple: %v", triple{s: spliturl, p: p.traits.splitURL, o: uurl})
-		if err := p.addTriple(triple{s: spliturl, p: p.traits.splitRelationURL, o: uurl}); err != nil {
-			return err
-		}
-		return nil
+		return p.addTriple(triple{s: spliturl, p: p.traits.splitRelationURL, o: uurl})
 	}
 	p.dictionary[l] = url
 	return nil

@@ -13,13 +13,22 @@
 				<h2>Results</h2>
 				<div id='result-table'>
 						<table>
+								<tr>
+										<th>Match</th>
+										<th>Concept</th>
+										<th>Document</th>
+								</tr>
 								{{range .Data.Tokens}}
 								{{if eq .L 0}}
 								<tr>
 								{{else}}
 								<tr class='grey'>
 								{{end}}
-										<td> {{.Token}} ({{.Begin}},{{.End}},L={{.L}}) </td>
+										<td>
+												<a href="/ctx?url={{.Path}}&b={{.Begin}}&e={{.End}}&n=500">
+														{{.Token}} ({{.Begin}},{{.End}},L={{.L}})
+												</a>
+										</td>
 										<td> <a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a> </td>
 										<td> <a target="_blank" href="{{.Path}}">{{.Path}}</a> </td>
 								</tr>
