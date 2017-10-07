@@ -3,7 +3,6 @@ package semix
 import (
 	"bytes"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -149,17 +148,14 @@ loop:
 		case html.EndTagToken:
 			tags.pop()
 		case html.TextToken:
-			// log.Printf("tag: %v", tag)
 			switch string(tags.back()) {
 			case "p", "b", "h1", "h2", "h3", "li", "a", "span", "td", "th":
 				txt := z.Text()
-				log.Printf("%v = %q", tags.back(), txt)
 				bs = append(bs, ' ')
 				bs = append(bs, txt...)
 			}
 		}
 	}
-	// log.Printf("text: %v", bs)
 	return NewReaderDocument(path, bytes.NewBuffer(bs)), nil
 }
 
