@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html>
-		<head>
-				<title>Semix Get</title>
-				<style> th, td {padding: 5px;} </style>
-		</head>
-		<body>
-				<a href="/">Home</a>
-				<h1>Semix Put</h1>
-				<h2>Results</h2>
-				<div id='result-table'>
-						<table>
-								{{range .Tokens}}
-								<tr>
-										<td> {{.Token}} ({{.Begin}},{{.End}}) </td>
-										<td> <a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a> </td>
-										<td> <a target="_blank" href="{{.Path}}">{{.Path}}</a> </td>
-								</tr>
-								{{end}}
-						</table>
-				</div>
-		</body>
+	<head>
+		<title>Semix Get</title>
+		<style> th, td {padding: 5px;} </style>
+	</head>
+	<body>
+		<a href="/">Home</a>
+		<h1>Semix Put</h1>
+		<h2>Results</h2>
+		<div id='result-table'>
+			<table>
+				{{range .Tokens}}
+				<tr>
+					<td> {{.Token}} ({{.Begin}},{{.End}}) </td>
+					<td> <a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a> </td>
+					<td> <a target="_blank" href="{{.Path}}">{{.Path}}</a> </td>
+				</tr>
+				{{end}}
+			</table>
+		</div>
+	</body>
 </html>

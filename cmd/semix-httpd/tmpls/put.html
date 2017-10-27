@@ -1,53 +1,53 @@
 <!DOCTYPE html>
 <html>
-		<head>
-				<title>Semix Put</title>
-				<style>
-						th, td {padding: 5px;}
-						.grey{background: lightgrey;}
-				</style>
-		</head>
-		<body>
-				<a href="/">Home</a>
-				<h1>Semix Put</h1>
-				<h2>Results</h2>
-				<div id='result-table'>
-						<table>
-								<tr>
-										<th>Match</th>
-										<th>Concept</th>
-										<th>Document</th>
-								</tr>
-								{{range .Data.Tokens}}
-								{{if eq .L 0}}
-								<tr>
-								{{else}}
-								<tr class='grey'>
-								{{end}}
-										<td>
-												<a href="/ctx?url={{.Path}}&b={{.Begin}}&e={{.End}}&n=500">
-														{{.Token}} ({{.Begin}},{{.End}},L={{.L}})
-												</a>
-										</td>
-										<td> <a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a> </td>
-										<td> <a target="_blank" href="{{.Path}}">{{.Path}}</a> </td>
-								</tr>
-								{{end}}
-						</table>
-				</div>
-				<h2>Themes</h2>
-				<div id='counts'>
-						<table>
-								{{range $p, $c := .Data.Counts}}
-								<tr><td>{{$p.String}}</td></tr>
-								{{range $c}}
-								<tr>
-										<td><a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a></td>
-										<td>{{printf "%.2f" .RelativeFrequency}} ({{.N}}/{{.Total}})</td>
-								</tr>
-								{{end}}
-								{{end}}
-						</table>
-				</div>
-		</body>
+	<head>
+		<title>Semix Put</title>
+		<style>
+th, td {padding: 5px;}
+.grey{background: lightgrey;}
+		</style>
+	</head>
+	<body>
+		<a href="/">Home</a>
+		<h1>Semix Put</h1>
+		<h2>Results</h2>
+		<div id='result-table'>
+			<table>
+				<tr>
+					<th>Match</th>
+					<th>Concept</th>
+					<th>Document</th>
+				</tr>
+				{{range .Data.Tokens}}
+				{{if eq .L 0}}
+				<tr>
+					{{else}}
+					<tr class='grey'>
+						{{end}}
+						<td>
+							<a href="/ctx?url={{.Path}}&b={{.Begin}}&e={{.End}}&n=500">
+								{{.Token}} ({{.Begin}},{{.End}},L={{.L}})
+							</a>
+						</td>
+						<td> <a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a> </td>
+						<td> <a target="_blank" href="{{.Path}}">{{.Path}}</a> </td>
+					</tr>
+					{{end}}
+			</table>
+		</div>
+		<h2>Themes</h2>
+		<div id='counts'>
+			<table>
+				{{range $p, $c := .Data.Counts}}
+				<tr><td>{{$p.String}}</td></tr>
+				{{range $c}}
+				<tr>
+					<td><a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a></td>
+					<td>{{printf "%.2f" .RelativeFrequency}} ({{.N}}/{{.Total}})</td>
+				</tr>
+				{{end}}
+				{{end}}
+			</table>
+		</div>
+	</body>
 </html>
