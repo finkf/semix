@@ -8,8 +8,8 @@ import (
 
 // Entry denotes a public available index entry
 type Entry struct {
-	ConceptURL, Path, Token, RelationURL string
-	Begin, End                           int
+	ConceptURL, Path, RelationURL, Token string
+	Begin, End, L                        int
 }
 
 // Putter represents a simple interface to put tokens into an index.
@@ -24,8 +24,8 @@ type Index interface {
 	Close() error
 }
 
-// Stream reads all tokens from a given stream into an index.
-func Stream(ctx context.Context, index Putter, s semix.Stream) semix.Stream {
+// Put reads all tokens from a given stream into an index.
+func Put(ctx context.Context, index Putter, s semix.Stream) semix.Stream {
 	istream := make(chan semix.StreamToken)
 	go func() {
 		defer close(istream)

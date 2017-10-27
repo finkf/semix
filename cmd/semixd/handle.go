@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -63,7 +65,7 @@ func (h handle) search(r *http.Request) (interface{}, int, error) {
 	c, _ := net.Search(h.g, h.d, q[0])
 	entries := net.SearchDictionaryEntries(h.d, c)
 	info := net.ConceptInfo{Concept: c, Entries: entries}
-	log.Printf("handled %s", r.URL.Path)
+	log.Printf("served request for %s", r.RequestURI)
 	return info, http.StatusOK, nil
 }
 
@@ -78,19 +80,17 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("bad document: %v", err)
 	}
-	stream := h.makeStream(doc)
-	ts := net.Tokens{Tokens: []semix.Token{}} // for json
+	stream, cancel := h.makeIndexStream(doc)
+	defer cancel()
+	ts := net.Tokens{Tokens: []net.Token{}} // for json
 	for t := range stream {
 		if t.Err != nil {
 			return nil, http.StatusInternalServerError,
-				fmt.Errorf("bad document: %v", err)
+				fmt.Errorf("cannot index document: %v", err)
 		}
-		if err := h.i.Put(t.Token); err != nil {
-			return nil, http.StatusInternalServerError,
-				fmt.Errorf("cannot index token %q: %v", t.Token, err)
-		}
-		ts.Tokens = append(ts.Tokens, t.Token)
+		ts.Tokens = append(ts.Tokens, net.NewTokens(t.Token)...)
 	}
+	log.Printf("served request for %s", r.RequestURI)
 	return ts, http.StatusCreated, nil
 }
 
@@ -128,14 +128,67 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 		}
 		ts.Tokens = append(ts.Tokens, t)
 	}
+	log.Printf("served request for %s", r.RequestURI)
 	return ts, http.StatusOK, nil
 }
 
-func (h handle) makeStream(d semix.Document) semix.Stream {
-	return semix.Filter(
-		semix.Match(semix.DFAMatcher{DFA: h.dfa},
-			semix.Normalize(
-				semix.Read(d))))
+func (h handle) ctx(r *http.Request) (interface{}, int, error) {
+	log.Printf("serving request for %s", r.RequestURI)
+	if r.Method != http.MethodGet {
+		return nil, http.StatusForbidden,
+			fmt.Errorf("invalid method: %v", r.Method)
+	}
+	url := r.URL.Query().Get("url")
+	b, err1 := strconv.ParseInt(r.URL.Query().Get("b"), 10, 32)
+	e, err2 := strconv.ParseInt(r.URL.Query().Get("e"), 10, 32)
+	n, err3 := strconv.ParseInt(r.URL.Query().Get("n"), 10, 32)
+	if url == "" || err1 != nil || err2 != nil || err3 != nil ||
+		b < 0 || e < 0 || n < 0 || b > e {
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query parameters = %s %v %v",
+				url, []error{err1, err2, err3}, []int64{b, e, n})
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	s := semix.Normalize(ctx, semix.Read(ctx, semix.NewHTTPDocument(url)))
+	t := <-s
+	if t.Err != nil {
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid document %s: %v", url, t.Err)
+	}
+	if int(b) >= len(t.Token.Token) || int(e) >= len(t.Token.Token) {
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query paramters = %d %d", b, e)
+	}
+	cs := b - n
+	if cs < 0 {
+		cs = 0
+	}
+	ce := e + n
+	if int(ce) > len(t.Token.Token) {
+		ce = int64(len(t.Token.Token))
+	}
+	log.Printf("served request for %s", r.RequestURI)
+	return net.Context{
+		URL:    url,
+		Before: t.Token.Token[cs:b],
+		Match:  t.Token.Token[b:e],
+		After:  t.Token.Token[e:ce],
+		Begin:  int(b),
+		End:    int(e),
+		Len:    int(n),
+	}, http.StatusOK, nil
+}
+
+func (h handle) makeIndexStream(d semix.Document) (semix.Stream, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(context.Background())
+	s := index.Put(ctx, h.i,
+		semix.Filter(ctx,
+			// semix.Match(ctx, semix.FuzzyDFAMatcher{DFA: semix.NewFuzzyDFA(3, h.dfa)},
+			semix.Match(ctx, semix.DFAMatcher{DFA: h.dfa},
+				semix.Normalize(ctx,
+					semix.Read(ctx, d))))) // )
+	return s, cancel
 }
 
 func makeDocument(r *http.Request) (semix.Document, error) {

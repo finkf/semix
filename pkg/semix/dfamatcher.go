@@ -38,7 +38,7 @@ func (m DFAMatcher) matchFromHere(str string) (int, *Concept, bool) {
 	var pos int
 	for i := 0; i < len(str); i++ {
 		s = m.DFA.Delta(s, str[i])
-		if s == 0 {
+		if !s.Valid() {
 			break
 		}
 		if c, f := m.DFA.Final(s); f {

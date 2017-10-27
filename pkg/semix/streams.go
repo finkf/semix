@@ -85,8 +85,9 @@ func Match(ctx context.Context, m Matcher, s Stream) Stream {
 				}
 				if t.Err != nil || t.Token.Concept != nil {
 					ms <- t
+				} else {
+					doMatch(ctx, ms, t.Token, m)
 				}
-				doMatch(ctx, ms, t.Token, m)
 			}
 		}
 	}()
@@ -94,8 +95,12 @@ func Match(ctx context.Context, m Matcher, s Stream) Stream {
 }
 
 func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
+	if t.Concept != nil {
+		panic("t.Token.Concept != nil")
+	}
 	rest := t.Token
-	ofs := 0
+	ofs := t.Begin
+	// log.Printf("### MATCHING TOKEN %v", t)
 	for len(rest) > 0 {
 		// // check for cancel
 		// select {
@@ -104,6 +109,7 @@ func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
 		// default:
 		// }
 		match := m.Match(rest)
+		// log.Printf("match: %v", match)
 		if match.Concept == nil {
 			putMatches(ctx, s, Token{
 				Token:   rest,
@@ -152,6 +158,7 @@ func putMatches(ctx context.Context, out chan StreamToken, ts ...Token) {
 		case <-ctx.Done():
 			return
 		case out <- StreamToken{Token: t}:
+			// log.Printf("put token: %v", t)
 		}
 	}
 }

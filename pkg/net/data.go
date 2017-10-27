@@ -26,9 +26,46 @@ func (info ConceptInfo) Predicates() map[*semix.Concept][]*semix.Concept {
 	return m
 }
 
+// Token mimics semix.Token
+type Token struct {
+	Token, Path   string
+	Concept       *semix.Concept
+	Begin, End, L int
+}
+
+// NewTokens converts a semix.Token to an array of tokens.
+// This function returns a slice, because ambiguous Concept tokens
+// are specially resolved.
+func NewTokens(t semix.Token) []Token {
+	ts := []Token{Token{
+		Token:   t.Token,
+		Path:    t.Path,
+		Concept: t.Concept,
+		Begin:   t.Begin,
+		End:     t.End,
+	}}
+	if t.Concept.Ambiguous() {
+		ts[0].L = -1 // set -1 for ambiguous concepts.
+		c := t.Concept
+		n := t.Concept.EdgesLen()
+		for i := 0; i < n; i++ {
+			e := c.EdgeAt(i)
+			ts = append(ts, Token{
+				Token:   t.Token,
+				Path:    t.Path,
+				Concept: e.O,
+				Begin:   t.Begin,
+				End:     t.End,
+				L:       e.L,
+			})
+		}
+	}
+	return ts
+}
+
 // Tokens represents an array of tokens.
 type Tokens struct {
-	Tokens []semix.Token
+	Tokens []Token
 }
 
 // Counts returns a sorted slice of Counts ordered by the according predicates.
@@ -80,17 +117,24 @@ func (c Count) RelativeFrequency() float32 {
 	return float32(c.N) / float32(c.Total)
 }
 
-// NewTokenFromEntry creates a semix.Token from an index.Entry
-func NewTokenFromEntry(g *semix.Graph, e index.Entry) (semix.Token, error) {
+// NewTokenFromEntry creates a Token from an index.Entry
+func NewTokenFromEntry(g *semix.Graph, e index.Entry) (Token, error) {
 	c, ok := g.FindByURL(e.ConceptURL)
 	if !ok {
-		return semix.Token{}, fmt.Errorf("invalid url %q", e.ConceptURL)
+		return Token{}, fmt.Errorf("invalid url %q", e.ConceptURL)
 	}
-	return semix.Token{
+	return Token{
 		Token:   e.Token,
 		Path:    e.Path,
 		Begin:   e.Begin,
 		End:     e.End,
+		L:       e.L,
 		Concept: c,
 	}, nil
+}
+
+// Context specifies the context of a match
+type Context struct {
+	Before, Match, After, URL string
+	Begin, End, Len           int
 }

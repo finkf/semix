@@ -21,18 +21,18 @@ func NewDFA(d map[string]*Concept, graph *Graph) DFA {
 }
 
 // Initial returns the initial state of the DFA.
-func (d DFA) Initial() uint32 {
+func (d DFA) Initial() sparsetable.State {
 	return d.dfa.Initial()
 }
 
 // Delta executes one transition in the DFA.
-func (d DFA) Delta(s uint32, c byte) uint32 {
+func (d DFA) Delta(s sparsetable.State, c byte) sparsetable.State {
 	return d.dfa.Delta(s, c)
 }
 
 // Final return the found Concept and true iff s denotes a final state.
 // Otherwise it returns nil and false.
-func (d DFA) Final(s uint32) (*Concept, bool) {
+func (d DFA) Final(s sparsetable.State) (*Concept, bool) {
 	data, final := d.dfa.Final(s)
 	if !final {
 		return nil, false

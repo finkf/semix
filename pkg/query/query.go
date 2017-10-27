@@ -1,6 +1,7 @@
 package query
 
 import (
+	"fmt"
 	"sort"
 
 	index "bitbucket.org/fflo/semix/pkg/index"
@@ -30,6 +31,7 @@ func ExecuteFunc(query string, idx index.Index, f func(index.Entry)) error {
 type Query struct {
 	constraint constraint
 	set        set
+	l          int
 }
 
 // New create a new query object from a query.
@@ -92,7 +94,7 @@ func (q Query) Execute(idx index.Index) ([]index.Entry, error) {
 func (q Query) ExecuteFunc(idx index.Index, f func(index.Entry)) error {
 	for url := range q.set {
 		err := idx.Get(url, func(e index.Entry) {
-			if q.constraint.match(e) {
+			if e.L <= q.l && q.constraint.match(e) {
 				f(e)
 			}
 		})
@@ -106,10 +108,14 @@ func (q Query) ExecuteFunc(idx index.Index, f func(index.Entry)) error {
 // String returns a string representing the query.
 func (q Query) String() string {
 	c := q.constraint.String()
-	if len(c) == 0 {
-		return "?({" + q.set.String() + "})"
+	pre := "?"
+	if q.l != 0 {
+		pre += fmt.Sprintf("%d", q.l)
 	}
-	return "?(" + c + "({" + q.set.String() + "}))"
+	if len(c) == 0 {
+		return pre + "({" + q.set.String() + "})"
+	}
+	return pre + "(" + c + "({" + q.set.String() + "}))"
 }
 
 type set map[string]bool
