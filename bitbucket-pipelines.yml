@@ -18,5 +18,5 @@ pipelines:
           - go get -v ${REPO}/pkg/{semix,index,query,rdfxml}
           - go get -v ${REPO}/cmd/semix{,-httpd,-restd}
           - go build -v ${REPO}/pkg/{semix,index,query,rdfxml}
-          - go build -v ${REPO}/cmd/{semixd,semixtmpl}
+          - go build -v ${REPO}/cmd/semix{,-httpd,-restd}
           - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml}
