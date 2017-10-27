@@ -3,30 +3,33 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"text/tabwriter"
 )
 
-const (
-	statusOK int = iota
-	statusInvalidCommand
-	statusCommandError
+var (
+	list     bool
+	help     bool
+	commands = map[string][]string{
+		"httpd": {"semix-httpd", "run semix http daemon"},
+		"restd": {"semix-restd", "run semix REST API daemon"},
+	}
 )
 
-var listCommands bool
-var commands = map[string][]string{
-	"httpd":  {"semix-httpd", "run semix http daemon"},
-	"daemon": {"semix-restd", "run semix REST API daemon"},
-}
-
 func init() {
-	flag.BoolVar(&listCommands, "list", false, "list available commands")
+	flag.BoolVar(&list, "list", false, "list available commands")
+	flag.BoolVar(&help, "help", false, "prints this help")
 }
 
 func main() {
 	flag.Parse()
-	if listCommands {
+	if help {
+		flag.Usage()
+		return
+	}
+	if list {
 		printCommands()
 	} else {
 		runCommand(flag.Args())
@@ -35,22 +38,18 @@ func main() {
 
 func runCommand(args []string) {
 	if len(args) == 0 {
-		fmt.Fprintf(os.Stderr, "missing command\n")
-		os.Exit(statusInvalidCommand)
+		log.Fatalf("missing command")
 	}
 	if _, ok := commands[args[0]]; !ok {
-		fmt.Fprintf(os.Stderr, "invalid command\n")
-		os.Exit(statusInvalidCommand)
+		log.Fatalf("invalid command: %s", args[0])
 	}
 	cmd := exec.Command(commands[args[0]][0], args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "error running command: %s\n", commands[args[0]][0])
-		os.Exit(statusCommandError)
+		log.Fatalf("error running command %s: %v", commands[args[0]][0], err)
 	}
-	fmt.Printf("args: %v", args)
 }
 
 func printCommands() {

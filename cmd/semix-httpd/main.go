@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/net"
@@ -30,16 +32,32 @@ var (
 	gettmpl   *template.Template
 	ctxtmpl   *template.Template
 	config    Config
+	tmpldir   string
+	host      string
+	restd     string
+	help      bool
 )
 
+func init() {
+	flag.StringVar(&tmpldir, "tmpldir", "cmd/semix-httpd/tmpls", "set template directory")
+	flag.StringVar(&host, "host", "localhost:8181", "set listen host")
+	flag.StringVar(&restd, "restd", "localhost:6060", "set host of rest service")
+	flag.BoolVar(&help, "help", false, "print this help")
+}
+
 func main() {
-	config.Self = "http://localhost:8181"
-	config.Semixd = "http://localhost:6060"
-	infotmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/info.html"))
-	puttmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/put.html"))
-	indextmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/index.html"))
-	gettmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/get.html"))
-	ctxtmpl = template.Must(template.ParseFiles("cmd/semixtmpl/tmpls/ctx.html"))
+	flag.Parse()
+	if help {
+		flag.Usage()
+		return
+	}
+	config.Self = host
+	config.Semixd = restd
+	infotmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "info.html")))
+	puttmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "put.html")))
+	indextmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "index.html")))
+	gettmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "get.html")))
+	ctxtmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "ctx.html")))
 	http.HandleFunc("/", requestFunc(index))
 	http.HandleFunc("/index", requestFunc(index))
 	http.HandleFunc("/info", requestFunc(info))
@@ -47,7 +65,7 @@ func main() {
 	http.HandleFunc("/get", requestFunc(get))
 	http.HandleFunc("/ctx", requestFunc(ctx))
 	log.Printf("starting the server")
-	log.Fatal(http.ListenAndServe(":8181", nil))
+	log.Fatal(http.ListenAndServe(host, nil))
 }
 
 func requestFunc(h func(*http.Request) ([]byte, int, error)) func(http.ResponseWriter, *http.Request) {
