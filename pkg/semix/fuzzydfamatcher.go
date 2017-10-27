@@ -15,7 +15,7 @@ func (m FuzzyDFAMatcher) Match(str string) MatchPos {
 		set := &matchset{m: make(map[*Concept]fuzzypos)}
 		for m.DFA.Delta(s, func(k, pos int, c *Concept) {
 			// skip garbage matches
-			if c == nil || isGarbage(k, i, pos) {
+			if c == nil || isGarbage(k, i, i+pos) {
 				return
 			}
 			pos--
@@ -25,7 +25,6 @@ func (m FuzzyDFAMatcher) Match(str string) MatchPos {
 			}
 			set.insert(fuzzypos{c: c, l: k, s: i + 1, e: i + pos, isws: isws})
 		}) {
-			// log.Printf("stack: %v", *s)
 		}
 		if len(set.m) > 0 {
 			return set.makeMatchPos()
@@ -69,6 +68,7 @@ func (m *matchset) makeMatchPos() MatchPos {
 	return MatchPos{Begin: left, End: m.longest, Concept: c}
 }
 
+// TODO: this should go somwhere else
 var fuzzyPredicate = NewConcept("http://bitbucket.org/fflo/semix/pkg/semix/fuzzy-predicate")
 
 func (m *matchset) insert(p fuzzypos) {
@@ -114,7 +114,6 @@ func selectFuzzypos(o, n fuzzypos) fuzzypos {
 
 func isGarbage(k, start, end int) bool {
 	// res := (end - start) < 6
-	// // log.Printf("garbage: %d = %t", end-start, res)
 	// return res
 	len := end - start - 2 // we do not care if start < end
 	res := len < 3*k
