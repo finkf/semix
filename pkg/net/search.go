@@ -13,27 +13,34 @@ import (
 // Then it tries a lookup in the dictionary.
 // Then it iterates over all URLs and dictionary entries.
 func Search(g *semix.Graph, d map[string]*semix.Concept, str string) []*semix.Concept {
+	set := make(map[string]bool)
 	var cs []*semix.Concept
+	add := func(c *semix.Concept) {
+		if !set[c.URL()] {
+			cs = append(cs, c)
+			set[c.URL()] = true
+		}
+	}
 	if c, ok := g.FindByURL(str); ok {
-		cs = append(cs, c)
+		add(c)
 	}
 	if c, ok := d[" "+str+" "]; ok {
-		cs = append(cs, c)
+		add(c)
 	}
 	// iterate over concepts.
 	for i := 0; i < g.ConceptsLen(); i++ {
 		c := g.ConceptAt(i)
 		if strings.Contains(c.URL(), str) {
-			cs = append(cs, c)
+			add(c)
 		}
 		if strings.Contains(c.Name, str) {
-			cs = append(cs, c)
+			add(c)
 		}
 	}
 	// iterate over dictionary entries
 	for e, c := range d {
 		if strings.Contains(e, str) {
-			cs = append(cs, c)
+			add(c)
 		}
 		// no need to check the concept, since we did this already.
 	}
