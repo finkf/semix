@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -60,9 +61,33 @@ func (h handle) search(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query: %v", q)
 	}
-	// if c cannot be found; it is nil.
-	// SearchDictionaryEntries handles this case.
-	c, _ := net.Search(h.g, h.d, q[0])
+	cs := net.Search(h.g, h.d, q[0])
+	for _, c := range cs {
+		log.Printf("concept: %s", c.URL())
+	}
+	log.Printf("served request for %s", r.RequestURI)
+	return cs, http.StatusOK, nil
+}
+
+func (h handle) info(r *http.Request) (interface{}, int, error) {
+	log.Printf("serving request for %s", r.RequestURI)
+	if r.Method != http.MethodGet {
+		return nil, http.StatusForbidden,
+			fmt.Errorf("invalid request method: %s", r.Method)
+	}
+	qs := r.URL.Query()["q"]
+	if len(qs) != 1 {
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query: %v", qs)
+	}
+	q, err := url.QueryUnescape(qs[0])
+	if err != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid url: %s", qs[0])
+	}
+	c, found := net.SearchURL(h.d, q)
+	if !found {
+		return nil, http.StatusNotFound, fmt.Errorf("invalid url: %s", q)
+	}
 	entries := net.SearchDictionaryEntries(h.d, c)
 	info := net.ConceptInfo{Concept: c, Entries: entries}
 	log.Printf("served request for %s", r.RequestURI)
@@ -105,11 +130,11 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 			fmt.Errorf("invalid query parameter q=%v", r.URL.Query()["q"])
 	}
 	q, err := query.NewFix(r.URL.Query()["q"][0], func(arg string) (string, error) {
-		c, ok := net.Search(h.g, h.d, arg)
-		if !ok {
+		cs := net.Search(h.g, h.d, arg)
+		if len(cs) == 0 {
 			return "", fmt.Errorf("cannot find %q", arg)
 		}
-		return c.URL(), nil
+		return cs[0].URL(), nil
 	})
 	if err != nil {
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)

@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/net"
+	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
 // M is the map of data for the templates.
@@ -26,16 +27,17 @@ type Config struct {
 }
 
 var (
-	infotmpl  *template.Template
-	puttmpl   *template.Template
-	indextmpl *template.Template
-	gettmpl   *template.Template
-	ctxtmpl   *template.Template
-	config    Config
-	tmpldir   string
-	host      string
-	restd     string
-	help      bool
+	infotmpl   *template.Template
+	puttmpl    *template.Template
+	indextmpl  *template.Template
+	gettmpl    *template.Template
+	ctxtmpl    *template.Template
+	searchtmpl *template.Template
+	config     Config
+	tmpldir    string
+	host       string
+	restd      string
+	help       bool
 )
 
 func init() {
@@ -58,11 +60,13 @@ func main() {
 	indextmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "index.html")))
 	gettmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "get.html")))
 	ctxtmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "ctx.html")))
+	searchtmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "search.html")))
 	http.HandleFunc("/", requestFunc(index))
 	http.HandleFunc("/index", requestFunc(index))
 	http.HandleFunc("/info", requestFunc(info))
 	http.HandleFunc("/put", requestFunc(put))
 	http.HandleFunc("/get", requestFunc(get))
+	http.HandleFunc("/search", requestFunc(search))
 	http.HandleFunc("/ctx", requestFunc(ctx))
 	log.Printf("starting the server")
 	log.Fatal(http.ListenAndServe(host, nil))
@@ -85,6 +89,35 @@ func requestFunc(h func(*http.Request) ([]byte, int, error)) func(http.ResponseW
 	}
 }
 
+func search(r *http.Request) ([]byte, int, error) {
+	log.Printf("serving request for %s", r.RequestURI)
+	if r.Method != "GET" {
+		return nil, http.StatusForbidden,
+			fmt.Errorf("invalid request method: %s", r.Method)
+	}
+	q := r.URL.Query()["q"]
+	if len(q) != 1 {
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query q=%v", q)
+	}
+	var cs []semix.Concept
+	err := semixdGet(fmt.Sprintf("/search?q=%s", url.QueryEscape(q[0])), &cs)
+	if err != nil {
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not talk to semixd: %v", err)
+	}
+	for _, c := range cs {
+		log.Printf("c: %s", c.URL())
+	}
+	buffer := new(bytes.Buffer)
+	if err := searchtmpl.Execute(buffer, struct{ Concepts []semix.Concept }{cs}); err != nil {
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not write html: %v", err)
+	}
+	log.Printf("served request for %s", r.RequestURI)
+	return buffer.Bytes(), http.StatusOK, nil
+}
+
 func info(r *http.Request) ([]byte, int, error) {
 	log.Printf("serving request for %s", r.RequestURI)
 	if r.Method != "GET" {
@@ -97,7 +130,7 @@ func info(r *http.Request) ([]byte, int, error) {
 			fmt.Errorf("invalid query q=%v", q)
 	}
 	var info net.ConceptInfo
-	err := semixdGet(fmt.Sprintf("/search?q=%s", url.QueryEscape(q[0])), &info)
+	err := semixdGet(fmt.Sprintf("/info?q=%s", url.QueryEscape(q[0])), &info)
 	if err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not talk to semixd: %v", err)

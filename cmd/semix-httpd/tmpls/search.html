@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Semix Search</title>
+	</head>
+	<body>
+		<a href="/">Home</a>
+		<h1>Results</h1>
+		<ul>
+		{{range .Concepts}}
+		<li><a href="/info?q={{.URL}}">{{.Name}}</a></li>
+		{{end}}
+		</ul>
+	</body>
+</html>

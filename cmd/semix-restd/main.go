@@ -25,7 +25,8 @@ func init() {
 		"set semix index directory")
 	flag.StringVar(&host, "host", "localhost:6060", "set listen host")
 	flag.StringVar(&rdf, "rdf",
-		filepath.Join(os.Getenv("HOME"), "/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"),
+		filepath.Join(os.Getenv("HOME"),
+			"/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"),
 		"set RDF input file")
 	flag.BoolVar(&help, "help", false, "prints this help")
 }
@@ -36,7 +37,6 @@ func main() {
 		flag.Usage()
 		return
 	}
-
 	index, err := index.New(
 		semixdir,
 		index.WithBufferSize(5),
@@ -69,5 +69,6 @@ func main() {
 	http.HandleFunc("/put", requestFunc(h.put))
 	http.HandleFunc("/get", requestFunc(h.get))
 	http.HandleFunc("/ctx", requestFunc(h.ctx))
+	http.HandleFunc("/info", requestFunc(h.info))
 	log.Fatalf(http.ListenAndServe(host, nil).Error())
 }
