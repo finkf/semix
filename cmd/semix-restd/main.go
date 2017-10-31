@@ -1,38 +1,44 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
-var semixdir string
+var (
+	dir  string
+	host string
+	rdf  string
+	help bool
+)
 
-// check for environment variable SEMIXDIR
 func init() {
-	semixdir = os.Getenv("SEMIXDIR")
-	if semixdir == "" {
-		panic("environment variable SEMIXDIR not set")
-	}
-	info, err := os.Lstat(semixdir)
-	if err != nil {
-		panic(fmt.Sprintf("could not stat %s: %v", semixdir, err))
-	}
-	if !info.IsDir() {
-		panic(fmt.Sprintf("%s: not a directory", semixdir))
-	}
+	flag.StringVar(&dir, "dir",
+		filepath.Join(os.Getenv("HOME"), "semix"),
+		"set semix index directory")
+	flag.StringVar(&host, "host", "localhost:6060", "set listen host")
+	flag.StringVar(&rdf, "rdf",
+		filepath.Join(os.Getenv("HOME"),
+			"/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"),
+		"set RDF input file")
+	flag.BoolVar(&help, "help", false, "prints this help")
 }
 
-var file = os.Getenv("HOME") + "/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"
-
 func main() {
+	flag.Parse()
+	if help {
+		flag.Usage()
+		return
+	}
 	index, err := index.New(
-		semixdir,
+		dir,
 		index.WithBufferSize(5),
 	)
 	if err != nil {
@@ -48,7 +54,7 @@ func main() {
 			"http://www.w3.org/2004/02/skos/core#narrower",
 		),
 	)
-	if err := p.ParseFile(file); err != nil {
+	if err := p.ParseFile(rdf); err != nil {
 		log.Fatal(err)
 	}
 	graph, dictionary := p.Get()
@@ -63,5 +69,6 @@ func main() {
 	http.HandleFunc("/put", requestFunc(h.put))
 	http.HandleFunc("/get", requestFunc(h.get))
 	http.HandleFunc("/ctx", requestFunc(h.ctx))
-	log.Fatalf(http.ListenAndServe(":6060", nil).Error())
+	http.HandleFunc("/info", requestFunc(h.info))
+	log.Fatalf(http.ListenAndServe(host, nil).Error())
 }

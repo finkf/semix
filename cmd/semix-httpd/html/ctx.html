@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Semix Context</title>
+	</head>
+	<body>
+		<a href="/">Home</a>
+		<h1>Context</h1>
+		<p>[...]{{.Before}}[...]</p>
+		<p><a href="{{.URL}}">{{.Match}}</a></p>
+		<p>[...]{{.After}}[...]</p>
+	</body>
+</html>
+<!--
+type Context struct {
+	Before, Match, After, URL string
+	Begin, End, Len           int
+}
+-->

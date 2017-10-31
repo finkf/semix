@@ -6,37 +6,53 @@ import (
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
-// Search searches the concept for a given string.
-// If a concept can be found the function returns the concept and true.
-// If nothing could be found (nil, false) is returned.
+// Search searches the all the concepts for a given string.
+// It returns a slice of all the found concepts.
 //
 // First it tries to find the concept with a simple URL lookup in the Graph.
 // Then it tries a lookup in the dictionary.
-// Then it iterates over all URLs and dictionary entries and returns the first
-// matching Concept.
-func Search(g *semix.Graph, d map[string]*semix.Concept, str string) (*semix.Concept, bool) {
+// Then it iterates over all URLs and dictionary entries.
+func Search(g *semix.Graph, d map[string]*semix.Concept, str string) []*semix.Concept {
+	set := make(map[string]bool)
+	var cs []*semix.Concept
+	add := func(c *semix.Concept) {
+		if !set[c.URL()] {
+			cs = append(cs, c)
+			set[c.URL()] = true
+		}
+	}
 	if c, ok := g.FindByURL(str); ok {
-		return c, true
+		add(c)
 	}
 	if c, ok := d[" "+str+" "]; ok {
-		return c, true
+		add(c)
 	}
 	// iterate over concepts.
 	for i := 0; i < g.ConceptsLen(); i++ {
 		c := g.ConceptAt(i)
 		if strings.Contains(c.URL(), str) {
-			return c, true
+			add(c)
 		}
 		if strings.Contains(c.Name, str) {
-			return c, true
+			add(c)
 		}
 	}
 	// iterate over dictionary entries
 	for e, c := range d {
 		if strings.Contains(e, str) {
-			return c, true
+			add(c)
 		}
 		// no need to check the concept, since we did this already.
+	}
+	return cs
+}
+
+// SearchURL searches for the concept by a given URL.
+func SearchURL(d map[string]*semix.Concept, url string) (*semix.Concept, bool) {
+	for _, c := range d {
+		if c.URL() == url {
+			return c, true
+		}
 	}
 	return nil, false
 }
