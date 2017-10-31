@@ -33,14 +33,14 @@ var (
 	ctxtmpl    *template.Template
 	searchtmpl *template.Template
 	config     Config
-	tmpldir    string
+	dir        string
 	host       string
 	restd      string
 	help       bool
 )
 
 func init() {
-	flag.StringVar(&tmpldir, "tmpldir", "cmd/semix-httpd/tmpls", "set template directory")
+	flag.StringVar(&dir, "dir", "cmd/semix-httpd/tmpls", "set template directory")
 	flag.StringVar(&host, "host", "localhost:8181", "set listen host")
 	flag.StringVar(&restd, "restd", "localhost:6060", "set host of rest service")
 	flag.BoolVar(&help, "help", false, "print this help")
@@ -54,12 +54,12 @@ func main() {
 	}
 	config.Self = host
 	config.Semixd = restd
-	infotmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "info.html")))
-	puttmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "put.html")))
-	indextmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "index.html")))
-	gettmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "get.html")))
-	ctxtmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "ctx.html")))
-	searchtmpl = template.Must(template.ParseFiles(filepath.Join(tmpldir, "search.html")))
+	infotmpl = template.Must(template.ParseFiles(filepath.Join(dir, "info.html")))
+	puttmpl = template.Must(template.ParseFiles(filepath.Join(dir, "put.html")))
+	indextmpl = template.Must(template.ParseFiles(filepath.Join(dir, "index.html")))
+	gettmpl = template.Must(template.ParseFiles(filepath.Join(dir, "get.html")))
+	ctxtmpl = template.Must(template.ParseFiles(filepath.Join(dir, "ctx.html")))
+	searchtmpl = template.Must(template.ParseFiles(filepath.Join(dir, "search.html")))
 	http.HandleFunc("/", withLogging(withGet(handle(home))))
 	http.HandleFunc("/index", withLogging(withGet(handle(home))))
 	http.HandleFunc("/info", withLogging(withGet(handle(info))))

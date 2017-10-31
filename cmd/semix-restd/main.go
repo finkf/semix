@@ -13,14 +13,14 @@ import (
 )
 
 var (
-	semixdir string
-	host     string
-	rdf      string
-	help     bool
+	dir  string
+	host string
+	rdf  string
+	help bool
 )
 
 func init() {
-	flag.StringVar(&semixdir, "semixdir",
+	flag.StringVar(&dir, "dir",
 		filepath.Join(os.Getenv("HOME"), "semix"),
 		"set semix index directory")
 	flag.StringVar(&host, "host", "localhost:6060", "set listen host")
@@ -38,7 +38,7 @@ func main() {
 		return
 	}
 	index, err := index.New(
-		semixdir,
+		dir,
 		index.WithBufferSize(5),
 	)
 	if err != nil {
