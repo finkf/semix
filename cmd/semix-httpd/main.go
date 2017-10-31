@@ -86,7 +86,7 @@ func handle(f func(*http.Request) (*template.Template, interface{}, status)) fun
 		}
 		buffer := new(bytes.Buffer)
 		if err := t.Execute(buffer, x); err != nil {
-			log.Printf("could not execute template: %v", s.err)
+			log.Printf("could not execute template: %v", err)
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -123,7 +123,7 @@ func search(r *http.Request) (*template.Template, interface{}, status) {
 	if err := semixdGet(fmt.Sprintf("/search?q=%s", url.QueryEscape(q)), &cs); err != nil {
 		return nil, nil, internalError(err)
 	}
-	return searchtmpl, cs, ok()
+	return searchtmpl, struct{ Concepts []semix.Concept }{cs}, ok()
 }
 
 func info(r *http.Request) (*template.Template, interface{}, status) {
