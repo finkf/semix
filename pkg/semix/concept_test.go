@@ -16,13 +16,13 @@ func TestJSONMarshalling(t *testing.T) {
 		a         bool
 	}{
 		{url: "A", name: "A-name", id: 42, es: nil, a: false},
-		{url: "A", name: "A-name", id: 42, es: nil, a: true},
+		{url: SplitURL, name: "A-name", id: 42, es: nil, a: true},
 		{url: "A", name: "A-name", id: 38, es: []string{"B", "C"}},
 		{url: "A", name: "A-name", id: 38, es: []string{"B", "C", "B", "D"}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.url, func(t *testing.T) {
-			c := &Concept{url: tc.url, Name: tc.name, id: tc.id, ambiguous: tc.a}
+			c := &Concept{url: tc.url, Name: tc.name, id: tc.id}
 			// add edges
 			for i := 0; i < len(tc.es); i += 2 {
 				p := &Concept{url: tc.es[i], Name: tc.es[i] + "-name", id: rand.Int31()}

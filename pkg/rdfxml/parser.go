@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/semix"
+
 	"github.com/pkg/errors"
 )
 

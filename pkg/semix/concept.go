@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+const (
+	SplitURL = "http://bitbucket.org/fflo/semix/pkg/semix/split-url"
+)
+
 // Edge represents an edge in the concept graph that
 // links on concept to another concept with a predicate and a Levenshtein distance.
 type Edge struct {
@@ -28,7 +32,11 @@ type Concept struct {
 	url, Name string
 	edges     []Edge
 	id        int32
-	ambiguous bool
+}
+
+// NewSplitConcept returns a new ambiuous split concept.
+func NewSplitConcept() *Concept {
+	return &Concept{url: SplitURL}
 }
 
 // NewConcept create a new Concept with the given URL.
@@ -65,7 +73,7 @@ func (c *Concept) URL() string {
 
 // Ambiguous returns if the concept is ambiguous or not.
 func (c *Concept) Ambiguous() bool {
-	return c.ambiguous
+	return c.url == SplitURL
 }
 
 // ShortURL returns a short version of the URL of this concept.
@@ -127,11 +135,10 @@ func (c *Concept) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	*c = Concept{
-		Name:      data.Name,
-		url:       data.URL,
-		id:        int32(data.ID),
-		edges:     make([]Edge, len(data.Edges)),
-		ambiguous: data.Ambiguous,
+		Name:  data.Name,
+		url:   data.URL,
+		id:    int32(data.ID),
+		edges: make([]Edge, len(data.Edges)),
 	}
 	// create unique local concepts that users can
 	// use the *Concepts as valid map entries etc.
@@ -168,11 +175,10 @@ func (c *Concept) MarshalJSON() ([]byte, error) {
 		Edges     []link
 		Ambiguous bool
 	}{
-		URL:       c.url,
-		Name:      c.Name,
-		ID:        int(c.id),
-		Edges:     c.links(),
-		Ambiguous: c.Ambiguous(),
+		URL:   c.url,
+		Name:  c.Name,
+		ID:    int(c.id),
+		Edges: c.links(),
 	}
 	return json.Marshal(data)
 }
