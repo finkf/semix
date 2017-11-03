@@ -91,7 +91,7 @@ func (parser *parser) add(s, p, o string) error {
 	}
 	if parser.traits.IsName(p) {
 		parser.names[o] = s
-		return nil
+		return parser.addLabel(s, o, false)
 	}
 	if parser.traits.IsAmbiguous(p) {
 		return parser.addLabel(s, o, true)
