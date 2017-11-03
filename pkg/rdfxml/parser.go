@@ -135,15 +135,15 @@ func (p *Parser) Get() (*semix.Graph, map[string]*semix.Concept) {
 		}
 		// insert triples into graph and set names of URL's.
 		for t := range p.relations[r] {
-			triple := g.Add(t.s, t.p, t.o)
-			if triple.S.Name == "" {
+			s, _, o := g.Add(t.s, t.p, t.o)
+			if s.Name == "" {
 				if name, ok := p.names[t.s]; ok {
-					triple.S.Name = name
+					s.Name = name
 				}
 			}
-			if triple.O.Name == "" {
+			if o.Name == "" {
 				if name, ok := p.names[t.o]; ok {
-					triple.O.Name = name
+					o.Name = name
 				}
 			}
 		}

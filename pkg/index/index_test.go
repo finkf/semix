@@ -63,10 +63,10 @@ func matcher() semix.Matcher {
 		if len(t) != 3 {
 			panic("invalid triple: " + ts)
 		}
-		triple := g.Add(t[0], t[1], t[2])
-		d[" "+strings.ToLower(t[0])+" "] = triple.S
-		d[" "+strings.ToLower(t[1])+" "] = triple.P
-		d[" "+strings.ToLower(t[2])+" "] = triple.O
+		s, p, o := g.Add(t[0], t[1], t[2])
+		d[" "+strings.ToLower(t[0])+" "] = s
+		d[" "+strings.ToLower(t[1])+" "] = p
+		d[" "+strings.ToLower(t[2])+" "] = o
 	}
 	return semix.DFAMatcher{DFA: semix.NewDFA(d, g)}
 }
