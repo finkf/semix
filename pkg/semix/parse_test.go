@@ -7,16 +7,16 @@ func TestParse(t *testing.T) {
 		"A", "p", "B", // normal
 		"B", "p", "C", // normal
 		"X", "i", "X", // ignore
-		"name", "n", "A", // name
-		"distinct", "d", "A", // distinct label
-		"ambiguous", "a", "A", // ambiguous label
+		"A", "n", "name", // name
+		"A", "d", "distinct", // distinct label
+		"A", "a", "ambiguous", // ambiguous label
 		"AS", "s", "BS", // symmetric
 		"AT", "t", "BT", // transitive
 		"BT", "t", "CT", // transitive
-		"split-name", "d", "A", // split
-		"split-name", "d", "B", // split
-		"second-split-name", "d", "http://example.org/A", // split
-		"second-split-name", "d", "http://example.org/B", // split
+		"A", "d", "split-name", // split
+		"B", "d", "split-name", // split
+		"http://example.org/A", "d", "second-split-name", // split
+		"http://example.org/B", "d", "second-split-name", // split
 	)
 	g, d, err := Parse(parser, testTraits{})
 	if err != nil {
@@ -24,7 +24,7 @@ func TestParse(t *testing.T) {
 	}
 	for _, name := range []string{"name", "distinct", "ambiguous", "split-name", "second-split-name"} {
 		if _, ok := d[name]; !ok {
-			t.Fatalf("could not find %s in dictionary", name)
+			t.Fatalf("could not find %q in dictionary", name)
 		}
 	}
 	for _, url := range []string{

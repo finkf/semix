@@ -92,15 +92,19 @@ func (parser *parser) add(s, p, o string) error {
 		return nil
 	}
 	if parser.traits.IsName(p) {
-		parser.names[o] = s
-		return parser.addLabel(s, o, false)
+		parser.names[s] = o
+		return parser.addLabel(o, s, false)
 	}
 	if parser.traits.IsAmbiguous(p) {
-		return parser.addLabel(s, o, true)
+		return parser.addLabel(o, s, true)
 	}
 	if parser.traits.IsDistinct(p) {
-		return parser.addLabel(s, o, false)
+		return parser.addLabel(o, s, false)
 	}
+	return parser.addTriple(s, p, o)
+}
+
+func (parser *parser) addTriple(s, p, o string) error {
 	triple := spo{s, p, o}
 	if _, ok := parser.predicates[p]; !ok {
 		parser.predicates[p] = make(map[spo]bool)
