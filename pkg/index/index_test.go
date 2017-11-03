@@ -57,16 +57,16 @@ func count(i Index, url string) int {
 
 func matcher() semix.Matcher {
 	g := semix.NewGraph()
-	d := make(map[string]*semix.Concept)
+	d := make(semix.Dictionary)
 	for _, ts := range strings.Split("A,P,B.B,P,C.A,P,C", ".") {
 		t := strings.Split(ts, ",")
 		if len(t) != 3 {
 			panic("invalid triple: " + ts)
 		}
 		s, p, o := g.Add(t[0], t[1], t[2])
-		d[" "+strings.ToLower(t[0])+" "] = s
-		d[" "+strings.ToLower(t[1])+" "] = p
-		d[" "+strings.ToLower(t[2])+" "] = o
+		d[strings.ToLower(t[0])] = s.ID()
+		d[strings.ToLower(t[1])] = p.ID()
+		d[strings.ToLower(t[2])] = o.ID()
 	}
 	return semix.DFAMatcher{DFA: semix.NewDFA(d, g)}
 }
