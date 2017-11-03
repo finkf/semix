@@ -13,21 +13,24 @@ func TestParse(t *testing.T) {
 		"AS", "s", "BS", // symmetric
 		"AT", "t", "BT", // transitive
 		"BT", "t", "CT", // transitive
+		"split-name", "d", "A", // split
+		"split-name", "d", "B", // split
+		"second-split-name", "d", "http://example.org/A", // split
+		"second-split-name", "d", "http://example.org/B", // split
 	)
 	g, d, err := Parse(parser, testTraits{})
 	if err != nil {
 		t.Fatalf("got error: %v", err)
 	}
-	if _, ok := d["name"]; !ok {
-		t.Fatalf("could not find `name` in dictionary")
+	for _, name := range []string{"name", "distinct", "ambiguous", "split-name", "second-split-name"} {
+		if _, ok := d[name]; !ok {
+			t.Fatalf("could not find %s in dictionary", name)
+		}
 	}
-	if _, ok := d["distinct"]; !ok {
-		t.Fatalf("could not find `distinct` in dictionary")
-	}
-	if _, ok := d["ambiguous"]; !ok {
-		t.Fatalf("could not find `ambiguous` in dictionary")
-	}
-	for _, url := range []string{"A", "B", "C", "AS", "BS", "AT", "BT", "CT"} {
+	for _, url := range []string{
+		"A", "B", "C", "AS", "BS", "AT", "BT", "CT", "A+B",
+		"http://example.org/A", "http://example.org/B", "http://example.org/A+B",
+	} {
 		c, ok := g.FindByURL(url)
 		if !ok {
 			t.Fatalf("could not find concept %s", url)

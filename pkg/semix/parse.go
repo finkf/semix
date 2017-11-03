@@ -1,6 +1,8 @@
 package semix
 
-import "strings"
+import (
+	"strings"
+)
 
 // Parser defines a parser that parses (Subject, Predicate, Object) triples.
 type Parser interface {
@@ -126,5 +128,5 @@ func combineURLs(a, b string) string {
 	if ai == -1 || bi == -1 || ai != bi || a[:ai] != b[:bi] {
 		return a + "+" + b
 	}
-	return a + b[bi+1:]
+	return a + "+" + b[bi+1:]
 }
