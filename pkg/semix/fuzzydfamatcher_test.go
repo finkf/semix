@@ -52,12 +52,12 @@ func makeFuzzyDFAMatcher(t *testing.T, k int) FuzzyDFAMatcher {
 	s2, _, _ := graph.Add("match two", "x", "y")
 	s3, _, _ := graph.Add("hot hot", "x", "y")
 	s4, _, _ := graph.Add("hit hit", "x", "y")
-	dictionary := map[string]*Concept{
-		" match ":       s1,
-		" match bbb ":   s1,
-		" mitch match ": s2,
-		" hot hot ":     s3,
-		" hit hit ":     s4,
+	dictionary := map[string]int32{
+		"match":       s1.ID(),
+		"match bbb":   s1.ID(),
+		"mitch match": s2.ID(),
+		"hot hot":     s3.ID(),
+		"hit hit":     s4.ID(),
 	}
 	return FuzzyDFAMatcher{
 		NewFuzzyDFA(k, NewDFA(dictionary, graph)),

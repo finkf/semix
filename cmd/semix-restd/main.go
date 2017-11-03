@@ -10,6 +10,7 @@ import (
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
 	"bitbucket.org/fflo/semix/pkg/semix"
+	"bitbucket.org/fflo/semix/pkg/traits"
 )
 
 var (
@@ -44,20 +45,29 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	is, err := os.Open(rdf)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer is.Close()
 	log.Printf("reading RDF-XML")
-	p := rdfxml.NewParser(
-		rdfxml.WithIgnoreURLs(
+	t := traits.New(
+		traits.WithIgnoreURLs(
 			"http://www.w3.org/2004/02/skos/core#narrower",
 		),
-		rdfxml.WithTransitiveURLs(
+		traits.WithTransitiveURLs(
 			"http://www.w3.org/2004/02/skos/core#broader",
 			"http://www.w3.org/2004/02/skos/core#narrower",
 		),
+		traits.WithNameURLs(
+			"http://www.w3.org/2004/02/skos/core#prefLabel",
+		),
+		traits.WithDistinctURLs(
+			"http://www.w3.org/2004/02/skos/core#altLabel",
+		),
 	)
-	if err := p.ParseFile(rdf); err != nil {
-		log.Fatal(err)
-	}
-	graph, dictionary := p.Get()
+	parser := rdfxml.NewParser(is)
+	graph, dictionary, err := semix.Parse(parser, t)
 	if err != nil {
 		log.Fatal(err)
 	}
