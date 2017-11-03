@@ -21,7 +21,7 @@ import (
 
 type handle struct {
 	g   *semix.Graph
-	d   map[string]*semix.Concept
+	d   semix.Dictionary
 	i   index.Index
 	dfa semix.DFA
 }
@@ -84,7 +84,7 @@ func (h handle) info(r *http.Request) (interface{}, int, error) {
 	if err != nil {
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid url: %s", qs[0])
 	}
-	c, found := net.SearchURL(h.d, q)
+	c, found := h.g.FindByURL(q)
 	if !found {
 		return nil, http.StatusNotFound, fmt.Errorf("invalid url: %s", q)
 	}
