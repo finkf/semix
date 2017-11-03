@@ -34,6 +34,7 @@ func TestParser(t *testing.T) {
 		{"BASE <xyz> . A B C.", "", true},
 		{`"#p:x" http://B <#C>.`, "(#p:x http://B #C)", false},
 		{"p:A B C.", "", true},
+		{"A a B.", "(A http://www.w3.org/1999/02/22-rdf-syntax-ns#type B)", false},
 	}
 
 	for _, tc := range tests {

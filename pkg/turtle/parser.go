@@ -9,6 +9,8 @@ import (
 	"unicode"
 )
 
+const a = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+
 // Parser parses a turtle knowledge base.
 type Parser struct {
 	l lexer
@@ -115,6 +117,9 @@ func (parser *Parser) nextWord() string {
 	t := parser.eat(word)
 	if t.specialSyntax {
 		return t.str
+	}
+	if t.str == "a" {
+		return a
 	}
 	slashpos := strings.Index(t.str, "//")
 	if slashpos > 0 {
