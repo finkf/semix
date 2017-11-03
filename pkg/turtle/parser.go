@@ -13,6 +13,7 @@ import (
 type Parser struct {
 	l lexer
 	p map[string]string
+	b string
 	n *token
 }
 
@@ -44,6 +45,9 @@ func (parser *Parser) parse(f func(string, string, string) error) (bool, error) 
 	switch t := parser.peek(); t.typ {
 	case prefix:
 		parser.parsePrefix()
+		return false, nil
+	case base:
+		parser.parseBase()
 		return false, nil
 	case eof:
 		return true, nil
@@ -88,26 +92,42 @@ loop:
 	return nil
 }
 
+func (parser *Parser) parseBase() {
+	t := parser.eat(base)
+	base := parser.eat(word)
+	if !t.specialSyntax {
+		parser.eat(dot)
+	}
+	parser.b = base.str
+}
+
 func (parser *Parser) parsePrefix() {
-	prefix := parser.nextWord()
+	t := parser.eat(prefix)
+	prefix := parser.eat(word)
 	url := parser.nextWord()
-	parser.eat(dot)
-	parser.p[prefix] = url
+	if !t.specialSyntax {
+		parser.eat(dot)
+	}
+	parser.p[prefix.str] = url
 }
 
 func (parser *Parser) nextWord() string {
 	t := parser.eat(word)
-	if t.quoted {
+	if t.specialSyntax {
+		return t.str
+	}
+	slashpos := strings.Index(t.str, "//")
+	if slashpos > 0 {
 		return t.str
 	}
 	i := strings.Index(t.str, ":")
 	if i < 0 {
-		return t.str
+		return parser.b + t.str
 	}
-	if _, ok := parser.p[t.str[:i]]; !ok {
-		panic(lexerError{fmt.Errorf("invalid prefix: %s", t.str[:i])})
+	if _, ok := parser.p[t.str[:i+1]]; !ok {
+		panic(lexerError{fmt.Errorf("invalid prefix: %q", t.str[:i])})
 	}
-	return parser.p[t.str[:i]] + t.str[i:]
+	return parser.p[t.str[:i+1]] + t.str[i+1:]
 }
 
 func (parser *Parser) peek() *token {
@@ -169,9 +189,13 @@ type lexerError struct {
 }
 
 type token struct {
-	str    string
-	typ    tokenType
-	quoted bool
+	str           string
+	typ           tokenType
+	specialSyntax bool
+}
+
+func (t token) String() string {
+	return t.str
 }
 
 type lexer struct {
@@ -191,10 +215,13 @@ func (l lexer) next() *token {
 	case '"':
 		return l.parseQuotedString()
 	case '.':
+		l.eat('.')
 		return &token{".", dot, false}
 	case ',':
+		l.eat(',')
 		return &token{",", comma, false}
 	case ';':
+		l.eat(';')
 		return &token{";", semicolon, false}
 	case 0:
 		return &token{"EOF", eof, false}
@@ -212,7 +239,7 @@ func (l lexer) parseAnnotation() *token {
 	case "base":
 		return &token{str, base, false}
 	default:
-		panic(lexerError{errors.New("invalid annotation")})
+		panic(lexerError{fmt.Errorf("invalid annotation: @%s", str)})
 	}
 }
 
@@ -224,7 +251,7 @@ func (l lexer) skipComment() {
 func (l lexer) parseURL() *token {
 	l.eat('<')
 	str := l.nextWord('>')
-	return &token{str, word, true}
+	return &token{str, word, false}
 }
 
 func (l lexer) parseQuotedString() *token {
@@ -239,7 +266,14 @@ func (l lexer) parseString() *token {
 	for {
 		switch l.peekChar() {
 		case '@', ',', '.', ';', 0, ' ', '\r', '\n', '\t', '\v', '"', '<':
-			return &token{string(bs), word, false}
+			switch str := string(bs); str {
+			case "PREFIX":
+				return &token{str, prefix, true}
+			case "BASE":
+				return &token{str, base, true}
+			default:
+				return &token{str, word, false}
+			}
 		default:
 			bs = append(bs, l.nextChar())
 		}
@@ -254,18 +288,21 @@ func (l lexer) nextWord(delim byte) string {
 	if err != nil {
 		panic(lexerError{err})
 	}
-	return string(bs)
+	return string(bs[:len(bs)-1])
 }
 
 func (l lexer) eat(b byte) {
 	n := l.nextChar()
 	if n != b {
-		panic(lexerError{errors.New("invalid byte")})
+		panic(lexerError{fmt.Errorf("expected %q; got %q", b, n)})
 	}
 }
 
 func (l lexer) peekChar() byte {
 	b := l.nextChar()
+	if b == 0 {
+		return 0
+	}
 	if err := l.r.UnreadByte(); err != nil {
 		panic(lexerError{err})
 	}
@@ -285,6 +322,6 @@ func (l lexer) nextChar() byte {
 
 func (l lexer) skipWhiteSpace() {
 	for b := l.peekChar(); unicode.IsSpace(rune(b)); b = l.peekChar() {
-		// do nothing
+		l.nextChar()
 	}
 }
