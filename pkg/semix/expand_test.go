@@ -12,6 +12,8 @@ func TestExpansion(t *testing.T) {
 		{"a,b,c", "[a b c]"},
 		{"a{b,c}", "[ab ac]"},
 		{"a{,b}", "[a ab]"},
+		{"a{b,}", "[ab a]"},
+		{"a{b,}c", "[abc ac]"},
 		{"a{b{c,d}}", "[abc abd]"},
 		{"a,{b,c}", "[a b c]"},
 		{`a{b\,\\,c}`, `[ab,\ ac]`},
@@ -20,6 +22,8 @@ func TestExpansion(t *testing.T) {
 		{"a{b{c,d},e}{f,g}", "[abcf abcg abdf abdg aef aeg]"},
 		{`\{a\,b\}`, "[{a,b}]"},
 		{`a{b,c}\`, `[ab ac]`},
+		{`a{b,c}\`, `[ab ac]`},
+		{"Georg {von der ,}Marwitz", "[Georg von der Marwitz Georg Marwitz]"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
