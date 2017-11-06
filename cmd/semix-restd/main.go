@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,6 +41,12 @@ func main() {
 		flag.Usage()
 		return
 	}
+	s := newServer()
+	log.Printf("starting the server")
+	log.Fatal(s.ListenAndServe())
+}
+
+func newServer() *http.Server {
 	index, err := index.New(dir)
 	panicIf(err)
 	config, err := readConfig(confg)
@@ -52,8 +59,7 @@ func main() {
 	panicIf(err)
 	s, err := rest.New(host, parser, config.traits(), index)
 	panicIf(err)
-	log.Printf("starting the server")
-	log.Fatal(s.ListenAndServe())
+	return s
 }
 
 func panicIf(err error) {
