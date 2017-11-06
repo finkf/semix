@@ -8,7 +8,11 @@
 		<h1>Search results</h1>
 		<ul>
 		{{range .Concepts}}
-		<li><a href="/info?q={{.URL}}">{{.Name}}</a></li>
+			{{if len .Name}}
+				<li><a href="/info?q={{.URL}}">{{.Name}}</a></li>
+			{{else}}
+				<li><a href="/info?q={{.URL}}">{{.ShortURL}}</a></li>
+			{{end}}
 		{{end}}
 		</ul>
 	</body>
