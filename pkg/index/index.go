@@ -17,8 +17,8 @@ type Putter interface {
 	Put(semix.Token) error
 }
 
-// Index represents the basic interface to put and get tokens from an index.
-type Index interface {
+// Interface represents the basic interface to put and get tokens from an index.
+type Interface interface {
 	Putter
 	Get(string, func(Entry)) error
 	Close() error

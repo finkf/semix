@@ -21,7 +21,7 @@ import (
 type handle struct {
 	g   *semix.Graph
 	d   semix.Dictionary
-	i   index.Index
+	i   index.Interface
 	dfa semix.DFA
 }
 

@@ -47,7 +47,7 @@ func TestIndex(t *testing.T) {
 	}
 }
 
-func count(i Index, url string) int {
+func count(i Interface, url string) int {
 	var count int
 	i.Get(url, func(e Entry) {
 		count++
