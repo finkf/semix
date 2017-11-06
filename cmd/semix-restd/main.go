@@ -12,7 +12,6 @@ import (
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
-	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/semix"
 	"bitbucket.org/fflo/semix/pkg/traits"
 	"bitbucket.org/fflo/semix/pkg/turtle"
@@ -68,7 +67,7 @@ func server() (*http.Server, error) {
 		return nil, err
 	}
 	g, d, err := semix.Parse(parser, config.traits())
-	return rest.New(host, g, d, index), nil
+	return restd.New(host, g, d, index), nil
 }
 
 type parser struct {
