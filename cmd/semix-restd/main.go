@@ -41,31 +41,34 @@ func main() {
 		flag.Usage()
 		return
 	}
-	s := newServer()
+	s, err := server()
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Printf("starting the server")
 	log.Fatal(s.ListenAndServe())
 }
 
-func newServer() *http.Server {
+func server() (*http.Server, error) {
 	index, err := index.New(dir)
-	panicIf(err)
+	if err != nil {
+		return nil, err
+	}
 	config, err := readConfig(confg)
-	panicIf(err)
-	log.Printf("config: %v", config)
+	if err != nil {
+		return nil, err
+	}
 	is, err := os.Open(config.Parser.File)
-	panicIf(err)
+	if err != nil {
+		return nil, err
+	}
 	defer is.Close()
 	parser, err := newParser(is, config)
-	panicIf(err)
-	s, err := rest.New(host, parser, config.traits(), index)
-	panicIf(err)
-	return s
-}
-
-func panicIf(err error) {
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
+	g, d, err := semix.Parse(parser, config.traits())
+	return rest.New(host, g, d, index), nil
 }
 
 type parser struct {
@@ -99,15 +102,15 @@ func (c config) traits() semix.Traits {
 	)
 }
 
-func readConfig(file string) (config, error) {
+func readConfig(file string) (*config, error) {
 	var c config
 	if _, err := toml.DecodeFile(file, &c); err != nil {
-		return config{}, err
+		return nil, err
 	}
-	return c, nil
+	return &c, nil
 }
 
-func newParser(r io.Reader, c config) (semix.Parser, error) {
+func newParser(r io.Reader, c *config) (semix.Parser, error) {
 	switch strings.ToLower(c.Parser.Type) {
 	case "rdfxml":
 		return rdfxml.NewParser(r), nil

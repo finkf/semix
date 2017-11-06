@@ -25,17 +25,6 @@ type handle struct {
 	dfa semix.DFA
 }
 
-func newHandle(parser semix.Parser, traits semix.Traits, index index.Index) (handle, error) {
-	log.Printf("reading knowledge base")
-	graph, dictionary, err := semix.Parse(parser, traits)
-	if err != nil {
-		return handle{}, err
-	}
-	dfa := semix.NewDFA(dictionary, graph)
-	log.Printf("done reading knowledge base")
-	return handle{dfa: dfa, g: graph, d: dictionary, i: index}, nil
-}
-
 func requestFunc(h func(*http.Request) (interface{}, int, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, status, err := h(r)
