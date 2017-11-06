@@ -90,6 +90,7 @@ func (c config) traits() semix.Traits {
 	return traits.New(
 		traits.WithIgnoreURLs(c.URLs.Ignore...),
 		traits.WithTransitiveURLs(c.URLs.Transitive...),
+		traits.WithSymmetricURLs(c.URLs.Symmetric...),
 		traits.WithNameURLs(c.URLs.Name...),
 		traits.WithAmbiguousURLs(c.URLs.Ambiguous...),
 		traits.WithDistinctURLs(c.URLs.Distinct...),
