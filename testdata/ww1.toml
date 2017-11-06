@@ -1,5 +1,5 @@
 [parser]
-file = "ww1.ttl"
+file = "testdata/ww1.ttl"
 type = "turtle"
 
 [urls]

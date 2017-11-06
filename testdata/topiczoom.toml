@@ -1,5 +1,5 @@
 [parser]
-file = "/home/flo/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"
+file = "testdata/topiczoom.skos.rdf.xml"
 type = "RDFXML"
 
 [urls]
