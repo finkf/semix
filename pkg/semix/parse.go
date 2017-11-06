@@ -1,6 +1,7 @@
 package semix
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -114,15 +115,21 @@ func (parser *parser) addTriple(s, p, o string) error {
 }
 
 func (parser *parser) addLabel(entry, url string, a bool) error {
-	if l, ok := parser.labels[entry]; ok && l.url != url {
-		splitURL := combineURLs(l.url, url)
-		parser.labels[entry] = label{splitURL, false}
-		if err := parser.add(splitURL, SplitURL, url); err != nil {
-			return err
-		}
-		return parser.add(splitURL, SplitURL, l.url)
+	labels, err := ExpandBraces(entry)
+	if err != nil {
+		return fmt.Errorf("could not expand %s: %v", entry, err)
 	}
-	parser.labels[entry] = label{url, a}
+	for _, expanded := range labels {
+		if l, ok := parser.labels[expanded]; ok && l.url != url {
+			splitURL := combineURLs(l.url, url)
+			parser.labels[entry] = label{splitURL, false}
+			if err := parser.add(splitURL, SplitURL, url); err != nil {
+				return err
+			}
+			return parser.add(splitURL, SplitURL, l.url)
+		}
+		parser.labels[entry] = label{url, a}
+	}
 	return nil
 }
 
