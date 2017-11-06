@@ -10,6 +10,8 @@ func TestExpansion(t *testing.T) {
 		test, res string
 		iserr     bool
 	}{
+		{"abc", "[abc]", false},
+		{"ab", "[ab]", false},
 		{"a,b,c", "[a,b,c]", false},
 		{"a{b,c}", "[ab ac]", false},
 		{"a{,b}", "[a ab]", false},
