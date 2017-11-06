@@ -57,16 +57,15 @@ func (g *Graph) ConceptAt(i int) *Concept {
 // Add adds a triple to the graph.
 // It returns a Triple that consits of the according concepts
 // that where created.
-func (g *Graph) Add(s, p, o string) Triple {
+func (g *Graph) Add(s, p, o string) (*Concept, *Concept, *Concept) {
 	if s == "" || p == "" || o == "" {
 		panic("cannot insert empty concept")
 	}
-	var triple Triple
-	triple.S = g.register(s)
-	triple.P = g.register(p)
-	triple.O = g.register(o)
-	triple.S.edges = append(triple.S.edges, Edge{P: triple.P, O: triple.O})
-	return triple
+	sc := g.register(s)
+	pc := g.register(p)
+	oc := g.register(o)
+	sc.edges = append(sc.edges, Edge{P: pc, O: oc})
+	return sc, pc, oc
 }
 
 func (g *Graph) register(url string) *Concept {

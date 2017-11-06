@@ -1,7 +1,6 @@
 package semix
 
 import (
-	"bytes"
 	"log"
 	"sort"
 
@@ -16,7 +15,7 @@ type DFA struct {
 }
 
 // NewDFA constructs a new DFA.
-func NewDFA(d map[string]*Concept, graph *Graph) DFA {
+func NewDFA(d Dictionary, graph *Graph) DFA {
 	return DFA{graph: graph, dfa: newSparseTableDFA(d)}
 }
 
@@ -43,20 +42,21 @@ func (d DFA) Final(s sparsetable.State) (*Concept, bool) {
 	return nil, false
 }
 
-func newSparseTableDFA(d map[string]*Concept) *sparsetable.DFA {
+func newSparseTableDFA(d Dictionary) *sparsetable.DFA {
 	type pair struct {
 		id  int32
 		str string
 	}
 	var pairs []pair
-	for str, c := range d {
-		if c.ID() == 0 {
-			log.Fatalf("concept %s: invalid id=%d for: %q", c.URL(), c.ID(), str)
+	for str, id := range d {
+		if id == 0 {
+			// TODO: errors!
+			log.Fatalf("concept %s: invalid id=%d", str, id)
 		}
-		pairs = append(pairs, pair{id: c.ID(), str: str})
+		pairs = append(pairs, pair{id: id, str: " " + str + " "})
 	}
 	sort.Slice(pairs, func(i, j int) bool {
-		return bytes.Compare([]byte(pairs[i].str), []byte(pairs[j].str)) < 0
+		return pairs[i].str < pairs[j].str
 	})
 	b := sparsetable.NewBuilder()
 	for _, p := range pairs {

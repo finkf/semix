@@ -9,9 +9,9 @@ func makeDFA(t *testing.T) DFA {
 	graph.Add("match two", "x", "y")
 	one, _ := graph.FindByURL("match")
 	two, _ := graph.FindByURL("match two")
-	dictionary := map[string]*Concept{
-		" match ":       one,
-		" mitch match ": two,
+	dictionary := map[string]int32{
+		"match":       one.ID(),
+		"mitch match": two.ID(),
 	}
 	return NewDFA(dictionary, graph)
 }

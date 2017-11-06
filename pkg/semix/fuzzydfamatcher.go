@@ -60,8 +60,7 @@ func (m *matchset) makeMatchPos() MatchPos {
 	if len(ps) == 1 && ps[0].l == 0 { // one direct hit without an error
 		return MatchPos{Begin: left, End: m.longest, Concept: ps[0].c}
 	}
-	c := NewConcept("http://bitbucket.org/fflo/semix/pkg/fuzzy-concept")
-	c.ambiguous = true
+	c := NewSplitConcept()
 	for _, p := range ps {
 		c.edges = append(c.edges, Edge{P: fuzzyPredicate, O: p.c, L: p.l})
 	}
