@@ -11,6 +11,7 @@ func TestTransitiveClosure(t *testing.T) {
 		{
 			map[spo]bool{
 				spo{"a", "p", "b"}: true,
+				spo{"a", "p", "c"}: true,
 				spo{"b", "p", "c"}: true,
 				spo{"c", "p", "d"}: true,
 				spo{"e", "p", "f"}: true,
