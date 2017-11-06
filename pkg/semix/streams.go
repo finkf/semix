@@ -39,7 +39,8 @@ func Filter(ctx context.Context, s Stream) Stream {
 	return fstream
 }
 
-var normalizeRegexp = regexp.MustCompile(`(\s|\pP|\pS)+`)
+// var normalizeRegexp = regexp.MustCompile(`(\s|\pP|\pS)+`)
+var normalizeRegexp = regexp.MustCompile(`[\s\pP\pS\pZ]+`)
 
 // Normalize normalizes the token input.
 // It prepends and appends one ' ' character to the token.
