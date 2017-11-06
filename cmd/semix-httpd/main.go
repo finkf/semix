@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bitbucket.org/fflo/semix/pkg/restd"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -34,14 +35,14 @@ var (
 	config     Config
 	dir        string
 	host       string
-	restd      string
+	restHost   string
 	help       bool
 )
 
 func init() {
 	flag.StringVar(&dir, "dir", "cmd/semix-httpd/html", "set template directory")
 	flag.StringVar(&host, "host", "localhost:8181", "set listen host")
-	flag.StringVar(&restd, "restd", "localhost:6060", "set host of rest service")
+	flag.StringVar(&restHost, "restd", "localhost:6060", "set host of rest service")
 	flag.BoolVar(&help, "help", false, "print this help")
 }
 
@@ -52,7 +53,7 @@ func main() {
 		return
 	}
 	config.Self = host
-	config.Semixd = restd
+	config.Semixd = restHost
 	infotmpl = template.Must(template.ParseFiles(filepath.Join(dir, "info.html")))
 	puttmpl = template.Must(template.ParseFiles(filepath.Join(dir, "put.html")))
 	indextmpl = template.Must(template.ParseFiles(filepath.Join(dir, "index.html")))
