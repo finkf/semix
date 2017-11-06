@@ -64,9 +64,9 @@ func writeError(w http.ResponseWriter, status int, err error) {
 
 func withLogging(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("serving request for %s", r.RequestURI)
+		log.Printf("serving request for [%s] %s", r.Method, r.RequestURI)
 		f(w, r)
-		log.Printf("served request for %s", r.RequestURI)
+		log.Printf("served request for [%s] %s", r.Method, r.RequestURI)
 	}
 }
 
