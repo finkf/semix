@@ -3,7 +3,7 @@ package semix
 // ExpandBraces expands braces in a given string using a bash-like syntax.
 func ExpandBraces(str string) ([]string, error) {
 	e := expander{str: str}
-	return e.parse(), nil
+	return e.parse(0), nil
 }
 
 type expander struct {
@@ -32,32 +32,44 @@ func (e *expander) next() (byte, bool) {
 	return e.str[pos], false
 }
 
-func (e *expander) parse() []string {
+func (e *expander) parse(bcount int) []string {
 	s := []string{""}
 	for c, esc := e.next(); c != 0; c, esc = e.next() {
 		l := len(s) - 1
 		switch {
 		case esc:
-			s[l] += string(c)
+			if bcount > 0 {
+				s[l] += string(c)
+			} else {
+				for i := range s {
+					s[i] += string(c)
+				}
+			}
 		case c == ',':
-			s = append(s, "")
+			if bcount > 0 {
+				s = append(s, "")
+			} else {
+				s[l] += string(c)
+			}
 		case c == '{':
-			ss := e.parse()
+			ss := e.parse(bcount + 1)
 			s = combine(s, ss)
 		case c == '}':
 			return s
 		default:
-			s[l] += string(c)
+			if bcount > 0 {
+				s[l] += string(c)
+			} else {
+				for i := range s {
+					s[i] += string(c)
+				}
+			}
 		}
 	}
 	return s
 }
 
 func combine(a, b []string) []string {
-	if len(a[len(a)-1]) == 0 {
-		a = a[:len(a)-1]
-		return append(a, b...)
-	}
 	var res []string
 	for _, astr := range a {
 		for _, bstr := range b {

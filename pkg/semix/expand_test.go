@@ -9,13 +9,14 @@ func TestExpansion(t *testing.T) {
 	tests := []struct {
 		test, res string
 	}{
-		{"a,b,c", "[a b c]"},
+		{"a,b,c", "[a,b,c]"},
 		{"a{b,c}", "[ab ac]"},
 		{"a{,b}", "[a ab]"},
 		{"a{b,}", "[ab a]"},
 		{"a{b,}c", "[abc ac]"},
+		{"a{,b}c", "[ac abc]"},
 		{"a{b{c,d}}", "[abc abd]"},
-		{"a,{b,c}", "[a b c]"},
+		{"a,{b,c}", "[a,b a,c]"},
 		{`a{b\,\\,c}`, `[ab,\ ac]`},
 		{`a\{b{c,d\}}`, `[a{bc a{bd}]`},
 		{"a{b,c}{d,e}", "[abd abe acd ace]"},
