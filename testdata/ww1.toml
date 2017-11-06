@@ -1,0 +1,15 @@
+[parser]
+file = "ww1.ttl"
+type = "turtle"
+
+[urls]
+ignore = []
+transitive = []
+symmetric = []
+name = [
+	"http://ww1.cis.lmu.de/PrefName",
+]
+distinct = [
+	"http://ww1.cis.lmu.de/AltName",
+]
+ambiguous = []
