@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<title>Semix Put</title>
 		<style>
 th, td {padding: 5px;}
@@ -18,7 +19,7 @@ th, td {padding: 5px;}
 					<th>Concept</th>
 					<th>Document</th>
 				</tr>
-				{{range .Data.Tokens}}
+				{{range .Tokens}}
 				{{if eq .L 0}}
 				<tr>
 					{{else}}
@@ -38,7 +39,7 @@ th, td {padding: 5px;}
 		<h2>Themes</h2>
 		<div id='counts'>
 			<table>
-				{{range $p, $c := .Data.Counts}}
+				{{range $p, $c := .Counts}}
 				<tr><td>{{$p.String}}</td></tr>
 				{{range $c}}
 				<tr>

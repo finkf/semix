@@ -32,7 +32,6 @@ var (
 	gettmpl    *template.Template
 	ctxtmpl    *template.Template
 	searchtmpl *template.Template
-	config     Config
 	dir        string
 	host       string
 	restHost   string
@@ -52,8 +51,6 @@ func main() {
 		flag.Usage()
 		return
 	}
-	config.Self = host
-	config.Semixd = restHost
 	infotmpl = template.Must(template.ParseFiles(filepath.Join(dir, "info.html")))
 	puttmpl = template.Must(template.ParseFiles(filepath.Join(dir, "put.html")))
 	indextmpl = template.Must(template.ParseFiles(filepath.Join(dir, "index.html")))
@@ -136,7 +133,7 @@ func info(r *http.Request) (*template.Template, interface{}, status) {
 }
 
 func home(r *http.Request) (*template.Template, interface{}, status) {
-	return indextmpl, M{"config": config}, ok()
+	return indextmpl, nil, ok()
 }
 
 func get(r *http.Request) (*template.Template, interface{}, status) {
@@ -182,14 +179,7 @@ func putGet(r *http.Request) (*template.Template, interface{}, status) {
 	if err := semixdGet(fmt.Sprintf("/put?url=%s", url.QueryEscape(q)), &info); err != nil {
 		return nil, nil, internalError(err)
 	}
-	data := struct {
-		Config Config
-		Data   restd.Tokens
-	}{
-		Config: config,
-		Data:   info,
-	}
-	return puttmpl, data, ok()
+	return puttmpl, info, ok()
 }
 
 func putPost(r *http.Request) (*template.Template, interface{}, status) {
@@ -201,14 +191,7 @@ func putPost(r *http.Request) (*template.Template, interface{}, status) {
 	if err := semixdPost("/put", ctype, r.Body, &info); err != nil {
 		return nil, nil, internalError(err)
 	}
-	data := struct {
-		Config Config
-		Data   restd.Tokens
-	}{
-		Config: config,
-		Data:   info,
-	}
-	return puttmpl, data, ok()
+	return puttmpl, info, ok()
 }
 
 func semixdPost(path string, ctype string, r io.Reader, data interface{}) error {
