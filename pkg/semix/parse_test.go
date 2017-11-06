@@ -9,6 +9,7 @@ func TestParse(t *testing.T) {
 		"X", "i", "X", // ignore
 		"A", "n", "name", // name
 		"A", "d", "distinct", // distinct label
+		"A", "d", "a{b,c}d", // distinct label
 		"A", "a", "ambiguous", // ambiguous label
 		"AS", "s", "BS", // symmetric
 		"AT", "t", "BT", // transitive
@@ -22,7 +23,8 @@ func TestParse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("got error: %v", err)
 	}
-	for _, name := range []string{"name", "distinct", "ambiguous", "split-name", "second-split-name"} {
+	for _, name := range []string{"name", "distinct", "ambiguous", "abd", "acd",
+		"split-name", "second-split-name"} {
 		if _, ok := d[name]; !ok {
 			t.Fatalf("could not find %q in dictionary", name)
 		}

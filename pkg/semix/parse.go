@@ -93,14 +93,13 @@ func (parser *parser) add(s, p, o string) error {
 		return nil
 	}
 	if parser.traits.IsName(p) {
-		parser.names[s] = o
-		return parser.addLabel(o, s, false)
+		return parser.addLabels(o, s, false, true)
 	}
 	if parser.traits.IsAmbiguous(p) {
-		return parser.addLabel(o, s, true)
+		return parser.addLabels(o, s, true, false)
 	}
 	if parser.traits.IsDistinct(p) {
-		return parser.addLabel(o, s, false)
+		return parser.addLabels(o, s, false, false)
 	}
 	return parser.addTriple(s, p, o)
 }
@@ -114,21 +113,26 @@ func (parser *parser) addTriple(s, p, o string) error {
 	return nil
 }
 
-func (parser *parser) addLabel(entry, url string, a bool) error {
+func (parser *parser) addLabels(entry, url string, ambig, name bool) error {
 	labels, err := ExpandBraces(entry)
 	if err != nil {
-		return fmt.Errorf("could not expand %s: %v", entry, err)
+		return fmt.Errorf("could not expand: %v", err)
 	}
 	for _, expanded := range labels {
+		if name {
+			if _, ok := parser.names[url]; !ok {
+				parser.names[url] = expanded
+			}
+		}
 		if l, ok := parser.labels[expanded]; ok && l.url != url {
 			splitURL := combineURLs(l.url, url)
-			parser.labels[entry] = label{splitURL, false}
+			parser.labels[expanded] = label{splitURL, false}
 			if err := parser.add(splitURL, SplitURL, url); err != nil {
 				return err
 			}
 			return parser.add(splitURL, SplitURL, l.url)
 		}
-		parser.labels[entry] = label{url, a}
+		parser.labels[expanded] = label{url, ambig}
 	}
 	return nil
 }
