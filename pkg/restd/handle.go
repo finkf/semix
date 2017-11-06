@@ -70,6 +70,9 @@ func (h handle) search(r *http.Request) (interface{}, int, error) {
 			fmt.Errorf("invalid query: %v", q)
 	}
 	cs := Search(h.g, h.d, q)
+	for _, c := range cs {
+		log.Printf("c = %v", *c)
+	}
 	return cs, http.StatusOK, nil
 }
 

@@ -30,6 +30,9 @@ func TestExpansion(t *testing.T) {
 		{"Georg {von der ,}Marwitz", "[Georg von der Marwitz Georg Marwitz]", false},
 		{"a{b,}}", "", true},
 		{"a{{b,}", "", true},
+		{"a{b,c},", "[ab, ac,]", false},
+		{"Großbritannien", "[Großbritannien]", false},
+		{"Österreich", "[Österreich]", false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
