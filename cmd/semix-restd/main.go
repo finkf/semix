@@ -3,13 +3,12 @@ package main
 import (
 	"flag"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
-	"bitbucket.org/fflo/semix/pkg/semix"
+	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/traits"
 )
 
@@ -50,7 +49,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer is.Close()
-	log.Printf("reading RDF-XML")
 	t := traits.New(
 		traits.WithIgnoreURLs(
 			"http://www.w3.org/2004/02/skos/core#narrower",
@@ -67,18 +65,10 @@ func main() {
 		),
 	)
 	parser := rdfxml.NewParser(is)
-	graph, dictionary, err := semix.Parse(parser, t)
+	s, err := rest.New(host, parser, t, index)
 	if err != nil {
 		log.Fatal(err)
 	}
-	dfa := semix.NewDFA(dictionary, graph)
-	log.Printf("done reading RDF-XML")
-	log.Printf("starting the server")
-	h := handle{dfa: dfa, g: graph, d: dictionary, i: index}
-	http.HandleFunc("/search", requestFunc(h.search))
-	http.HandleFunc("/put", requestFunc(h.put))
-	http.HandleFunc("/get", requestFunc(h.get))
-	http.HandleFunc("/ctx", requestFunc(h.ctx))
-	http.HandleFunc("/info", requestFunc(h.info))
-	log.Fatalf(http.ListenAndServe(host, nil).Error())
+	log.Printf("starting server")
+	log.Fatal(s.ListenAndServe())
 }

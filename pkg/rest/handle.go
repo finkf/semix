@@ -1,4 +1,4 @@
-package main
+package rest
 
 import (
 	"bytes"
@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"bitbucket.org/fflo/semix/pkg/index"
-	"bitbucket.org/fflo/semix/pkg/net"
 	"bitbucket.org/fflo/semix/pkg/query"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -26,20 +25,27 @@ type handle struct {
 	dfa semix.DFA
 }
 
-func requestFunc(h func(*http.Request) (interface{}, int, error)) func(http.ResponseWriter, *http.Request) {
+func newHandle(parser semix.Parser, traits semix.Traits, index index.Index) (handle, error) {
+	log.Printf("reading knowledge base")
+	graph, dictionary, err := semix.Parse(parser, traits)
+	if err != nil {
+		return handle{}, err
+	}
+	dfa := semix.NewDFA(dictionary, graph)
+	log.Printf("done reading knowledge base")
+	return handle{dfa: dfa, g: graph, d: dictionary, i: index}, nil
+}
+
+func requestFunc(h func(*http.Request) (interface{}, int, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, status, err := h(r)
 		if err != nil {
-			log.Printf("error: %v", err)
-			w.Header()["Content-Type"] = []string{"text/plain; charset=utf-8"}
-			http.Error(w, err.Error(), status)
+			writeError(w, status, err)
 			return
 		}
 		buffer := new(bytes.Buffer)
 		if err := json.NewEncoder(buffer).Encode(data); err != nil {
-			log.Printf("could not encode: %v", err)
-			http.Error(w, fmt.Sprintf("could not encode response: %v", err),
-				http.StatusInternalServerError)
+			writeError(w, http.StatusInternalServerError, fmt.Errorf("could not encode: %v", err))
 			return
 		}
 		w.WriteHeader(status)
@@ -50,27 +56,35 @@ func requestFunc(h func(*http.Request) (interface{}, int, error)) func(http.Resp
 	}
 }
 
+func writeError(w http.ResponseWriter, status int, err error) {
+	log.Printf("error: %v [%d]", err, status)
+	w.Header()["Content-Type"] = []string{"text/plain; charset=utf-8"}
+	http.Error(w, err.Error(), status)
+}
+
+func withLogging(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("serving request for %s", r.RequestURI)
+		f(w, r)
+		log.Printf("served request for %s", r.RequestURI)
+	}
+}
+
 func (h handle) search(r *http.Request) (interface{}, int, error) {
-	log.Printf("serving request for %s", r.RequestURI)
 	if r.Method != http.MethodGet {
 		return nil, http.StatusForbidden,
 			fmt.Errorf("invalid request method: %s", r.Method)
 	}
-	q := r.URL.Query()["q"]
-	if len(q) != 1 {
+	q := r.URL.Query().Get("q")
+	if len(q) == 0 {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query: %v", q)
 	}
-	cs := net.Search(h.g, h.d, q[0])
-	for _, c := range cs {
-		log.Printf("concept: %s", c.URL())
-	}
-	log.Printf("served request for %s", r.RequestURI)
+	cs := Search(h.g, h.d, q)
 	return cs, http.StatusOK, nil
 }
 
 func (h handle) info(r *http.Request) (interface{}, int, error) {
-	log.Printf("serving request for %s", r.RequestURI)
 	if r.Method != http.MethodGet {
 		return nil, http.StatusForbidden,
 			fmt.Errorf("invalid request method: %s", r.Method)
@@ -88,14 +102,12 @@ func (h handle) info(r *http.Request) (interface{}, int, error) {
 	if !found {
 		return nil, http.StatusNotFound, fmt.Errorf("invalid url: %s", q)
 	}
-	entries := net.SearchDictionaryEntries(h.d, c)
-	info := net.ConceptInfo{Concept: c, Entries: entries}
-	log.Printf("served request for %s", r.RequestURI)
+	entries := SearchDictionaryEntries(h.d, c)
+	info := ConceptInfo{Concept: c, Entries: entries}
 	return info, http.StatusOK, nil
 }
 
 func (h handle) put(r *http.Request) (interface{}, int, error) {
-	log.Printf("serving request for %s", r.RequestURI)
 	if r.Method != http.MethodPost && r.Method != http.MethodGet {
 		return nil, http.StatusForbidden,
 			fmt.Errorf("invalid request method: %s", r.Method)
@@ -107,20 +119,18 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 	}
 	stream, cancel := h.makeIndexStream(doc)
 	defer cancel()
-	ts := net.Tokens{Tokens: []net.Token{}} // for json
+	ts := Tokens{Tokens: []Token{}} // for json
 	for t := range stream {
 		if t.Err != nil {
 			return nil, http.StatusInternalServerError,
 				fmt.Errorf("cannot index document: %v", err)
 		}
-		ts.Tokens = append(ts.Tokens, net.NewTokens(t.Token)...)
+		ts.Tokens = append(ts.Tokens, NewTokens(t.Token)...)
 	}
-	log.Printf("served request for %s", r.RequestURI)
 	return ts, http.StatusCreated, nil
 }
 
 func (h handle) get(r *http.Request) (interface{}, int, error) {
-	log.Printf("serving request for %s", r.RequestURI)
 	if r.Method != http.MethodGet {
 		return nil, http.StatusForbidden,
 			fmt.Errorf("invalid method: %s", r.Method)
@@ -130,7 +140,7 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 			fmt.Errorf("invalid query parameter q=%v", r.URL.Query()["q"])
 	}
 	q, err := query.NewFix(r.URL.Query()["q"][0], func(arg string) (string, error) {
-		cs := net.Search(h.g, h.d, arg)
+		cs := Search(h.g, h.d, arg)
 		if len(cs) == 0 {
 			return "", fmt.Errorf("cannot find %q", arg)
 		}
@@ -144,21 +154,19 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not execute query %q: %v", q, err)
 	}
-	var ts net.Tokens
+	var ts Tokens
 	for _, e := range es {
-		t, err := net.NewTokenFromEntry(h.g, e)
+		t, err := NewTokenFromEntry(h.g, e)
 		if err != nil {
 			return nil, http.StatusInternalServerError,
 				fmt.Errorf("cannot convert %v: %v", e, err)
 		}
 		ts.Tokens = append(ts.Tokens, t)
 	}
-	log.Printf("served request for %s", r.RequestURI)
 	return ts, http.StatusOK, nil
 }
 
 func (h handle) ctx(r *http.Request) (interface{}, int, error) {
-	log.Printf("serving request for %s", r.RequestURI)
 	if r.Method != http.MethodGet {
 		return nil, http.StatusForbidden,
 			fmt.Errorf("invalid method: %v", r.Method)
@@ -193,8 +201,7 @@ func (h handle) ctx(r *http.Request) (interface{}, int, error) {
 	if int(ce) > len(t.Token.Token) {
 		ce = int64(len(t.Token.Token))
 	}
-	log.Printf("served request for %s", r.RequestURI)
-	return net.Context{
+	return Context{
 		URL:    url,
 		Before: t.Token.Token[cs:b],
 		Match:  t.Token.Token[b:e],
