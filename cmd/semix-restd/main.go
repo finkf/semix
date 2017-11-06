@@ -12,6 +12,7 @@ import (
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
+	"bitbucket.org/fflo/semix/pkg/restd"
 	"bitbucket.org/fflo/semix/pkg/semix"
 	"bitbucket.org/fflo/semix/pkg/traits"
 	"bitbucket.org/fflo/semix/pkg/turtle"
