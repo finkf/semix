@@ -130,7 +130,7 @@ func combineURLs(a, b string) string {
 	ai := strings.LastIndex(a, "/")
 	bi := strings.LastIndex(b, "/")
 	if ai == -1 || bi == -1 || ai != bi || a[:ai] != b[:bi] {
-		return a + "+" + b
+		return a + "-" + b
 	}
-	return a + "+" + b[bi+1:]
+	return a + "-" + b[bi+1:]
 }

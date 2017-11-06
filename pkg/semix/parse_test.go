@@ -28,8 +28,8 @@ func TestParse(t *testing.T) {
 		}
 	}
 	for _, url := range []string{
-		"A", "B", "C", "AS", "BS", "AT", "BT", "CT", "A+B",
-		"http://example.org/A", "http://example.org/B", "http://example.org/A+B",
+		"A", "B", "C", "AS", "BS", "AT", "BT", "CT", "A-B",
+		"http://example.org/A", "http://example.org/B", "http://example.org/A-B",
 	} {
 		c, ok := g.FindByURL(url)
 		if !ok {
