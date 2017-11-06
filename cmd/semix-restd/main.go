@@ -79,6 +79,7 @@ type urls struct {
 	Name       []string
 	Distinct   []string
 	Ambiguous  []string
+	Inverted   []string
 }
 
 type config struct {
@@ -94,6 +95,7 @@ func (c config) traits() semix.Traits {
 		traits.WithNameURLs(c.URLs.Name...),
 		traits.WithAmbiguousURLs(c.URLs.Ambiguous...),
 		traits.WithDistinctURLs(c.URLs.Distinct...),
+		traits.WithInvertedURLs(c.URLs.Inverted...),
 	)
 }
 

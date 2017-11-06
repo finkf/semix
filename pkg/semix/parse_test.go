@@ -14,6 +14,7 @@ func TestParse(t *testing.T) {
 		"AS", "s", "BS", // symmetric
 		"AT", "t", "BT", // transitive
 		"BT", "t", "CT", // transitive
+		"AV", "v", "BV", // inverted
 		"A", "d", "split-name", // split
 		"B", "d", "split-name", // split
 		"http://example.org/A", "d", "second-split-name", // split
@@ -57,6 +58,8 @@ func TestParse(t *testing.T) {
 	edgesExist(t, bs, "s", "AS")
 	at, _ := g.FindByURL("AT")
 	edgesExist(t, at, "t", "BT", "t", "CT")
+	bv, _ := g.FindByURL("BV")
+	edgesExist(t, bv, "v", "AV")
 }
 
 func edgesExist(t *testing.T, c *Concept, urls ...string) {
@@ -100,3 +103,4 @@ func (testTraits) IsDistinct(p string) bool   { return p == "d" }
 func (testTraits) IsAmbiguous(p string) bool  { return p == "a" }
 func (testTraits) IsSymmetric(p string) bool  { return p == "s" }
 func (testTraits) IsTransitive(p string) bool { return p == "t" }
+func (testTraits) IsInverted(p string) bool   { return p == "v" }

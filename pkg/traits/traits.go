@@ -32,6 +32,15 @@ func WithSymmetricURLs(urls ...string) Option {
 	}
 }
 
+// WithInvertedURLs specifies a list of symmetric predicate URLs.
+func WithInvertedURLs(urls ...string) Option {
+	return func(t traits) {
+		for _, url := range urls {
+			t.v[url] = true
+		}
+	}
+}
+
 // WithNameURLs specifies a list of name predicate URLs.
 func WithNameURLs(urls ...string) Option {
 	return func(t traits) {
@@ -69,6 +78,7 @@ func New(opts ...Option) semix.Traits {
 		n: make(traitSet),
 		d: make(traitSet),
 		a: make(traitSet),
+		v: make(traitSet),
 	}
 	for _, opt := range opts {
 		opt(t)
@@ -79,7 +89,7 @@ func New(opts ...Option) semix.Traits {
 type traitSet map[string]bool
 
 type traits struct {
-	i, t, s, n, d, a traitSet
+	i, t, s, n, d, a, v traitSet
 }
 
 func (t traits) Ignore(url string) bool {
@@ -88,6 +98,10 @@ func (t traits) Ignore(url string) bool {
 
 func (t traits) IsSymmetric(url string) bool {
 	return t.s[url]
+}
+
+func (t traits) IsInverted(url string) bool {
+	return t.v[url]
 }
 
 func (t traits) IsTransitive(url string) bool {

@@ -122,3 +122,27 @@ func TestSymmetricClosure(t *testing.T) {
 		}
 	}
 }
+
+func TestInvert(t *testing.T) {
+	for _, tc := range []struct {
+		test, want map[spo]bool
+	}{
+		{
+			map[spo]bool{
+				spo{"a", "p", "b"}: true,
+				spo{"b", "p", "c"}: true,
+			},
+			map[spo]bool{
+				spo{"b", "p", "a"}: true,
+				spo{"c", "p", "b"}: true,
+			},
+		},
+	} {
+		closure := invert(tc.test)
+		for tr, b := range tc.want {
+			if closure[tr] != b {
+				t.Errorf("expected closure[%v] = %t; got %t", tr, b, closure[tr])
+			}
+		}
+	}
+}

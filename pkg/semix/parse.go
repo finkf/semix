@@ -18,6 +18,7 @@ type Traits interface {
 	IsName(string) bool
 	IsDistinct(string) bool
 	IsAmbiguous(string) bool
+	IsInverted(string) bool
 }
 
 // Dictionary is a dictionary that maps the labels of the concepts
@@ -58,6 +59,9 @@ func newParser(traits Traits) *parser {
 func (parser *parser) parse() (*Graph, Dictionary, error) {
 	g := NewGraph()
 	for p, spos := range parser.predicates {
+		if parser.traits.IsInverted(p) {
+			parser.predicates[p] = invert(spos)
+		}
 		if parser.traits.IsSymmetric(p) {
 			parser.predicates[p] = calculateSymmetricClosure(spos)
 		}

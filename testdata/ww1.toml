@@ -15,3 +15,4 @@ distinct = [
 	"http://ww1.cis.lmu.de/AltName",
 ]
 ambiguous = []
+inverted = []

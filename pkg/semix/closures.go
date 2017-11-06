@@ -49,3 +49,11 @@ func calculateSymmetricClosure(ts map[spo]bool) map[spo]bool {
 	}
 	return closure
 }
+
+func invert(spos map[spo]bool) map[spo]bool {
+	closure := make(map[spo]bool, len(spos))
+	for x := range spos {
+		closure[spo{s: x.o, p: x.p, o: x.s}] = true
+	}
+	return closure
+}
