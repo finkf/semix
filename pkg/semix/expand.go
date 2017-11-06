@@ -1,9 +1,11 @@
 package semix
 
+import "fmt"
+
 // ExpandBraces expands braces in a given string using a bash-like syntax.
 func ExpandBraces(str string) ([]string, error) {
 	e := expander{str: str}
-	return e.parse(0), nil
+	return e.parse(0)
 }
 
 type expander struct {
@@ -32,7 +34,7 @@ func (e *expander) next() (byte, bool) {
 	return e.str[pos], false
 }
 
-func (e *expander) parse(bcount int) []string {
+func (e *expander) parse(bcount int) ([]string, error) {
 	s := []string{""}
 	for c, esc := e.next(); c != 0; c, esc = e.next() {
 		l := len(s) - 1
@@ -52,10 +54,16 @@ func (e *expander) parse(bcount int) []string {
 				s[l] += string(c)
 			}
 		case c == '{':
-			ss := e.parse(bcount + 1)
+			ss, err := e.parse(bcount + 1)
+			if err != nil {
+				return nil, err
+			}
 			s = combine(s, ss)
 		case c == '}':
-			return s
+			if bcount <= 0 {
+				return nil, fmt.Errorf("invalid expansion: %s: unbalanced bracets", e.str)
+			}
+			return s, nil
 		default:
 			if bcount > 0 {
 				s[l] += string(c)
@@ -66,7 +74,10 @@ func (e *expander) parse(bcount int) []string {
 			}
 		}
 	}
-	return s
+	if bcount > 0 {
+		return nil, fmt.Errorf("invalid expansion: %s: unbalanced bracets", e.str)
+	}
+	return s, nil
 }
 
 func combine(a, b []string) []string {
