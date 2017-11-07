@@ -84,15 +84,19 @@ func (ts Tokens) Counts() map[*semix.Concept][]Count {
 		n++
 		preds := make(map[*semix.Concept]bool)
 		t.Concept.EachEdge(func(edge semix.Edge) {
-			if m[register(edge.P)] == nil {
-				m[register(edge.P)] = make(map[*semix.Concept]int)
+			p := register(edge.P)
+			o := register(edge.O)
+			if m[p] == nil {
+				m[p] = make(map[*semix.Concept]int)
 			}
-			m[register(edge.P)][register(edge.O)]++
-			preds[register(edge.P)] = true
+			m[p][o]++
+			preds[p] = true
 		})
-		for p := range preds {
-			m[p][register(t.Concept)]++
-		}
+		/*
+			for p := range preds {
+				m[p][register(t.Concept)]++
+			}
+		*/
 	}
 	counts := make(map[*semix.Concept][]Count, len(m))
 	for p := range m {
