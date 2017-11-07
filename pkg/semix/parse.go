@@ -2,7 +2,7 @@ package semix
 
 import (
 	"fmt"
-	"strings"
+	"sort"
 )
 
 // Parser defines a parser that parses (Subject, Predicate, Object) triples.
@@ -129,23 +129,36 @@ func (parser *parser) addLabels(entry, url string, ambig, name bool) error {
 			}
 		}
 		if l, ok := parser.labels[expanded]; ok && l.url != url {
-			splitURL := combineURLs(l.url, url)
-			parser.labels[expanded] = label{splitURL, false}
-			if err := parser.add(splitURL, SplitURL, url); err != nil {
-				return err
-			}
-			return parser.add(splitURL, SplitURL, l.url)
+			return parser.addSplit(expanded, l.url, url)
 		}
 		parser.labels[expanded] = label{url, ambig}
 	}
 	return nil
 }
 
-func combineURLs(a, b string) string {
-	ai := strings.LastIndex(a, "/")
-	bi := strings.LastIndex(b, "/")
-	if ai == -1 || bi == -1 || ai != bi || a[:ai] != b[:bi] {
-		return a + "-" + b
+func (parser *parser) addSplit(entry, aurl, burl string) error {
+	splits := []string{burl}
+	var founds []spo
+	for t := range parser.predicates[SplitURL] {
+		if t.s == aurl {
+			founds = append(founds, t)
+			splits = append(splits, t.o)
+		}
 	}
-	return a + "-" + b[bi+1:]
+	if len(founds) == 0 {
+		splits = append(splits, aurl)
+	}
+	for _, t := range founds {
+		delete(parser.predicates[SplitURL], t)
+	}
+	// sort for stability
+	sort.Strings(splits)
+	splitURL := CombineURLs(splits...)
+	parser.labels[entry] = label{splitURL, false}
+	for _, url := range splits {
+		if err := parser.add(splitURL, SplitURL, url); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -1,6 +1,8 @@
 package semix
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestParse(t *testing.T) {
 	parser := newTestParser(
@@ -19,6 +21,7 @@ func TestParse(t *testing.T) {
 		"B", "d", "split-name", // split
 		"http://example.org/A", "d", "second-split-name", // split
 		"http://example.org/B", "d", "second-split-name", // split
+		"http://example.org/C", "d", "second-split-name", // split
 	)
 	g, d, err := Parse(parser, testTraits{})
 	if err != nil {
@@ -30,9 +33,9 @@ func TestParse(t *testing.T) {
 			t.Fatalf("could not find %q in dictionary", name)
 		}
 	}
-	for _, url := range []string{
-		"A", "B", "C", "AS", "BS", "AT", "BT", "CT", "A-B",
-		"http://example.org/A", "http://example.org/B", "http://example.org/A-B",
+	// test `normal` concepts
+	for _, url := range []string{"A", "B", "C", "AS", "BS", "AT", "BT", "CT",
+		"http://example.org/A", "http://example.org/B", "http://example.org/C",
 	} {
 		c, ok := g.FindByURL(url)
 		if !ok {
@@ -40,6 +43,22 @@ func TestParse(t *testing.T) {
 		}
 		if tmp := c.URL(); tmp != url {
 			t.Fatalf("expected url=%s; got %s", url, tmp)
+		}
+		if tmp := c.Ambiguous(); tmp != false {
+			t.Fatalf("expected ambiguous = false; got %t", tmp)
+		}
+	}
+	// test `ambiguous` concepts
+	for _, url := range []string{"A-B", "http://example.org/A-B-C"} {
+		c, ok := g.FindByURL(url)
+		if !ok {
+			t.Fatalf("could not find concept %s", url)
+		}
+		if tmp := c.URL(); tmp != url {
+			t.Fatalf("expected url=%s; got %s", url, tmp)
+		}
+		if tmp := c.Ambiguous(); tmp != true {
+			t.Fatalf("expected ambiguous = true; got %t", tmp)
 		}
 	}
 	for _, url := range []string{"X", "Y", "Z"} {
