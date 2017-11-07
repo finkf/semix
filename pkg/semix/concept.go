@@ -32,6 +32,11 @@ type Concept struct {
 	id        int32
 }
 
+// Edges returns the edges of a concept.
+func (c Concept) Edges() []Edge {
+	return c.edges
+}
+
 // CombineURLs combines tow or more URLs.
 // If urls is empty, the empty string is returned.
 // If urls contain exactly on url, this url is returned.
