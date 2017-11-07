@@ -1,8 +1,6 @@
 package index
 
 import (
-	"context"
-
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -18,59 +16,45 @@ func New(dir string, size int) (Interface, error) {
 	if err != nil {
 		return nil, err
 	}
-	i := &index{
+	return &index{
 		storage: storage,
-		n:       size,
 		buffer:  make(map[string][]Entry),
-		put:     make(chan putRequest),
-		get:     make(chan getRequest),
-	}
-	go i.run()
-	return i, nil
-}
-
-type putRequest struct {
-	token semix.Token
-	err   chan<- error
-}
-
-type getRequest struct {
-	url string
-	f   func(Entry)
-	err chan<- error
+		n:       size,
+	}, nil
 }
 
 type index struct {
 	storage Storage
 	buffer  map[string][]Entry
-	cancel  context.CancelFunc
-	put     chan putRequest
-	get     chan getRequest
-	dir     string
 	n       int
 }
 
 // Put puts a token in the index.
 func (i *index) Put(t semix.Token) error {
-	err := make(chan error)
-	i.put <- putRequest{token: t, err: err}
-	return <-err
+	return putAll(t, func(e Entry) error {
+		url := e.ConceptURL
+		i.buffer[url] = append(i.buffer[url], e)
+		if len(i.buffer[url]) == i.n {
+			if err := i.storage.Put(url, i.buffer[url]); err != nil {
+				return err
+			}
+			i.buffer[url] = make([]Entry, 0, i.n)
+		}
+		return nil
+	})
 }
 
 // Get queries the index for a concept and calls the callback function
 // for each entry in the index.
 func (i *index) Get(url string, f func(Entry)) error {
-	err := make(chan error)
-	i.get <- getRequest{url: url, f: f, err: err}
-	return <-err
+	for _, e := range i.buffer[url] {
+		f(e)
+	}
+	return i.storage.Get(url, f)
 }
 
 // Close closes the index and writes all buffered entries to disc.
 func (i *index) Close() error {
-	i.cancel()
-	close(i.put)
-	close(i.get)
-	defer i.storage.Close()
 	for url, es := range i.buffer {
 		if len(es) == 0 {
 			continue
@@ -80,44 +64,6 @@ func (i *index) Close() error {
 		}
 	}
 	return nil
-}
-
-func (i *index) run() {
-	for {
-		select {
-		case r, ok := <-i.get:
-			if !ok {
-				return
-			}
-			r.err <- i.getEntries(r.url, r.f)
-		case r, ok := <-i.put:
-			if !ok {
-				return
-			}
-			r.err <- i.putToken(r.token)
-		}
-	}
-}
-
-func (i *index) putToken(t semix.Token) error {
-	return putAll(t, func(e Entry) error {
-		url := e.ConceptURL
-		i.buffer[url] = append(i.buffer[url], e)
-		if len(i.buffer[url]) == i.n {
-			if err := i.storage.Put(url, i.buffer[url]); err != nil {
-				return err
-			}
-			i.buffer[url] = nil
-		}
-		return nil
-	})
-}
-
-func (i *index) getEntries(url string, f func(Entry)) error {
-	for _, e := range i.buffer[url] {
-		f(e)
-	}
-	return i.storage.Get(url, f)
 }
 
 // NewMemoryMap create a new in memory index, that uses
