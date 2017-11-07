@@ -7,6 +7,8 @@ import (
 )
 
 const (
+	// SplitURL is the name of predicates that denote ambiguous connections
+	// in the concept graph.
 	SplitURL = "http://bitbucket.org/fflo/semix/pkg/semix/split-url"
 )
 
