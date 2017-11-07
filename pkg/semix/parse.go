@@ -44,6 +44,7 @@ type parser struct {
 	predicates map[string]map[spo]bool
 	names      map[string]string
 	labels     map[string]label
+	splits     map[string][]string
 	traits     Traits
 }
 
@@ -52,11 +53,18 @@ func newParser(traits Traits) *parser {
 		predicates: make(map[string]map[spo]bool),
 		names:      make(map[string]string),
 		labels:     make(map[string]label),
+		splits:     make(map[string][]string),
 		traits:     traits,
 	}
 }
 
 func (parser *parser) parse() (*Graph, Dictionary, error) {
+	g := parser.buildGraph()
+	d := parser.buildDictionary(g)
+	return g, d, nil
+}
+
+func (parser *parser) buildGraph() *Graph {
 	g := NewGraph()
 	for p, spos := range parser.predicates {
 		if parser.traits.IsInverted(p) {
@@ -79,7 +87,12 @@ func (parser *parser) parse() (*Graph, Dictionary, error) {
 			}
 		}
 	}
+	return g
+}
+
+func (parser *parser) buildDictionary(g *Graph) Dictionary {
 	d := make(Dictionary)
+	// simple entries
 	for entry, label := range parser.labels {
 		if c, ok := g.FindByURL(label.url); ok {
 			id := c.ID()
@@ -89,7 +102,40 @@ func (parser *parser) parse() (*Graph, Dictionary, error) {
 			d[entry] = id
 		}
 	}
-	return g, d, nil
+	// splits
+	splitURLs := make(map[string]string)
+	splitPreds := make(map[spo]bool)
+	for entry := range parser.splits {
+		urls := sortUnique(parser.splits[entry])
+		splitURL := CombineURLs(urls...)
+		splitURLs[entry] = splitURL
+		for _, url := range urls {
+			splitPreds[spo{splitURL, SplitURL, url}] = true
+		}
+	}
+	for spo := range splitPreds {
+		g.Add(spo.s, spo.p, spo.o)
+	}
+	for entry, url := range splitURLs {
+		c, ok := g.FindByURL(url)
+		if ok {
+			d[entry] = c.ID()
+		}
+	}
+	return d
+}
+
+func sortUnique(urls []string) []string {
+	urlset := make(map[string]bool)
+	for _, url := range urls {
+		urlset[url] = true
+	}
+	splits := make([]string, 0, len(urlset))
+	for url := range urlset {
+		splits = append(splits, url)
+	}
+	sort.Strings(splits)
+	return splits
 }
 
 func (parser *parser) add(s, p, o string) error {
@@ -123,56 +169,23 @@ func (parser *parser) addLabels(entry, url string, ambig, name bool) error {
 		return fmt.Errorf("could not expand: %v", err)
 	}
 	for _, expanded := range labels {
-		if name {
+		if _, ok := parser.splits[expanded]; ok {
+			parser.splits[expanded] = append(parser.splits[expanded], url)
+			return nil
+		}
+		if l, ok := parser.labels[expanded]; ok && l.url != url {
+			delete(parser.labels, expanded)
+			parser.splits[expanded] = append(parser.splits[expanded], url)
+			parser.splits[expanded] = append(parser.splits[expanded], l.url)
+			return nil
+		}
+		// name can/should never be part of a split
+		if name && !ambig {
 			if _, ok := parser.names[url]; !ok {
 				parser.names[url] = expanded
 			}
 		}
-		if l, ok := parser.labels[expanded]; ok && l.url != url {
-			return parser.addSplit(expanded, l.url, url)
-		}
 		parser.labels[expanded] = label{url, ambig}
-	}
-	return nil
-}
-
-func (parser *parser) addSplit(entry, aurl, burl string) error {
-	// use a set to enforce uniqueness.
-	splitset := map[string]bool{burl: true}
-	var founds []spo
-	for t := range parser.predicates[SplitURL] {
-		if t.s == aurl {
-			founds = append(founds, t)
-			splitset[t.o] = true
-		}
-	}
-	// we did not find aurl in the split predicates
-	// -> aurl is not a split predicate
-	if len(founds) == 0 {
-		splitset[aurl] = true
-	}
-	// delete all old entries that reference aurl
-	for _, t := range founds {
-		delete(parser.predicates[SplitURL], t)
-	}
-	// flatten the set to an array of URLs
-	splits := make([]string, 0, len(splitset))
-	for url := range splitset {
-		splits = append(splits, url)
-	}
-	// sort for stability of combined concept names
-	sort.Strings(splits)
-	splitURL := CombineURLs(splits...)
-	// log.Printf("[%s] aurl:     %q", entry, aurl)
-	// log.Printf("[%s] burl:     %q", entry, burl)
-	// log.Printf("[%s] founds:   %v", entry, founds)
-	// log.Printf("[%s] splits:   %v", entry, splits)
-	// log.Printf("[%s] splitURL: %v", entry, splitURL)
-	parser.labels[entry] = label{splitURL, false}
-	for _, url := range splits {
-		if err := parser.add(splitURL, SplitURL, url); err != nil {
-			return err
-		}
 	}
 	return nil
 }
