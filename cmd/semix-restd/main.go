@@ -68,7 +68,7 @@ func server() (*http.Server, error) {
 		return nil, err
 	}
 	g, d, err := semix.Parse(parser, config.traits())
-	return restd.New(host, g, d, index), nil
+	return restd.New(host, dir, g, d, index), nil
 }
 
 type parser struct {

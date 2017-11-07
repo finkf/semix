@@ -8,16 +8,16 @@ import (
 )
 
 // New returns a new server instance.
-func New(self string, g *semix.Graph, d semix.Dictionary, i index.Interface) *http.Server {
+func New(self, dir string, g *semix.Graph, d semix.Dictionary, i index.Interface) *http.Server {
 	return &http.Server{
 		Addr:    self,
-		Handler: newMux(g, d, i),
+		Handler: newMux(dir, g, d, i),
 	}
 }
 
-func newMux(g *semix.Graph, d semix.Dictionary, i index.Interface) *http.ServeMux {
+func newMux(dir string, g *semix.Graph, d semix.Dictionary, i index.Interface) *http.ServeMux {
 	dfa := semix.NewDFA(d, g)
-	h := handle{dfa: dfa, d: d, g: g, i: i}
+	h := handle{dir: dir, dfa: dfa, d: d, g: g, i: i}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/search", withLogging(requestFunc(h.search)))
 	mux.HandleFunc("/put", withLogging(requestFunc(h.put)))

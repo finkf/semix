@@ -8,10 +8,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/query"
@@ -19,10 +17,11 @@ import (
 )
 
 type handle struct {
-	g   *semix.Graph
-	d   semix.Dictionary
-	i   index.Interface
-	dfa semix.DFA
+	g         *semix.Graph
+	d         semix.Dictionary
+	i         index.Interface
+	dfa       semix.DFA
+	dir, host string
 }
 
 func requestFunc(h func(*http.Request) (interface{}, int, error)) http.HandlerFunc {
@@ -92,7 +91,10 @@ func (h handle) info(r *http.Request) (interface{}, int, error) {
 	}
 	c, found := h.g.FindByURL(q)
 	if !found {
-		return nil, http.StatusNotFound, fmt.Errorf("invalid url: %s", q)
+		c, found = h.g.FindByID(h.d[q])
+		if !found {
+			return nil, http.StatusNotFound, fmt.Errorf("invalid query: %s", q)
+		}
 	}
 	entries := SearchDictionaryEntries(h.d, c)
 	info := ConceptInfo{Concept: c, Entries: entries}
@@ -104,7 +106,7 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusForbidden,
 			fmt.Errorf("invalid request method: %s", r.Method)
 	}
-	doc, err := makeDocument(r)
+	doc, err := h.makeDocument(r)
 	if err != nil {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("bad document: %v", err)
@@ -173,15 +175,12 @@ func (h handle) ctx(r *http.Request) (interface{}, int, error) {
 			fmt.Errorf("invalid query parameters = %s %v %v",
 				url, []error{err1, err2, err3}, []int64{b, e, n})
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	s := semix.Normalize(ctx, semix.Read(ctx, semix.NewHTTPDocument(url)))
-	t := <-s
-	if t.Err != nil {
-		return nil, http.StatusBadRequest,
-			fmt.Errorf("invalid document %s: %v", url, t.Err)
+	t, err := h.readToken(url)
+	if err != nil {
+		return nil, http.StatusNotFound,
+			fmt.Errorf("invalid document %s: %v", url, err)
 	}
-	if int(b) >= len(t.Token.Token) || int(e) >= len(t.Token.Token) {
+	if int(b) >= len(t.Token) || int(e) >= len(t.Token) {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query paramters = %d %d", b, e)
 	}
@@ -190,18 +189,35 @@ func (h handle) ctx(r *http.Request) (interface{}, int, error) {
 		cs = 0
 	}
 	ce := e + n
-	if int(ce) > len(t.Token.Token) {
-		ce = int64(len(t.Token.Token))
+	if int(ce) > len(t.Token) {
+		ce = int64(len(t.Token))
 	}
 	return Context{
 		URL:    url,
-		Before: t.Token.Token[cs:b],
-		Match:  t.Token.Token[b:e],
-		After:  t.Token.Token[e:ce],
+		Before: t.Token[cs:b],
+		Match:  t.Token[b:e],
+		After:  t.Token[e:ce],
 		Begin:  int(b),
 		End:    int(e),
 		Len:    int(n),
 	}, http.StatusOK, nil
+}
+
+func (h handle) readToken(url string) (semix.Token, error) {
+	var d semix.Document
+	if strings.HasPrefix(url, "semix-") {
+		d = openDumpFile(h.dir, url)
+	} else {
+		d = semix.NewHTTPDocument(url)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	s := semix.Normalize(ctx, semix.Read(ctx, d))
+	t := <-s
+	if t.Err != nil {
+		return semix.Token{}, t.Err
+	}
+	return t.Token, nil
 }
 
 func (h handle) makeIndexStream(d semix.Document) (semix.Stream, context.CancelFunc) {
@@ -215,7 +231,7 @@ func (h handle) makeIndexStream(d semix.Document) (semix.Stream, context.CancelF
 	return s, cancel
 }
 
-func makeDocument(r *http.Request) (semix.Document, error) {
+func (h handle) makeDocument(r *http.Request) (semix.Document, error) {
 	switch r.Method {
 	default:
 		panic("invalid method")
@@ -230,9 +246,11 @@ func makeDocument(r *http.Request) (semix.Document, error) {
 		if err != nil {
 			return nil, fmt.Errorf("could not parse post form: %v", err)
 		}
-		path := time.Now().Format("2006-01-02:15-04-05")
-		str := " " + strings.Join(r.PostForm["text"], " ") + " "
-		str = regexp.MustCompile(`\s+`).ReplaceAllLiteralString(str, " ")
-		return semix.NewStringDocument(path, str), nil
+		r := strings.NewReader(strings.Join(r.PostForm["text"], " "))
+		doc, err := newDumpFile(r, h.dir, "text/plain")
+		if err != nil {
+			return nil, fmt.Errorf("could not create file: %v", err)
+		}
+		return doc, nil
 	}
 }
