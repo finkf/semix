@@ -23,13 +23,9 @@ func (e Edge) String() string {
 	return fmt.Sprintf("{%s %s %d}", e.P.url, e.O.url, e.L)
 }
 
-// TODO: do we need this?
-var splitRelation = &Concept{url: "[split]"}
-
 // Concept represents a concept in the concept graph.
 // It consits of an unique URL, an optional (human readeable) name,
 // a list of edges and an unique ID.
-// TODO: do we need the ID?
 type Concept struct {
 	url, Name string
 	edges     []Edge
