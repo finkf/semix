@@ -11,11 +11,14 @@
 		<h2>Results</h2>
 		<div id='result-table'>
 			<table>
+				<th>Match</th>
+				<th>Concept</th>
+				<th>Document</th>
 				{{range .Tokens}}
 				<tr>
-					<td> {{.Token}} ({{.Begin}},{{.End}}) </td>
-					<td> <a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a> </td>
-					<td> <a target="_blank" href="{{.Path}}">{{.Path}}</a> </td>
+					<td><a href="/ctx?url={{.Path}}&b={{.Begin}}&e={{.End}}&n=500">{{.Token}} ({{.Begin}},{{.End}})</a></td>
+					<td><a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a></td>
+					<td><a target="_blank" href="{{.Path}}">{{.Path}}</a></td>
 				</tr>
 				{{end}}
 			</table>
