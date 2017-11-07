@@ -32,9 +32,30 @@ type Concept struct {
 	id        int32
 }
 
-// NewSplitConcept returns a new ambiuous split concept.
-func NewSplitConcept() *Concept {
-	return &Concept{url: SplitURL}
+// CombineURLs combines tow or more URLs.
+// If urls is empty, the empty string is returned.
+// If urls contain exactly on url, this url is returned.
+func CombineURLs(urls ...string) string {
+	if len(urls) == 0 {
+		return ""
+	}
+	if len(urls) == 1 {
+		return urls[0]
+	}
+	res := urls[0]
+	for i := 1; i < len(urls); i++ {
+		res = combineTwoURLs(res, urls[i])
+	}
+	return res
+}
+
+func combineTwoURLs(a, b string) string {
+	ai := strings.LastIndex(a, "/")
+	bi := strings.LastIndex(b, "/")
+	if ai == -1 || bi == -1 || ai != bi || a[:ai] != b[:bi] {
+		return a + "-" + b
+	}
+	return a + "-" + b[bi+1:]
 }
 
 // NewConcept create a new Concept with the given URL.
@@ -71,7 +92,10 @@ func (c *Concept) URL() string {
 
 // Ambiguous returns if the concept is ambiguous or not.
 func (c *Concept) Ambiguous() bool {
-	return c.url == SplitURL
+	if len(c.edges) == 0 {
+		return false
+	}
+	return c.edges[0].P.url == SplitURL
 }
 
 // ShortURL returns a short version of the URL of this concept.
