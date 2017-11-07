@@ -6,37 +6,24 @@ import (
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
-// DirIndexOpt defines a functional argument setter.
-type DirIndexOpt func(*index)
-
-// WithBufferSize sets the optional buffer size of the directory index.
-func WithBufferSize(n int) DirIndexOpt {
-	return func(i *index) {
-		i.n = n
-	}
-}
-
 const (
-	// DefaultIndexDirBufferSize is the default buffer size.
-	DefaultIndexDirBufferSize = 1024
+	// DefaultBufferSize is the default buffer size.
+	DefaultBufferSize = 1024
 )
 
 // New opens a directory index at the given directory path with
 // and the given options.
-func New(dir string, opts ...DirIndexOpt) (Interface, error) {
+func New(dir string, size int) (Interface, error) {
 	storage, err := OpenDirStorage(dir)
 	if err != nil {
 		return nil, err
 	}
 	i := &index{
 		storage: storage,
-		n:       DefaultIndexDirBufferSize,
+		n:       size,
 		buffer:  make(map[string][]Entry),
 		put:     make(chan putRequest),
 		get:     make(chan getRequest),
-	}
-	for _, opt := range opts {
-		opt(i)
 	}
 	go i.run()
 	return i, nil

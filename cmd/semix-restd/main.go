@@ -50,7 +50,7 @@ func main() {
 }
 
 func server() (*http.Server, error) {
-	index, err := index.New(dir)
+	index, err := index.New(dir, index.DefaultBufferSize)
 	if err != nil {
 		return nil, err
 	}
