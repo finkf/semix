@@ -2,7 +2,6 @@ package semix
 
 import (
 	"fmt"
-	"log"
 )
 
 // ExpandBraces expands braces in a given string using a bash-like syntax.
@@ -72,7 +71,6 @@ func (e *expander) parse(bcount int) ([][]byte, error) {
 				return nil, err
 			}
 			x := combine(s, ss)
-			log.Printf("combine(%s,%s) = %s", s, ss, x)
 			s = x
 		case c == '}':
 			if bcount <= 0 {
@@ -99,26 +97,11 @@ func combine(a, b [][]byte) [][]byte {
 	var res [][]byte
 	for _, astr := range a {
 		for _, bstr := range b {
-			log.Printf("res = %s", res)
-			comb := append(astr, bstr...)
-			log.Printf("comb = %s", comb)
-			res = append(res, comb...)
-			log.Printf("%s (%s %s)", res, astr, bstr)
+			comb := make([]byte, len(astr)+len(bstr))
+			copy(comb, astr)
+			copy(comb[len(astr):], bstr)
+			res = append(res, comb)
 		}
 	}
 	return res
 }
-
-// func combine(a, b []string) []string {
-// 	if len(a[len(a)-1]) == 0 {
-// 		a = a[:len(a)-1]
-// 		return append(a, b...)
-// 	}
-// 	var res []string
-// 	for _, astr := range a {
-// 		for _, bstr := range b {
-// 			res = append(res, astr+bstr)
-// 		}
-// 	}
-// 	return res
-// }

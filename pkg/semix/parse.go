@@ -1,6 +1,7 @@
 package semix
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -117,27 +118,26 @@ func (parser *parser) addTriple(s, p, o string) error {
 }
 
 func (parser *parser) addLabels(entry, url string, ambig, name bool) error {
-	// labels, err := ExpandBraces(entry)
-	// if err != nil {
-	// 	return fmt.Errorf("could not expand: %v", err)
-	// }
-	// for _, expanded := range labels {
-	expanded := entry
-	if name {
-		if _, ok := parser.names[url]; !ok {
-			parser.names[url] = expanded
-		}
+	labels, err := ExpandBraces(entry)
+	if err != nil {
+		return fmt.Errorf("could not expand: %v", err)
 	}
-	if l, ok := parser.labels[expanded]; ok && l.url != url {
-		splitURL := combineURLs(l.url, url)
-		parser.labels[expanded] = label{splitURL, false}
-		if err := parser.add(splitURL, SplitURL, url); err != nil {
-			return err
+	for _, expanded := range labels {
+		if name {
+			if _, ok := parser.names[url]; !ok {
+				parser.names[url] = expanded
+			}
 		}
-		return parser.add(splitURL, SplitURL, l.url)
+		if l, ok := parser.labels[expanded]; ok && l.url != url {
+			splitURL := combineURLs(l.url, url)
+			parser.labels[expanded] = label{splitURL, false}
+			if err := parser.add(splitURL, SplitURL, url); err != nil {
+				return err
+			}
+			return parser.add(splitURL, SplitURL, l.url)
+		}
+		parser.labels[expanded] = label{url, ambig}
 	}
-	parser.labels[expanded] = label{url, ambig}
-	// }
 	return nil
 }
 
