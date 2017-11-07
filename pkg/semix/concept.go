@@ -7,6 +7,8 @@ import (
 )
 
 const (
+	// SplitURL is the name of predicates that denote ambiguous connections
+	// in the concept graph.
 	SplitURL = "http://bitbucket.org/fflo/semix/pkg/semix/split-url"
 )
 
@@ -21,22 +23,44 @@ func (e Edge) String() string {
 	return fmt.Sprintf("{%s %s %d}", e.P.url, e.O.url, e.L)
 }
 
-// TODO: do we need this?
-var splitRelation = &Concept{url: "[split]"}
-
 // Concept represents a concept in the concept graph.
 // It consits of an unique URL, an optional (human readeable) name,
 // a list of edges and an unique ID.
-// TODO: do we need the ID?
 type Concept struct {
 	url, Name string
 	edges     []Edge
 	id        int32
 }
 
-// NewSplitConcept returns a new ambiuous split concept.
-func NewSplitConcept() *Concept {
-	return &Concept{url: SplitURL}
+// Edges returns the edges of a concept.
+func (c Concept) Edges() []Edge {
+	return c.edges
+}
+
+// CombineURLs combines tow or more URLs.
+// If urls is empty, the empty string is returned.
+// If urls contain exactly on url, this url is returned.
+func CombineURLs(urls ...string) string {
+	if len(urls) == 0 {
+		return ""
+	}
+	if len(urls) == 1 {
+		return urls[0]
+	}
+	res := urls[0]
+	for i := 1; i < len(urls); i++ {
+		res = combineTwoURLs(res, urls[i])
+	}
+	return res
+}
+
+func combineTwoURLs(a, b string) string {
+	ai := strings.LastIndex(a, "/")
+	bi := strings.LastIndex(b, "/")
+	if ai == -1 || bi == -1 || ai != bi || a[:ai] != b[:bi] {
+		return a + "-" + b
+	}
+	return a + "-" + b[bi+1:]
 }
 
 // NewConcept create a new Concept with the given URL.
@@ -59,8 +83,8 @@ func (c *Concept) EdgeAt(i int) Edge {
 	return c.edges[i]
 }
 
-// Edges iterates over all edges of this. concept.
-func (c *Concept) Edges(f func(Edge)) {
+// EachEdge iterates over all edges of this concept.
+func (c *Concept) EachEdge(f func(Edge)) {
 	for _, e := range c.edges {
 		f(e)
 	}
@@ -73,7 +97,10 @@ func (c *Concept) URL() string {
 
 // Ambiguous returns if the concept is ambiguous or not.
 func (c *Concept) Ambiguous() bool {
-	return c.url == SplitURL
+	if len(c.edges) == 0 {
+		return false
+	}
+	return c.edges[0].P.url == SplitURL
 }
 
 // ShortURL returns a short version of the URL of this concept.

@@ -21,7 +21,7 @@ func (info ConceptInfo) Predicates() map[*semix.Concept][]*semix.Concept {
 	if info.Concept == nil {
 		return m
 	}
-	info.Concept.Edges(func(edge semix.Edge) {
+	info.Concept.EachEdge(func(edge semix.Edge) {
 		m[edge.P] = append(m[edge.P], edge.O)
 	})
 	return m
@@ -83,16 +83,20 @@ func (ts Tokens) Counts() map[*semix.Concept][]Count {
 	for _, t := range ts.Tokens {
 		n++
 		preds := make(map[*semix.Concept]bool)
-		t.Concept.Edges(func(edge semix.Edge) {
-			if m[register(edge.P)] == nil {
-				m[register(edge.P)] = make(map[*semix.Concept]int)
+		t.Concept.EachEdge(func(edge semix.Edge) {
+			p := register(edge.P)
+			o := register(edge.O)
+			if m[p] == nil {
+				m[p] = make(map[*semix.Concept]int)
 			}
-			m[register(edge.P)][register(edge.O)]++
-			preds[register(edge.P)] = true
+			m[p][o]++
+			preds[p] = true
 		})
-		for p := range preds {
-			m[p][register(t.Concept)]++
-		}
+		/*
+			for p := range preds {
+				m[p][register(t.Concept)]++
+			}
+		*/
 	}
 	counts := make(map[*semix.Concept][]Count, len(m))
 	for p := range m {

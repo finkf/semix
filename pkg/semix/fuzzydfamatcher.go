@@ -60,15 +60,13 @@ func (m *matchset) makeMatchPos() MatchPos {
 	if len(ps) == 1 && ps[0].l == 0 { // one direct hit without an error
 		return MatchPos{Begin: left, End: m.longest, Concept: ps[0].c}
 	}
-	c := NewSplitConcept()
+	c := &Concept{url: SplitURL}
+	split := &Concept{url: SplitURL}
 	for _, p := range ps {
-		c.edges = append(c.edges, Edge{P: fuzzyPredicate, O: p.c, L: p.l})
+		c.edges = append(c.edges, Edge{P: split, O: p.c, L: p.l})
 	}
 	return MatchPos{Begin: left, End: m.longest, Concept: c}
 }
-
-// TODO: this should go somwhere else
-var fuzzyPredicate = NewConcept("http://bitbucket.org/fflo/semix/pkg/semix/fuzzy-predicate")
 
 func (m *matchset) insert(p fuzzypos) {
 	if _, ok := m.m[p.c]; !ok {

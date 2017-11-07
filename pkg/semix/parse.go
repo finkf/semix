@@ -2,7 +2,7 @@ package semix
 
 import (
 	"fmt"
-	"strings"
+	"sort"
 )
 
 // Parser defines a parser that parses (Subject, Predicate, Object) triples.
@@ -44,6 +44,7 @@ type parser struct {
 	predicates map[string]map[spo]bool
 	names      map[string]string
 	labels     map[string]label
+	splits     map[string][]string
 	traits     Traits
 }
 
@@ -52,11 +53,18 @@ func newParser(traits Traits) *parser {
 		predicates: make(map[string]map[spo]bool),
 		names:      make(map[string]string),
 		labels:     make(map[string]label),
+		splits:     make(map[string][]string),
 		traits:     traits,
 	}
 }
 
 func (parser *parser) parse() (*Graph, Dictionary, error) {
+	g := parser.buildGraph()
+	d := parser.buildDictionary(g)
+	return g, d, nil
+}
+
+func (parser *parser) buildGraph() *Graph {
 	g := NewGraph()
 	for p, spos := range parser.predicates {
 		if parser.traits.IsInverted(p) {
@@ -79,7 +87,12 @@ func (parser *parser) parse() (*Graph, Dictionary, error) {
 			}
 		}
 	}
+	return g
+}
+
+func (parser *parser) buildDictionary(g *Graph) Dictionary {
 	d := make(Dictionary)
+	// simple entries
 	for entry, label := range parser.labels {
 		if c, ok := g.FindByURL(label.url); ok {
 			id := c.ID()
@@ -89,7 +102,40 @@ func (parser *parser) parse() (*Graph, Dictionary, error) {
 			d[entry] = id
 		}
 	}
-	return g, d, nil
+	// splits
+	splitURLs := make(map[string]string)
+	splitPreds := make(map[spo]bool)
+	for entry := range parser.splits {
+		urls := sortUnique(parser.splits[entry])
+		splitURL := CombineURLs(urls...)
+		splitURLs[entry] = splitURL
+		for _, url := range urls {
+			splitPreds[spo{splitURL, SplitURL, url}] = true
+		}
+	}
+	for spo := range splitPreds {
+		g.Add(spo.s, spo.p, spo.o)
+	}
+	for entry, url := range splitURLs {
+		c, ok := g.FindByURL(url)
+		if ok {
+			d[entry] = c.ID()
+		}
+	}
+	return d
+}
+
+func sortUnique(urls []string) []string {
+	urlset := make(map[string]bool)
+	for _, url := range urls {
+		urlset[url] = true
+	}
+	splits := make([]string, 0, len(urlset))
+	for url := range urlset {
+		splits = append(splits, url)
+	}
+	sort.Strings(splits)
+	return splits
 }
 
 func (parser *parser) add(s, p, o string) error {
@@ -123,29 +169,23 @@ func (parser *parser) addLabels(entry, url string, ambig, name bool) error {
 		return fmt.Errorf("could not expand: %v", err)
 	}
 	for _, expanded := range labels {
-		if name {
+		if _, ok := parser.splits[expanded]; ok {
+			parser.splits[expanded] = append(parser.splits[expanded], url)
+			return nil
+		}
+		if l, ok := parser.labels[expanded]; ok && l.url != url {
+			delete(parser.labels, expanded)
+			parser.splits[expanded] = append(parser.splits[expanded], url)
+			parser.splits[expanded] = append(parser.splits[expanded], l.url)
+			return nil
+		}
+		// name can/should never be part of a split
+		if name && !ambig {
 			if _, ok := parser.names[url]; !ok {
 				parser.names[url] = expanded
 			}
 		}
-		if l, ok := parser.labels[expanded]; ok && l.url != url {
-			splitURL := combineURLs(l.url, url)
-			parser.labels[expanded] = label{splitURL, false}
-			if err := parser.add(splitURL, SplitURL, url); err != nil {
-				return err
-			}
-			return parser.add(splitURL, SplitURL, l.url)
-		}
 		parser.labels[expanded] = label{url, ambig}
 	}
 	return nil
-}
-
-func combineURLs(a, b string) string {
-	ai := strings.LastIndex(a, "/")
-	bi := strings.LastIndex(b, "/")
-	if ai == -1 || bi == -1 || ai != bi || a[:ai] != b[:bi] {
-		return a + "-" + b
-	}
-	return a + "-" + b[bi+1:]
 }

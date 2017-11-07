@@ -50,3 +50,23 @@ func TestJSONMarshalling(t *testing.T) {
 		})
 	}
 }
+
+func TestCombineURLs(t *testing.T) {
+	tests := []struct {
+		urls []string
+		want string
+	}{
+		{[]string{}, ""},
+		{[]string{"a"}, "a"},
+		{[]string{"a", "b", "c"}, "a-b-c"},
+		{[]string{"http://a/x", "http://a/y", "http://a/z"}, "http://a/x-y-z"},
+	}
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("%v", tc.urls), func(t *testing.T) {
+			got := CombineURLs(tc.urls...)
+			if got != tc.want {
+				t.Errorf("expected %s; got %s", tc.want, got)
+			}
+		})
+	}
+}
