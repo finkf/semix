@@ -1,0 +1,21 @@
+[parser]
+file = "testdata/topiczoom.skos.rdf.xml"
+type = "RDFXML"
+
+[urls]
+ignore = [
+	"http://www.w3.org/2004/02/skos/core#narrower",
+]
+transitive = [
+	"http://www.w3.org/2004/02/skos/core#broader",
+	"http://www.w3.org/2004/02/skos/core#narrower",
+]
+symmetric = []
+name = [
+	"http://www.w3.org/2004/02/skos/core#prefLabel",
+	]
+distinct = [
+	"http://www.w3.org/2004/02/skos/core#altLabel",
+]
+ambiguous = []
+inverted = []

@@ -9,7 +9,7 @@ import (
 
 // Execute executes a query on the given index and returns a slice
 // with all the matched IndexEntries.
-func Execute(query string, idx index.Index) ([]index.Entry, error) {
+func Execute(query string, idx index.Interface) ([]index.Entry, error) {
 	q, err := New(query)
 	if err != nil {
 		return nil, err
@@ -19,7 +19,7 @@ func Execute(query string, idx index.Index) ([]index.Entry, error) {
 
 // ExecuteFunc executes a query on the given index.
 // The callback is called for every matched IndexEntry.
-func ExecuteFunc(query string, idx index.Index, f func(index.Entry)) error {
+func ExecuteFunc(query string, idx index.Interface, f func(index.Entry)) error {
 	q, err := New(query)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func NewFix(query string, fix func(string) (string, error)) (Query, error) {
 
 // Execute executes the query on the given index and returns
 // the slice of the matched IndexEntries.
-func (q Query) Execute(idx index.Index) ([]index.Entry, error) {
+func (q Query) Execute(idx index.Interface) ([]index.Entry, error) {
 	var es []index.Entry
 	err := q.ExecuteFunc(idx, func(e index.Entry) {
 		es = append(es, e)
@@ -91,7 +91,7 @@ func (q Query) Execute(idx index.Index) ([]index.Entry, error) {
 
 // ExecuteFunc executes the query on an index. The callback function
 // is called for every matched IndexEntry.
-func (q Query) ExecuteFunc(idx index.Index, f func(index.Entry)) error {
+func (q Query) ExecuteFunc(idx index.Interface, f func(index.Entry)) error {
 	for url := range q.set {
 		err := idx.Get(url, func(e index.Entry) {
 			if e.L <= q.l && q.constraint.match(e) {

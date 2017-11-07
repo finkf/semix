@@ -1,6 +1,7 @@
 package semix
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -17,6 +18,7 @@ type Traits interface {
 	IsName(string) bool
 	IsDistinct(string) bool
 	IsAmbiguous(string) bool
+	IsInverted(string) bool
 }
 
 // Dictionary is a dictionary that maps the labels of the concepts
@@ -57,6 +59,9 @@ func newParser(traits Traits) *parser {
 func (parser *parser) parse() (*Graph, Dictionary, error) {
 	g := NewGraph()
 	for p, spos := range parser.predicates {
+		if parser.traits.IsInverted(p) {
+			parser.predicates[p] = invert(spos)
+		}
 		if parser.traits.IsSymmetric(p) {
 			parser.predicates[p] = calculateSymmetricClosure(spos)
 		}
@@ -92,14 +97,13 @@ func (parser *parser) add(s, p, o string) error {
 		return nil
 	}
 	if parser.traits.IsName(p) {
-		parser.names[s] = o
-		return parser.addLabel(o, s, false)
+		return parser.addLabels(o, s, false, true)
 	}
 	if parser.traits.IsAmbiguous(p) {
-		return parser.addLabel(o, s, true)
+		return parser.addLabels(o, s, true, false)
 	}
 	if parser.traits.IsDistinct(p) {
-		return parser.addLabel(o, s, false)
+		return parser.addLabels(o, s, false, false)
 	}
 	return parser.addTriple(s, p, o)
 }
@@ -113,16 +117,27 @@ func (parser *parser) addTriple(s, p, o string) error {
 	return nil
 }
 
-func (parser *parser) addLabel(entry, url string, a bool) error {
-	if l, ok := parser.labels[entry]; ok && l.url != url {
-		splitURL := combineURLs(l.url, url)
-		parser.labels[entry] = label{splitURL, false}
-		if err := parser.add(splitURL, SplitURL, url); err != nil {
-			return err
-		}
-		return parser.add(splitURL, SplitURL, l.url)
+func (parser *parser) addLabels(entry, url string, ambig, name bool) error {
+	labels, err := ExpandBraces(entry)
+	if err != nil {
+		return fmt.Errorf("could not expand: %v", err)
 	}
-	parser.labels[entry] = label{url, a}
+	for _, expanded := range labels {
+		if name {
+			if _, ok := parser.names[url]; !ok {
+				parser.names[url] = expanded
+			}
+		}
+		if l, ok := parser.labels[expanded]; ok && l.url != url {
+			splitURL := combineURLs(l.url, url)
+			parser.labels[expanded] = label{splitURL, false}
+			if err := parser.add(splitURL, SplitURL, url); err != nil {
+				return err
+			}
+			return parser.add(splitURL, SplitURL, l.url)
+		}
+		parser.labels[expanded] = label{url, ambig}
+	}
 	return nil
 }
 
@@ -130,7 +145,7 @@ func combineURLs(a, b string) string {
 	ai := strings.LastIndex(a, "/")
 	bi := strings.LastIndex(b, "/")
 	if ai == -1 || bi == -1 || ai != bi || a[:ai] != b[:bi] {
-		return a + "+" + b
+		return a + "-" + b
 	}
-	return a + "+" + b[bi+1:]
+	return a + "-" + b[bi+1:]
 }

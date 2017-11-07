@@ -150,9 +150,8 @@ loop:
 		case html.TextToken:
 			switch string(tags.back()) {
 			case "p", "b", "h1", "h2", "h3", "li", "a", "span", "td", "th":
-				txt := z.Text()
 				bs = append(bs, ' ')
-				bs = append(bs, txt...)
+				bs = append(bs, z.Text()...)
 			}
 		}
 	}
@@ -164,11 +163,13 @@ type tags []string
 func (t *tags) push(str string) {
 	*t = append(*t, str)
 }
+
 func (t *tags) pop() {
 	if len(*t) > 0 {
 		*t = (*t)[0 : len(*t)-1]
 	}
 }
+
 func (t tags) back() string {
 	if len(t) <= 0 {
 		return ""

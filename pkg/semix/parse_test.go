@@ -9,10 +9,12 @@ func TestParse(t *testing.T) {
 		"X", "i", "X", // ignore
 		"A", "n", "name", // name
 		"A", "d", "distinct", // distinct label
+		"A", "d", "a{b,c}d", // distinct label
 		"A", "a", "ambiguous", // ambiguous label
 		"AS", "s", "BS", // symmetric
 		"AT", "t", "BT", // transitive
 		"BT", "t", "CT", // transitive
+		"AV", "v", "BV", // inverted
 		"A", "d", "split-name", // split
 		"B", "d", "split-name", // split
 		"http://example.org/A", "d", "second-split-name", // split
@@ -22,14 +24,15 @@ func TestParse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("got error: %v", err)
 	}
-	for _, name := range []string{"name", "distinct", "ambiguous", "split-name", "second-split-name"} {
+	for _, name := range []string{"name", "distinct", "ambiguous", "abd", "acd",
+		"split-name", "second-split-name"} {
 		if _, ok := d[name]; !ok {
 			t.Fatalf("could not find %q in dictionary", name)
 		}
 	}
 	for _, url := range []string{
-		"A", "B", "C", "AS", "BS", "AT", "BT", "CT", "A+B",
-		"http://example.org/A", "http://example.org/B", "http://example.org/A+B",
+		"A", "B", "C", "AS", "BS", "AT", "BT", "CT", "A-B",
+		"http://example.org/A", "http://example.org/B", "http://example.org/A-B",
 	} {
 		c, ok := g.FindByURL(url)
 		if !ok {
@@ -55,6 +58,8 @@ func TestParse(t *testing.T) {
 	edgesExist(t, bs, "s", "AS")
 	at, _ := g.FindByURL("AT")
 	edgesExist(t, at, "t", "BT", "t", "CT")
+	bv, _ := g.FindByURL("BV")
+	edgesExist(t, bv, "v", "AV")
 }
 
 func edgesExist(t *testing.T, c *Concept, urls ...string) {
@@ -98,3 +103,4 @@ func (testTraits) IsDistinct(p string) bool   { return p == "d" }
 func (testTraits) IsAmbiguous(p string) bool  { return p == "a" }
 func (testTraits) IsSymmetric(p string) bool  { return p == "s" }
 func (testTraits) IsTransitive(p string) bool { return p == "t" }
+func (testTraits) IsInverted(p string) bool   { return p == "v" }

@@ -1,0 +1,21 @@
+[parser]
+file = "testdata/ww1.ttl"
+type = "turtle"
+
+[urls]
+ignore = []
+transitive = [
+	"http://ww1.cis.lmu.de/Type",
+	"http://ww1.cis.lmu.de/Location",
+]
+symmetric = [
+	"http://ww1.cis.lmu.de/Date",
+]
+name = [
+	"http://ww1.cis.lmu.de/PrefName",
+]
+distinct = [
+	"http://ww1.cis.lmu.de/AltName",
+]
+ambiguous = []
+inverted = []

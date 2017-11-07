@@ -11,6 +11,7 @@ func TestTransitiveClosure(t *testing.T) {
 		{
 			map[spo]bool{
 				spo{"a", "p", "b"}: true,
+				spo{"a", "p", "c"}: true,
 				spo{"b", "p", "c"}: true,
 				spo{"c", "p", "d"}: true,
 				spo{"e", "p", "f"}: true,
@@ -114,6 +115,30 @@ func TestSymmetricClosure(t *testing.T) {
 		},
 	} {
 		closure := calculateSymmetricClosure(tc.test)
+		for tr, b := range tc.want {
+			if closure[tr] != b {
+				t.Errorf("expected closure[%v] = %t; got %t", tr, b, closure[tr])
+			}
+		}
+	}
+}
+
+func TestInvert(t *testing.T) {
+	for _, tc := range []struct {
+		test, want map[spo]bool
+	}{
+		{
+			map[spo]bool{
+				spo{"a", "p", "b"}: true,
+				spo{"b", "p", "c"}: true,
+			},
+			map[spo]bool{
+				spo{"b", "p", "a"}: true,
+				spo{"c", "p", "b"}: true,
+			},
+		},
+	} {
+		closure := invert(tc.test)
 		for tr, b := range tc.want {
 			if closure[tr] != b {
 				t.Errorf("expected closure[%v] = %t; got %t", tr, b, closure[tr])

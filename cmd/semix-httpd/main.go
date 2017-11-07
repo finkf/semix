@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/net"
+	"bitbucket.org/fflo/semix/pkg/restd"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -32,17 +32,16 @@ var (
 	gettmpl    *template.Template
 	ctxtmpl    *template.Template
 	searchtmpl *template.Template
-	config     Config
 	dir        string
 	host       string
-	restd      string
+	restHost   string
 	help       bool
 )
 
 func init() {
 	flag.StringVar(&dir, "dir", "cmd/semix-httpd/html", "set template directory")
 	flag.StringVar(&host, "host", "localhost:8181", "set listen host")
-	flag.StringVar(&restd, "restd", "localhost:6060", "set host of rest service")
+	flag.StringVar(&restHost, "restd", "localhost:6060", "set host of rest service")
 	flag.BoolVar(&help, "help", false, "print this help")
 }
 
@@ -52,8 +51,6 @@ func main() {
 		flag.Usage()
 		return
 	}
-	config.Self = host
-	config.Semixd = restd
 	infotmpl = template.Must(template.ParseFiles(filepath.Join(dir, "info.html")))
 	puttmpl = template.Must(template.ParseFiles(filepath.Join(dir, "put.html")))
 	indextmpl = template.Must(template.ParseFiles(filepath.Join(dir, "index.html")))
@@ -128,7 +125,7 @@ func search(r *http.Request) (*template.Template, interface{}, status) {
 
 func info(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("q")
-	var info net.ConceptInfo
+	var info restd.ConceptInfo
 	if err := semixdGet(fmt.Sprintf("/info?q=%s", url.QueryEscape(q)), &info); err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -136,12 +133,12 @@ func info(r *http.Request) (*template.Template, interface{}, status) {
 }
 
 func home(r *http.Request) (*template.Template, interface{}, status) {
-	return indextmpl, M{"config": config}, ok()
+	return indextmpl, nil, ok()
 }
 
 func get(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("q")
-	var ts net.Tokens
+	var ts restd.Tokens
 	if err := semixdGet(fmt.Sprintf("/get?q=%s", url.QueryEscape(q)), &ts); err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -149,7 +146,7 @@ func get(r *http.Request) (*template.Template, interface{}, status) {
 }
 
 func ctx(r *http.Request) (*template.Template, interface{}, status) {
-	var ctx net.Context
+	var ctx restd.Context
 	url := fmt.Sprintf("/ctx?url=%s&b=%s&e=%s&n=%s",
 		url.QueryEscape(r.URL.Query().Get("url")),
 		url.QueryEscape(r.URL.Query().Get("b")),
@@ -178,22 +175,15 @@ func put(r *http.Request) (*template.Template, interface{}, status) {
 
 func putGet(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("url")
-	var info net.Tokens
+	var info restd.Tokens
 	if err := semixdGet(fmt.Sprintf("/put?url=%s", url.QueryEscape(q)), &info); err != nil {
 		return nil, nil, internalError(err)
 	}
-	data := struct {
-		Config Config
-		Data   net.Tokens
-	}{
-		Config: config,
-		Data:   info,
-	}
-	return puttmpl, data, ok()
+	return puttmpl, info, ok()
 }
 
 func putPost(r *http.Request) (*template.Template, interface{}, status) {
-	var info net.Tokens
+	var info restd.Tokens
 	ctype := "text/plain"
 	if len(r.Header["Content-Type"]) > 0 {
 		ctype = strings.Join(r.Header["Content-Type"], ",")
@@ -201,14 +191,7 @@ func putPost(r *http.Request) (*template.Template, interface{}, status) {
 	if err := semixdPost("/put", ctype, r.Body, &info); err != nil {
 		return nil, nil, internalError(err)
 	}
-	data := struct {
-		Config Config
-		Data   net.Tokens
-	}{
-		Config: config,
-		Data:   info,
-	}
-	return puttmpl, data, ok()
+	return puttmpl, info, ok()
 }
 
 func semixdPost(path string, ctype string, r io.Reader, data interface{}) error {

@@ -2,22 +2,28 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
+	"bitbucket.org/fflo/semix/pkg/restd"
 	"bitbucket.org/fflo/semix/pkg/semix"
 	"bitbucket.org/fflo/semix/pkg/traits"
+	"bitbucket.org/fflo/semix/pkg/turtle"
+	"github.com/BurntSushi/toml"
 )
 
 var (
-	dir  string
-	host string
-	rdf  string
-	help bool
+	dir   string
+	host  string
+	confg string
+	help  bool
 )
 
 func init() {
@@ -25,10 +31,7 @@ func init() {
 		filepath.Join(os.Getenv("HOME"), "semix"),
 		"set semix index directory")
 	flag.StringVar(&host, "host", "localhost:6060", "set listen host")
-	flag.StringVar(&rdf, "rdf",
-		filepath.Join(os.Getenv("HOME"),
-			"/devel/priv/semix/misc/data/topiczoom.skos.rdf.xml"),
-		"set RDF input file")
+	flag.StringVar(&confg, "config", "testdata/topiczoom.toml", "set configuration file")
 	flag.BoolVar(&help, "help", false, "prints this help")
 }
 
@@ -38,47 +41,82 @@ func main() {
 		flag.Usage()
 		return
 	}
-	index, err := index.New(
-		dir,
-		index.WithBufferSize(5),
-	)
+	s, err := server()
 	if err != nil {
 		log.Fatal(err)
 	}
-	is, err := os.Open(rdf)
+	log.Printf("starting the server")
+	log.Fatal(s.ListenAndServe())
+}
+
+func server() (*http.Server, error) {
+	index, err := index.New(dir)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
+	}
+	config, err := readConfig(confg)
+	if err != nil {
+		return nil, err
+	}
+	is, err := os.Open(config.Parser.File)
+	if err != nil {
+		return nil, err
 	}
 	defer is.Close()
-	log.Printf("reading RDF-XML")
-	t := traits.New(
-		traits.WithIgnoreURLs(
-			"http://www.w3.org/2004/02/skos/core#narrower",
-		),
-		traits.WithTransitiveURLs(
-			"http://www.w3.org/2004/02/skos/core#broader",
-			"http://www.w3.org/2004/02/skos/core#narrower",
-		),
-		traits.WithNameURLs(
-			"http://www.w3.org/2004/02/skos/core#prefLabel",
-		),
-		traits.WithDistinctURLs(
-			"http://www.w3.org/2004/02/skos/core#altLabel",
-		),
-	)
-	parser := rdfxml.NewParser(is)
-	graph, dictionary, err := semix.Parse(parser, t)
+	parser, err := newParser(is, config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	dfa := semix.NewDFA(dictionary, graph)
-	log.Printf("done reading RDF-XML")
-	log.Printf("starting the server")
-	h := handle{dfa: dfa, g: graph, d: dictionary, i: index}
-	http.HandleFunc("/search", requestFunc(h.search))
-	http.HandleFunc("/put", requestFunc(h.put))
-	http.HandleFunc("/get", requestFunc(h.get))
-	http.HandleFunc("/ctx", requestFunc(h.ctx))
-	http.HandleFunc("/info", requestFunc(h.info))
-	log.Fatalf(http.ListenAndServe(host, nil).Error())
+	g, d, err := semix.Parse(parser, config.traits())
+	return restd.New(host, g, d, index), nil
+}
+
+type parser struct {
+	File, Type string
+}
+
+type urls struct {
+	Ignore     []string
+	Transitive []string
+	Symmetric  []string
+	Name       []string
+	Distinct   []string
+	Ambiguous  []string
+	Inverted   []string
+}
+
+type config struct {
+	Parser parser
+	URLs   urls
+}
+
+func (c config) traits() semix.Traits {
+	return traits.New(
+		traits.WithIgnoreURLs(c.URLs.Ignore...),
+		traits.WithTransitiveURLs(c.URLs.Transitive...),
+		traits.WithSymmetricURLs(c.URLs.Symmetric...),
+		traits.WithNameURLs(c.URLs.Name...),
+		traits.WithAmbiguousURLs(c.URLs.Ambiguous...),
+		traits.WithDistinctURLs(c.URLs.Distinct...),
+		traits.WithInvertedURLs(c.URLs.Inverted...),
+	)
+}
+
+func readConfig(file string) (*config, error) {
+	var c config
+	if _, err := toml.DecodeFile(file, &c); err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
+func newParser(r io.Reader, c *config) (semix.Parser, error) {
+	switch strings.ToLower(c.Parser.Type) {
+	case "rdfxml":
+		return rdfxml.NewParser(r), nil
+	case "turtle":
+		return turtle.NewParser(r), nil
+	default:
+		return nil, fmt.Errorf("invalid type: %s", c.Parser.Type)
+	}
 }

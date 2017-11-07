@@ -23,7 +23,7 @@ const (
 
 // New opens a directory index at the given directory path with
 // and the given options.
-func New(dir string, opts ...DirIndexOpt) (Index, error) {
+func New(dir string, opts ...DirIndexOpt) (Interface, error) {
 	storage, err := OpenDirStorage(dir)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (i *index) getEntries(url string, f func(Entry)) error {
 
 // NewMapIndex create a new in memory index, that uses
 // a simple map of Entry slices for storage.
-func NewMapIndex() Index {
+func NewMapIndex() Interface {
 	return mapIndex{index: make(map[string][]Entry)}
 }
 

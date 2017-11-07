@@ -1,13 +1,25 @@
 package semix
 
+import (
+	"fmt"
+)
+
 // ExpandBraces expands braces in a given string using a bash-like syntax.
 func ExpandBraces(str string) ([]string, error) {
-	e := expander{str: str}
-	return e.parse(), nil
+	e := expander{str: []byte(str)}
+	var res []string
+	bss, err := e.parse(0)
+	if err != nil {
+		return nil, err
+	}
+	for _, bs := range bss {
+		res = append(res, string(bs))
+	}
+	return res, nil
 }
 
 type expander struct {
-	str string
+	str []byte
 	pos int
 }
 
@@ -32,36 +44,63 @@ func (e *expander) next() (byte, bool) {
 	return e.str[pos], false
 }
 
-func (e *expander) parse() []string {
-	s := []string{""}
+func (e *expander) parse(bcount int) ([][]byte, error) {
+	s := [][]byte{nil}
 	for c, esc := e.next(); c != 0; c, esc = e.next() {
 		l := len(s) - 1
 		switch {
 		case esc:
-			s[l] += string(c)
+			if bcount > 0 {
+				s[l] = append(s[l], c)
+			} else {
+				for i := range s {
+					s[i] = append(s[i], c)
+				}
+			}
 		case c == ',':
-			s = append(s, "")
+			if bcount > 0 {
+				s = append(s, nil)
+			} else {
+				for i := range s {
+					s[i] = append(s[i], c)
+				}
+			}
 		case c == '{':
-			ss := e.parse()
-			s = combine(s, ss)
+			ss, err := e.parse(bcount + 1)
+			if err != nil {
+				return nil, err
+			}
+			x := combine(s, ss)
+			s = x
 		case c == '}':
-			return s
+			if bcount <= 0 {
+				return nil, fmt.Errorf("invalid expansion: %s: unbalanced bracets", e.str)
+			}
+			return s, nil
 		default:
-			s[l] += string(c)
+			if bcount > 0 {
+				s[l] = append(s[l], c)
+			} else {
+				for i := range s {
+					s[i] = append(s[i], c)
+				}
+			}
 		}
 	}
-	return s
+	if bcount > 0 {
+		return nil, fmt.Errorf("invalid expansion: %s: unbalanced bracets", e.str)
+	}
+	return s, nil
 }
 
-func combine(a, b []string) []string {
-	if len(a[len(a)-1]) == 0 {
-		a = a[:len(a)-1]
-		return append(a, b...)
-	}
-	var res []string
+func combine(a, b [][]byte) [][]byte {
+	var res [][]byte
 	for _, astr := range a {
 		for _, bstr := range b {
-			res = append(res, astr+bstr)
+			comb := make([]byte, len(astr)+len(bstr))
+			copy(comb, astr)
+			copy(comb[len(astr):], bstr)
+			res = append(res, comb)
 		}
 	}
 	return res
