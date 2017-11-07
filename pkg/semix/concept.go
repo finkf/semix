@@ -78,8 +78,8 @@ func (c *Concept) EdgeAt(i int) Edge {
 	return c.edges[i]
 }
 
-// Edges iterates over all edges of this. concept.
-func (c *Concept) Edges(f func(Edge)) {
+// EachEdge iterates over all edges of this concept.
+func (c *Concept) EachEdge(f func(Edge)) {
 	for _, e := range c.edges {
 		f(e)
 	}
