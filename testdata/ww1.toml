@@ -4,7 +4,10 @@ type = "turtle"
 
 [urls]
 ignore = []
-transitive = []
+transitive = [
+	"http://ww1.cis.lmu.de/Type",
+	"http://ww1.cis.lmu.de/Location",
+]
 symmetric = [
 	"http://ww1.cis.lmu.de/Date",
 ]
