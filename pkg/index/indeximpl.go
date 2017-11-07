@@ -133,9 +133,9 @@ func (i *index) getEntries(url string, f func(Entry)) error {
 	return i.storage.Get(url, f)
 }
 
-// NewMapIndex create a new in memory index, that uses
+// NewMemoryMap create a new in memory index, that uses
 // a simple map of Entry slices for storage.
-func NewMapIndex() Interface {
+func NewMemoryMap() Interface {
 	return mapIndex{index: make(map[string][]Entry)}
 }
 
