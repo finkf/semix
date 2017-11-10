@@ -18,6 +18,16 @@ type Searcher struct {
 	dict  semix.Dictionary
 }
 
+// FindByID mimics the graph searching interface.
+func (s Searcher) FindByID(id int) (*semix.Concept, bool) {
+	return s.graph.FindByID(int32(id))
+}
+
+// FindByURL mimics the graph searching interface.
+func (s Searcher) FindByURL(url string) (*semix.Concept, bool) {
+	return s.graph.FindByURL(url)
+}
+
 // SearchConcepts searches for maximal n concepts whose
 // dictionary entries or URLs match a given query string.
 // If n < 0, all matching concepts are returned.
