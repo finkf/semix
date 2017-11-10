@@ -58,9 +58,24 @@ func combineTwoURLs(a, b string) string {
 	ai := strings.LastIndex(a, "/")
 	bi := strings.LastIndex(b, "/")
 	if ai == -1 || bi == -1 || ai != bi || a[:ai] != b[:bi] {
-		return a + "-" + b
+		pref := commonPrefix(a, b)
+		if pref == 0 || pref >= len(b) {
+			return a + "-" + b
+		}
+		return a + "-" + b[pref:]
 	}
 	return a + "-" + b[bi+1:]
+}
+
+func commonPrefix(a, b string) int {
+	var pref int
+	for i := 0; i < len(a) && i < len(b); i++ {
+		if a[i] != b[i] {
+			break
+		}
+		pref++
+	}
+	return pref
 }
 
 // NewConcept create a new Concept with the given URL.

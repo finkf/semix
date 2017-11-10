@@ -60,6 +60,7 @@ func TestCombineURLs(t *testing.T) {
 		{[]string{"a"}, "a"},
 		{[]string{"a", "b", "c"}, "a-b-c"},
 		{[]string{"http://a/x", "http://a/y", "http://a/z"}, "http://a/x-y-z"},
+		{[]string{"http://a/b/x", "http://a/c/y", "http://a/d/z"}, "http://a/b/x-c/y-d/z"},
 	}
 	for _, tc := range tests {
 		t.Run(fmt.Sprintf("%v", tc.urls), func(t *testing.T) {
