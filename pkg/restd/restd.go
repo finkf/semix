@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"bitbucket.org/fflo/semix/pkg/index"
+	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -17,9 +18,10 @@ func New(self, dir string, g *semix.Graph, d semix.Dictionary, i index.Interface
 
 func newMux(dir string, g *semix.Graph, d semix.Dictionary, i index.Interface) *http.ServeMux {
 	dfa := semix.NewDFA(d, g)
-	h := handle{dir: dir, dfa: dfa, d: d, g: g, i: i}
+	h := handle{dir: dir, dfa: dfa, searcher: searcher.New(g, d), i: i}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/search", withLogging(requestFunc(h.search)))
+	mux.HandleFunc("/search", withLogging(withGet(requestFunc(h.search))))
+	mux.HandleFunc("/parents", withLogging(withGet(requestFunc(h.parents))))
 	mux.HandleFunc("/put", withLogging(requestFunc(h.put)))
 	mux.HandleFunc("/get", withLogging(requestFunc(h.get)))
 	mux.HandleFunc("/ctx", withLogging(requestFunc(h.ctx)))

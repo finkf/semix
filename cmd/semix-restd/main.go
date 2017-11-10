@@ -45,7 +45,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("starting the server")
+	log.Printf("starting the server on %s", host)
 	log.Fatal(s.ListenAndServe())
 }
 

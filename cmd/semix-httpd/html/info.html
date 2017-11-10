@@ -9,21 +9,21 @@
 		<h1>Semix Info</h1>
 		{{if .Concept}}
 		<h2>URL: <a href="{{.Concept.URL}}">{{.Concept.URL}}</a></h2>
-		<h2>Entries</h2>
-		<ul>
-			{{range .Entries}}
-			<li>{{.}}</li>
-			{{end}}
-		</ul>
-		<h2>Links</h2>
+		<h2>Links (<a href="/parents?url={{.Concept.URL}}">Parents</a>)</h2>
 		<ul>
 			{{range $p, $o := .Predicates}}
-			<li><a href="/info?q={{$p.URL}}">{{$p.String}}</a></li>
+			<li><a href="/info?url={{$p.URL}}">{{$p.String}}</a></li>
 			<ul>
 				{{range $o}}
 				<li><a href="/info?q={{.URL}}">{{.String}}</a></li>
 				{{end}}
 			</ul>
+			{{end}}
+		</ul>
+		<h2>Dictionary entries</h2>
+		<ul>
+			{{range .Entries}}
+			<li>{{.}}</li>
 			{{end}}
 		</ul>
 		{{end}}

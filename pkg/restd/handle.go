@@ -7,18 +7,17 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/query"
+	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
 type handle struct {
-	g         *semix.Graph
-	d         semix.Dictionary
+	searcher  searcher.Searcher
 	i         index.Interface
 	dfa       semix.DFA
 	dir, host string
@@ -58,20 +57,34 @@ func withLogging(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (h handle) search(r *http.Request) (interface{}, int, error) {
-	if r.Method != http.MethodGet {
-		return nil, http.StatusForbidden,
-			fmt.Errorf("invalid request method: %s", r.Method)
+func withGet(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			writeError(w, http.StatusBadRequest,
+				fmt.Errorf("invalid request method: %s", r.Method))
+			return
+		}
+		f(w, r)
 	}
+}
+
+func (h handle) parents(r *http.Request) (interface{}, int, error) {
+	q := r.URL.Query().Get("url")
+	if len(q) == 0 {
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query: %v", q)
+	}
+	cs := h.searcher.SearchParents(q, -1)
+	return cs, http.StatusOK, nil
+}
+
+func (h handle) search(r *http.Request) (interface{}, int, error) {
 	q := r.URL.Query().Get("q")
 	if len(q) == 0 {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query: %v", q)
 	}
-	cs := Search(h.g, h.d, q)
-	for _, c := range cs {
-		log.Printf("c = %v", *c)
-	}
+	cs := h.searcher.SearchConcepts(q, -1)
 	return cs, http.StatusOK, nil
 }
 
@@ -80,23 +93,12 @@ func (h handle) info(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusForbidden,
 			fmt.Errorf("invalid request method: %s", r.Method)
 	}
-	qs := r.URL.Query()["q"]
-	if len(qs) != 1 {
-		return nil, http.StatusBadRequest,
-			fmt.Errorf("invalid query: %v", qs)
-	}
-	q, err := url.QueryUnescape(qs[0])
-	if err != nil {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid url: %s", qs[0])
-	}
-	c, found := h.g.FindByURL(q)
+	url := r.URL.Query().Get("q")
+	c, found := h.searcher.FindByURL(url)
 	if !found {
-		c, found = h.g.FindByID(h.d[q])
-		if !found {
-			return nil, http.StatusNotFound, fmt.Errorf("invalid query: %s", q)
-		}
+		return nil, http.StatusNotFound, fmt.Errorf("invalid url: %s", url)
 	}
-	entries := SearchDictionaryEntries(h.d, c)
+	entries := h.searcher.SearchDictionaryEntries(url)
 	info := ConceptInfo{Concept: c, Entries: entries}
 	return info, http.StatusOK, nil
 }
@@ -129,12 +131,9 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusForbidden,
 			fmt.Errorf("invalid method: %s", r.Method)
 	}
-	if len(r.URL.Query()["q"]) != 1 {
-		return nil, http.StatusBadRequest,
-			fmt.Errorf("invalid query parameter q=%v", r.URL.Query()["q"])
-	}
-	q, err := query.NewFix(r.URL.Query()["q"][0], func(arg string) (string, error) {
-		cs := Search(h.g, h.d, arg)
+	q := r.URL.Query().Get("q")
+	qu, err := query.NewFix(q, func(arg string) (string, error) {
+		cs := h.searcher.SearchConcepts(arg, 1)
 		if len(cs) == 0 {
 			return "", fmt.Errorf("cannot find %q", arg)
 		}
@@ -143,14 +142,14 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 	if err != nil {
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)
 	}
-	es, err := q.Execute(h.i)
+	es, err := qu.Execute(h.i)
 	if err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not execute query %q: %v", q, err)
 	}
 	var ts Tokens
 	for _, e := range es {
-		t, err := NewTokenFromEntry(h.g, e)
+		t, err := NewTokenFromEntry(h.searcher, e)
 		if err != nil {
 			return nil, http.StatusInternalServerError,
 				fmt.Errorf("cannot convert %v: %v", e, err)

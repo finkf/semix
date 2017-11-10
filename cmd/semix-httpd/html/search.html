@@ -6,7 +6,7 @@
 	</head>
 	<body>
 		<a href="/">Home</a>
-		<h1>Search results</h1>
+		<h1>Search results for {{.Title}}</h1>
 		<ul>
 		{{range $i, $c := .Concepts}}
 			<li><a href="/info?q={{$c.URL}}">{{$c.String}}</a></li>

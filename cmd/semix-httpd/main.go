@@ -64,7 +64,8 @@ func main() {
 	http.HandleFunc("/search", withLogging(withGet(handle(search))))
 	http.HandleFunc("/ctx", withLogging(withGet(handle(ctx))))
 	http.HandleFunc("/put", withLogging(handle(put)))
-	log.Printf("starting the server")
+	http.HandleFunc("/parents", withLogging(withGet(handle(parents))))
+	log.Printf("starting the server on %s", host)
 	log.Fatal(http.ListenAndServe(host, nil))
 }
 
@@ -120,7 +121,22 @@ func search(r *http.Request) (*template.Template, interface{}, status) {
 	if err := semixdGet(fmt.Sprintf("/search?q=%s", url.QueryEscape(q)), &cs); err != nil {
 		return nil, nil, internalError(err)
 	}
-	return searchtmpl, struct{ Concepts []semix.Concept }{cs}, ok()
+	return searchtmpl, struct {
+		Title    string
+		Concepts []semix.Concept
+	}{fmt.Sprintf("%q", q), cs}, ok()
+}
+
+func parents(r *http.Request) (*template.Template, interface{}, status) {
+	var cs []semix.Concept
+	q := r.URL.Query().Get("url")
+	if err := semixdGet(fmt.Sprintf("/parents?url=%s", url.QueryEscape(q)), &cs); err != nil {
+		return nil, nil, internalError(err)
+	}
+	return searchtmpl, struct {
+		Title    string
+		Concepts []semix.Concept
+	}{fmt.Sprintf("parents of %q", q), cs}, ok()
 }
 
 func info(r *http.Request) (*template.Template, interface{}, status) {
