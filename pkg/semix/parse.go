@@ -183,7 +183,9 @@ func (parser *parser) addLabels(entry, url string, ambig, name bool) error {
 		// name can/should never be part of a split
 		if name && !ambig {
 			if _, ok := parser.names[url]; !ok {
-				parser.names[url] = normalized
+				// the name should not be normalized, so it looks nicer.
+				// the name is still put normalized into the dictionary.
+				parser.names[url] = expanded
 			}
 		}
 		parser.labels[normalized] = label{url, ambig}
