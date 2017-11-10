@@ -3,7 +3,6 @@ package semix
 import (
 	"context"
 	"io/ioutil"
-	"regexp"
 	"sync"
 )
 
@@ -39,9 +38,6 @@ func Filter(ctx context.Context, s Stream) Stream {
 	return fstream
 }
 
-// var normalizeRegexp = regexp.MustCompile(`(\s|\pP|\pS)+`)
-var normalizeRegexp = regexp.MustCompile(`[\s\pP\pS\pZ]+`)
-
 // Normalize normalizes the token input.
 // It prepends and appends one ' ' character to the token.
 // All sequences of one or more unicode punctuation or unicode whitespaces
@@ -59,8 +55,7 @@ func Normalize(ctx context.Context, s Stream) Stream {
 					return
 				}
 				if t.Err == nil {
-					t.Token.Token = normalizeRegexp.
-						ReplaceAllLiteralString(" "+t.Token.Token+" ", " ")
+					t.Token.Token = NormalizeString(t.Token.Token, true)
 				}
 				nstream <- t
 			}
