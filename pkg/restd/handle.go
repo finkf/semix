@@ -93,7 +93,7 @@ func (h handle) info(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusForbidden,
 			fmt.Errorf("invalid request method: %s", r.Method)
 	}
-	url := r.URL.Query().Get("q")
+	url := r.URL.Query().Get("url")
 	c, found := h.searcher.FindByURL(url)
 	if !found {
 		return nil, http.StatusNotFound, fmt.Errorf("invalid url: %s", url)

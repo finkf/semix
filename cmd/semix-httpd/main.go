@@ -26,16 +26,17 @@ type Config struct {
 }
 
 var (
-	infotmpl   *template.Template
-	puttmpl    *template.Template
-	indextmpl  *template.Template
-	gettmpl    *template.Template
-	ctxtmpl    *template.Template
-	searchtmpl *template.Template
-	dir        string
-	host       string
-	restHost   string
-	help       bool
+	infotmpl    *template.Template
+	puttmpl     *template.Template
+	indextmpl   *template.Template
+	gettmpl     *template.Template
+	ctxtmpl     *template.Template
+	searchtmpl  *template.Template
+	dir         string
+	host        string
+	restHost    string
+	faviconPath string
+	help        bool
 )
 
 func init() {
@@ -57,6 +58,7 @@ func main() {
 	gettmpl = template.Must(template.ParseFiles(filepath.Join(dir, "get.html")))
 	ctxtmpl = template.Must(template.ParseFiles(filepath.Join(dir, "ctx.html")))
 	searchtmpl = template.Must(template.ParseFiles(filepath.Join(dir, "search.html")))
+	faviconPath = filepath.Join(dir, "favicon.ico")
 	http.HandleFunc("/", withLogging(withGet(handle(home))))
 	http.HandleFunc("/index", withLogging(withGet(handle(home))))
 	http.HandleFunc("/info", withLogging(withGet(handle(info))))
@@ -65,6 +67,7 @@ func main() {
 	http.HandleFunc("/ctx", withLogging(withGet(handle(ctx))))
 	http.HandleFunc("/put", withLogging(handle(put)))
 	http.HandleFunc("/parents", withLogging(withGet(handle(parents))))
+	http.HandleFunc("/favicon.ico", withLogging(withGet(favicon)))
 	log.Printf("starting the server on %s", host)
 	log.Fatal(http.ListenAndServe(host, nil))
 }
@@ -94,6 +97,11 @@ func handle(f func(*http.Request) (*template.Template, interface{}, status)) fun
 			log.Printf("could not write html: %v", err)
 		}
 	}
+}
+
+func favicon(w http.ResponseWriter, r *http.Request) {
+	log.Printf("FAVICON")
+	http.ServeFile(w, r, faviconPath)
 }
 
 func withLogging(f http.HandlerFunc) http.HandlerFunc {
@@ -140,9 +148,9 @@ func parents(r *http.Request) (*template.Template, interface{}, status) {
 }
 
 func info(r *http.Request) (*template.Template, interface{}, status) {
-	q := r.URL.Query().Get("q")
+	q := r.URL.Query().Get("url")
 	var info restd.ConceptInfo
-	if err := semixdGet(fmt.Sprintf("/info?q=%s", url.QueryEscape(q)), &info); err != nil {
+	if err := semixdGet(fmt.Sprintf("/info?url=%s", url.QueryEscape(q)), &info); err != nil {
 		return nil, nil, internalError(err)
 	}
 	return infotmpl, info, ok()
