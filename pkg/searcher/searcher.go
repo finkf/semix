@@ -38,7 +38,7 @@ func (s Searcher) SearchConcepts(q string, n int) []*semix.Concept {
 	if c, ok := s.graph.FindByURL(q); ok {
 		return []*semix.Concept{c}
 	}
-	if id, ok := s.dict[q]; ok {
+	if id, ok := s.dict[semix.NormalizeString(q, false)]; ok {
 		if c, ok := s.graph.FindByID(id); ok {
 			return []*semix.Concept{c}
 		}
@@ -99,6 +99,7 @@ func abs(id int32) int32 {
 }
 
 func (s Searcher) searchMatchingConcepts(q string, n int) []*semix.Concept {
+	normalized := semix.NormalizeString(q, false)
 	set := make(map[string]bool)
 	var res []*semix.Concept
 	addToResults := func(c *semix.Concept) {
@@ -116,7 +117,7 @@ func (s Searcher) searchMatchingConcepts(q string, n int) []*semix.Concept {
 		if strings.Contains(c.URL(), q) {
 			addToResults(c)
 		}
-		if strings.Contains(c.Name, q) {
+		if strings.Contains(c.Name, normalized) {
 			addToResults(c)
 		}
 	}
@@ -125,7 +126,7 @@ func (s Searcher) searchMatchingConcepts(q string, n int) []*semix.Concept {
 		if done() {
 			break
 		}
-		if strings.Contains(entry, q) {
+		if strings.Contains(entry, normalized) {
 			if c, ok := s.graph.FindByID(id); ok {
 				addToResults(c)
 			}
