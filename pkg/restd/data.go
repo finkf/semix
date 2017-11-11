@@ -30,9 +30,9 @@ func (info ConceptInfo) Predicates() map[*semix.Concept][]*semix.Concept {
 
 // Token mimics semix.Token
 type Token struct {
-	Token, Path   string
-	Concept       *semix.Concept
-	Begin, End, L int
+	Token, Path, RelationURL string
+	Concept                  *semix.Concept
+	Begin, End, L            int
 }
 
 // NewTokens converts a semix.Token to an array of tokens.
@@ -130,12 +130,13 @@ func NewTokenFromEntry(s searcher.Searcher, e index.Entry) (Token, error) {
 		return Token{}, fmt.Errorf("invalid url %q", e.ConceptURL)
 	}
 	return Token{
-		Token:   e.Token,
-		Path:    e.Path,
-		Begin:   e.Begin,
-		End:     e.End,
-		L:       e.L,
-		Concept: c,
+		Token:       e.Token,
+		Path:        e.Path,
+		Begin:       e.Begin,
+		End:         e.End,
+		RelationURL: e.RelationURL,
+		L:           e.L,
+		Concept:     c,
 	}, nil
 }
 

@@ -12,11 +12,14 @@
 		<div id='result-table'>
 			<table>
 				<th>Match</th>
+				<th>Predicate</th>
 				<th>Concept</th>
 				<th>Document</th>
 				{{range .Tokens}}
 				<tr>
-					<td><a href="/ctx?url={{.Path}}&b={{.Begin}}&e={{.End}}&n=500">{{.Token}} ({{.Begin}},{{.End}})</a></td>
+					<td><a href="/ctx?url={{.Path}}&b={{.Begin}}&e={{.End}}&n=500">
+							{{.Token}} ({{.Begin}},{{.End}})</a></td>
+					<td><a href="/info?url={{.RelationURL}}">{{.RelationURL}}</a></td>
 					<td><a href="/info?url={{.Concept.URL}}">{{.Concept.String}}</a></td>
 					<td><a target="_blank" href="{{.Path}}">{{.Path}}</a></td>
 				</tr>

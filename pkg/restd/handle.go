@@ -142,6 +142,7 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 	if err != nil {
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)
 	}
+	log.Printf("executing query: %s", qu)
 	es, err := qu.Execute(h.i)
 	if err != nil {
 		return nil, http.StatusInternalServerError,
