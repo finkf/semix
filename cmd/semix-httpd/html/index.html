@@ -3,46 +3,16 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<title>Semix</title>
+		<script type="text/javascript" src="/js/semix.js"></script>
 	</head>
 	<body>
 		<h1>Semix</h1>
 		<h2>Query index</h2>
 		<form id='query-index-form' method='get' action='/get'>
-			<input id='query-index-input-predicates' type='text' placeholder='Predicates' name='q'>
-			<input id='query-index-input-concepts' type='text' placeholder='Concepts' name='q' required>
-			<input id='query-index-input-button' type='button' value='query'>
+			<input id='query-index-input-predicates' type='text' placeholder='Predicates' name='q' oninput='SetQueryButtonText();'>
+			<input id='query-index-input-concepts' type='text' placeholder='Concepts' name='q' oninput='SetQueryButtonText();'>
+			<input id='query-index-input-button' type='button' value='query' onclick='ExecuteQuery();'>
 		</form>
-		<script type="text/javascript">
-			document.getElementById('query-index-input-button')
-				.addEventListener("click", function(event) {
-					p = document.getElementById('query-index-input-predicates').value;
-					if (p == '*') {
-						p = '*';
-					} else if (p.length == 0) {
-						p = '';
-					} else {
-						ps = p.split(/\s*,\s*/);
-						for (i = 0; i < ps.length; i++) {
-							ps[i] = '"' + ps[i] + '"';
-						}
-						p = ps.join(",");
-					}
-					c = document.getElementById('query-index-input-concepts').value;
-					cs = c.split(/\s*,\s*/);
-					for (i = 0; i < cs.length; i++) {
-						cs[i] = '"' + cs[i] + '"';
-					}
-					c = cs.join(",")
-					q = '?(';
-					if (p.length != 0) {
-						q = '?(' + p + '({' + c + '}))';
-					} else {
-						q = '?({' + c + '})';
-					}
-					q = '/get?q=' + encodeURIComponent(q);
-					document.location = q;
-				});
-		</script>
 		<h2>Search concepts</h2>
 		<div id='search'>
 			<form id='search-info-form' method='get' action='/search'>
