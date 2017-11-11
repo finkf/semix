@@ -3,6 +3,7 @@ package semix
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 )
 
@@ -57,14 +58,10 @@ func CombineURLs(urls ...string) string {
 func combineTwoURLs(a, b string) string {
 	ai := strings.LastIndex(a, "/")
 	bi := strings.LastIndex(b, "/")
-	if ai == -1 || bi == -1 || ai != bi || a[:ai] != b[:bi] {
-		pref := commonPrefix(a, b)
-		if pref == 0 || pref >= len(b) {
-			return a + "-" + b
-		}
-		return a + "-" + b[pref:]
+	if ai == -1 || bi == -1 {
+		return a + "-" + b
 	}
-	return a + "-" + b[bi+1:]
+	return a + "-" + url.PathEscape(b[bi+1:])
 }
 
 func commonPrefix(a, b string) int {

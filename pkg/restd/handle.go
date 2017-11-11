@@ -132,6 +132,7 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 			fmt.Errorf("invalid method: %s", r.Method)
 	}
 	q := r.URL.Query().Get("q")
+	log.Printf("query: %s", q)
 	qu, err := query.NewFix(q, func(arg string) (string, error) {
 		cs := h.searcher.SearchConcepts(arg, 1)
 		if len(cs) == 0 {
@@ -142,6 +143,7 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 	if err != nil {
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)
 	}
+	log.Printf("executing query: %s", qu)
 	es, err := qu.Execute(h.i)
 	if err != nil {
 		return nil, http.StatusInternalServerError,

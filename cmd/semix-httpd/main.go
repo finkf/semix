@@ -26,17 +26,16 @@ type Config struct {
 }
 
 var (
-	infotmpl    *template.Template
-	puttmpl     *template.Template
-	indextmpl   *template.Template
-	gettmpl     *template.Template
-	ctxtmpl     *template.Template
-	searchtmpl  *template.Template
-	dir         string
-	host        string
-	restHost    string
-	faviconPath string
-	help        bool
+	infotmpl   *template.Template
+	puttmpl    *template.Template
+	indextmpl  *template.Template
+	gettmpl    *template.Template
+	ctxtmpl    *template.Template
+	searchtmpl *template.Template
+	dir        string
+	host       string
+	restHost   string
+	help       bool
 )
 
 func init() {
@@ -58,7 +57,6 @@ func main() {
 	gettmpl = template.Must(template.ParseFiles(filepath.Join(dir, "get.html")))
 	ctxtmpl = template.Must(template.ParseFiles(filepath.Join(dir, "ctx.html")))
 	searchtmpl = template.Must(template.ParseFiles(filepath.Join(dir, "search.html")))
-	faviconPath = filepath.Join(dir, "favicon.ico")
 	http.HandleFunc("/", withLogging(withGet(handle(home))))
 	http.HandleFunc("/index", withLogging(withGet(handle(home))))
 	http.HandleFunc("/info", withLogging(withGet(handle(info))))
@@ -68,6 +66,7 @@ func main() {
 	http.HandleFunc("/put", withLogging(handle(put)))
 	http.HandleFunc("/parents", withLogging(withGet(handle(parents))))
 	http.HandleFunc("/favicon.ico", withLogging(withGet(favicon)))
+	http.HandleFunc("/js/semix.js", withLogging(withGet(semixJS)))
 	log.Printf("starting the server on %s", host)
 	log.Fatal(http.ListenAndServe(host, nil))
 }
@@ -100,8 +99,11 @@ func handle(f func(*http.Request) (*template.Template, interface{}, status)) fun
 }
 
 func favicon(w http.ResponseWriter, r *http.Request) {
-	log.Printf("FAVICON")
-	http.ServeFile(w, r, faviconPath)
+	http.ServeFile(w, r, filepath.Join(dir, "favicon.ico"))
+}
+
+func semixJS(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(dir, "js", "semix.js"))
 }
 
 func withLogging(f http.HandlerFunc) http.HandlerFunc {
