@@ -134,13 +134,7 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 	}
 	q := r.URL.Query().Get("q")
 	log.Printf("query: %s", q)
-	qu, err := query.NewFix(q, func(arg string) (string, error) {
-		cs := h.searcher.SearchConcepts(arg, 1)
-		if len(cs) == 0 {
-			return "", fmt.Errorf("cannot find %q", arg)
-		}
-		return cs[0].URL(), nil
-	})
+	qu, err := query.NewFix(q, h.getFixFunc())
 	if err != nil {
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)
 	}
@@ -160,6 +154,27 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 		ts.Tokens = append(ts.Tokens, t)
 	}
 	return ts, http.StatusOK, nil
+}
+
+func (h handle) getFixFunc() query.FixFunc {
+	return func(arg string) ([]string, error) {
+		cs := h.searcher.SearchConcepts(arg, 1)
+		if len(cs) == 0 {
+			return nil, fmt.Errorf("cannot find %q", arg)
+		}
+		var urls []string
+		for _, c := range cs {
+			if c.Ambiguous() {
+				for i := 0; i < c.EdgesLen(); i++ {
+					e := c.EdgeAt(i)
+					urls = append(urls, e.O.URL())
+				}
+			} else {
+				urls = append(urls, c.URL())
+			}
+		}
+		return urls, nil
+	}
 }
 
 func (h handle) ctx(r *http.Request) (interface{}, int, error) {
