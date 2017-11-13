@@ -10,15 +10,15 @@
 	</head>
 	<body>
 		<a href="/">Home</a>
-		<h1>Semix Put</h1>
-		<h2>Results</h2>
+		<h1>Semix Get</h1>
+		<h2>Results for {{printf "%s" .Query}}</h2>
 		<div id='result-table'>
 			<table>
 				<th>Match</th>
 				<th>Predicate</th>
 				<th>Concept</th>
 				<th>Document</th>
-				{{range .Tokens}}
+				{{range .Tokens.Tokens}}
 					{{if eq .L 0}}
 					<tr>
 					{{else}}

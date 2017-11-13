@@ -168,7 +168,10 @@ func get(r *http.Request) (*template.Template, interface{}, status) {
 	if err := semixdGet(fmt.Sprintf("/get?q=%s", url.QueryEscape(q)), &ts); err != nil {
 		return nil, nil, internalError(err)
 	}
-	return gettmpl, ts, ok()
+	return gettmpl, struct {
+		Query  string
+		Tokens restd.Tokens
+	}{q, ts}, ok()
 }
 
 func ctx(r *http.Request) (*template.Template, interface{}, status) {
