@@ -194,13 +194,7 @@ func encodeL(l int, a bool) uint8 {
 }
 
 func decodeL(x uint8) (int, bool) {
-	var a bool
-	var l int
-	if x&0x80 > 0 {
-		a = true
-	}
-	l = int(x & 0x7f)
-	return l, a
+	return int(x & 0x7f), x&0x80 > 0
 }
 
 func escapeURL(u string) string {
