@@ -72,32 +72,21 @@ type Tokens struct {
 
 // Counts returns a sorted slice of Counts ordered by the according predicates.
 func (ts Tokens) Counts() map[*semix.Concept][]Count {
-	urls := make(map[string]*semix.Concept)
-	register := func(c *semix.Concept) *semix.Concept {
-		if _, ok := urls[c.URL()]; !ok {
-			urls[c.URL()] = c
-		}
-		return urls[c.URL()]
-	}
 	m := make(map[*semix.Concept]map[*semix.Concept]int)
 	var n int
 	for _, t := range ts.Tokens {
 		n++
-		preds := make(map[*semix.Concept]bool)
+		if t.Concept.Ambiguous() {
+			continue
+		}
 		t.Concept.EachEdge(func(edge semix.Edge) {
-			p := register(edge.P)
-			o := register(edge.O)
+			p := edge.P
+			o := edge.O
 			if m[p] == nil {
 				m[p] = make(map[*semix.Concept]int)
 			}
 			m[p][o]++
-			preds[p] = true
 		})
-		/*
-			for p := range preds {
-				m[p][register(t.Concept)]++
-			}
-		*/
 	}
 	counts := make(map[*semix.Concept][]Count, len(m))
 	for p := range m {
