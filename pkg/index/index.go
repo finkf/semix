@@ -26,7 +26,7 @@ type Interface interface {
 }
 
 // Put reads all tokens from a given stream into an index.
-func Put(ctx context.Context, index Putter, s semix.Stream) semix.Stream {
+func Put(ctx context.Context, putter Putter, s semix.Stream) semix.Stream {
 	istream := make(chan semix.StreamToken)
 	go func() {
 		defer close(istream)
@@ -38,7 +38,7 @@ func Put(ctx context.Context, index Putter, s semix.Stream) semix.Stream {
 				if !ok {
 					return
 				}
-				err := index.Put(t.Token)
+				err := putter.Put(t.Token)
 				if err != nil {
 					istream <- semix.StreamToken{Err: err}
 				} else {
