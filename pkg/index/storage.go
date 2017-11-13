@@ -52,11 +52,12 @@ func (s dirStorage) Put(url string, es []Entry) error {
 		ds[i] = dse{
 			S: es[i].Token,
 			P: es[i].Path,
-			B: es[i].Begin,
-			E: es[i].End,
+			B: uint32(es[i].Begin),
+			E: uint32(es[i].End),
+			L: encodeL(es[i].L, es[i].Ambiguous),
 		}
 		if es[i].RelationURL != "" {
-			ds[i].R = s.register.Register(es[i].RelationURL)
+			ds[i].R = int32(s.register.Register(es[i].RelationURL))
 		}
 	}
 	return s.write(url, ds)
@@ -95,13 +96,16 @@ func (s dirStorage) Get(url string, f func(Entry)) error {
 			return nil
 		}
 		for _, d := range ds {
+			l, a := decodeL(d.L)
 			f(Entry{
 				ConceptURL:  url,
-				RelationURL: s.lookup(d.R),
+				RelationURL: s.lookup(int(d.R)),
 				Token:       d.S,
 				Path:        d.P,
-				Begin:       d.B,
-				End:         d.E,
+				Begin:       int(d.B),
+				End:         int(d.E),
+				L:           l,
+				Ambiguous:   a,
 			})
 		}
 	}
@@ -175,13 +179,32 @@ func readBlock(r io.Reader) ([]dse, error) {
 // E is the end position
 // R is the relation id
 type dse struct {
-	S, P    string
-	B, E, R int
+	S, P string
+	B, E uint32
+	R    int32
+	L    uint8
+}
+
+func encodeL(l int, a bool) uint8 {
+	x := uint8(l) & 0x7f
+	if a {
+		x |= 0x80
+	}
+	return x
+}
+
+func decodeL(x uint8) (int, bool) {
+	var a bool
+	var l int
+	if x&0x80 > 0 {
+		a = true
+	}
+	l = int(x & 0x7f)
+	return l, a
 }
 
 func escapeURL(u string) string {
-	u = strings.Replace(u, "http://", "", 1)
-	u = strings.Replace(u, "https://", "", 1)
+	u = strings.Replace(u, "https?://", "", 1)
 	u = strings.Map(func(r rune) rune {
 		if r == '/' {
 			return '.'
