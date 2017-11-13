@@ -148,7 +148,11 @@ func putAllAmbiguous(t semix.Token, f func(Entry) error) error {
 	for i := 0; i < n; i++ {
 		e := c.EdgeAt(i)
 		t.Concept = e.O
-		if err := putAllWithError(t, e.L, f); err != nil {
+		l := e.L
+		if l == 0 {
+			l = -1
+		}
+		if err := putAllWithError(t, l, f); err != nil {
 			return err
 		}
 	}
