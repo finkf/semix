@@ -10,6 +10,7 @@ import (
 type Entry struct {
 	ConceptURL, Path, RelationURL, Token string
 	Begin, End, L                        int
+	Ambiguous                            bool
 }
 
 // Putter represents a simple interface to put tokens into an index.
