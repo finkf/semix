@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -49,7 +48,7 @@ func main() {
 	log.Fatal(s.ListenAndServe())
 }
 
-func server() (*http.Server, error) {
+func server() (*restd.Server, error) {
 	index, err := index.New(dir, index.DefaultBufferSize)
 	if err != nil {
 		return nil, err

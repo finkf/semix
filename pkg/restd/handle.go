@@ -19,7 +19,7 @@ import (
 
 type handle struct {
 	searcher  searcher.Searcher
-	i         index.Interface
+	index     index.Interface
 	dfa       semix.DFA
 	dir, host string
 }
@@ -139,7 +139,7 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)
 	}
 	log.Printf("executing query: %s", qu)
-	es, err := qu.Execute(h.i)
+	es, err := qu.Execute(h.index)
 	if err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not execute query %q: %v", q, err)
@@ -251,7 +251,7 @@ func (h handle) readToken(url string) (semix.Token, error) {
 
 func (h handle) makeIndexStream(d semix.Document) (semix.Stream, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background())
-	s := index.Put(ctx, h.i,
+	s := index.Put(ctx, h.index,
 		semix.Filter(ctx,
 			// semix.Match(ctx, semix.FuzzyDFAMatcher{DFA: semix.NewFuzzyDFA(3, h.dfa)},
 			semix.Match(ctx, semix.DFAMatcher{DFA: h.dfa},
