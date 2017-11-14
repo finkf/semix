@@ -94,10 +94,7 @@ func (d *HTTPDocument) Read(b []byte) (int, error) {
 			return 0, err
 		}
 		if strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
-			htmlReader, err := NewHTMLDocument(d.url, resp.Body)
-			if err != nil {
-				return 0, err
-			}
+			htmlReader := NewHTMLDocument(d.url, resp.Body)
 			d.r = htmlReader
 		} else {
 			d.r = resp.Body
@@ -145,9 +142,41 @@ func (d *FileDocument) Read(b []byte) (int, error) {
 	return d.file.Read(b)
 }
 
-// NewHTMLDocument returns a new HTML Document reader or
-// an error if the parsing of the HTML failed.
-func NewHTMLDocument(path string, r io.Reader) (Document, error) {
+// NewHTMLDocument returns a new HTML Document reader.
+// If the parsing of the html fails, its Read method will return the
+// appropriate error.
+func NewHTMLDocument(path string, r io.Reader) Document {
+	return &htmlDocument{
+		in:   r,
+		path: path,
+	}
+}
+
+type htmlDocument struct {
+	in, out io.Reader
+	path    string
+}
+
+func (d *htmlDocument) Path() string {
+	return d.path
+}
+
+func (d *htmlDocument) Close() error {
+	return nil
+}
+
+func (d *htmlDocument) Read(b []byte) (int, error) {
+	if d.out == nil {
+		bs, err := readHTML(d.in)
+		if err != nil {
+			return 0, err
+		}
+		d.out = bytes.NewBuffer(bs)
+	}
+	return d.out.Read(b)
+}
+
+func readHTML(r io.Reader) ([]byte, error) {
 	z := html.NewTokenizer(r)
 	var bs []byte
 	var tags tags
@@ -172,7 +201,7 @@ loop:
 			}
 		}
 	}
-	return NewReaderDocument(path, bytes.NewBuffer(bs)), nil
+	return bs, nil
 }
 
 type tags []string

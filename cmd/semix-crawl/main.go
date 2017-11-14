@@ -182,14 +182,9 @@ func handle(ctx context.Context, url *url.URL) {
 	}
 	content := buffer.String()
 	go dispatchLinks(ctx, content, url)
-	doc, err := semix.NewHTMLDocument(url.String(), strings.NewReader(content))
-	if err != nil {
-		log.Printf("could not create document: %s", err)
-		return
-	}
 	select {
 	case <-ctx.Done():
-	case crawls <- doc:
+	case crawls <- semix.NewHTMLDocument(url.String(), strings.NewReader(content)):
 	}
 }
 
