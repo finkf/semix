@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,7 +32,7 @@ func OpenDirStorage(dir string) (Storage, error) {
 	is, err := os.Open(path)
 	if err != nil {
 		// ignore io errors
-		log.Printf("ignoring error: %v", err)
+		// log.Printf("ignoring error: %v", err)
 		return s, nil
 	}
 	defer is.Close()
@@ -67,7 +66,7 @@ func (s dirStorage) Put(url string, es []Entry) error {
 func (s dirStorage) write(url string, ds []dse) error {
 	path := s.path(url)
 	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
-	log.Printf("wrting %d entries to %s", len(ds), path)
+	// log.Printf("wrting %d entries to %s", len(ds), path)
 	os, err := os.OpenFile(path, flags, 0666)
 	if err != nil {
 		return fmt.Errorf("could not open %q: %v", path, err)
@@ -89,7 +88,7 @@ func (s dirStorage) Get(url string, f func(Entry)) error {
 		return fmt.Errorf("could not open %q: %v", path, err)
 	}
 	defer is.Close()
-	log.Printf("reading path %s", path)
+	// log.Printf("reading path %s", path)
 	for {
 		ds, err := readBlock(is)
 		if err != nil {
@@ -116,7 +115,7 @@ func (s dirStorage) Get(url string, f func(Entry)) error {
 
 func (s dirStorage) Close() error {
 	path := s.urlRegisterPath()
-	log.Printf("wrting register to %s", path)
+	// log.Printf("wrting register to %s", path)
 	os, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("cannot write %q: %v", path, err)
@@ -154,7 +153,7 @@ func writeBlock(w io.Writer, ds []dse) error {
 	if _, err := w.Write(buffer.Bytes()); err != nil {
 		return err
 	}
-	log.Printf("wrote %d entries", len(ds))
+	// log.Printf("wrote %d entries", len(ds))
 	return nil
 }
 
@@ -174,7 +173,7 @@ func readBlock(r io.Reader) ([]dse, error) {
 	d := gob.NewDecoder(dec)
 	var ds []dse
 	err := d.Decode(&ds)
-	log.Printf("read %d entries", len(ds))
+	// log.Printf("read %d entries", len(ds))
 	return ds, err
 }
 
@@ -208,9 +207,9 @@ func (s dirStorage) preparePath(u string) string {
 	u = strings.Replace(u, "http://", "", 1)
 	u = filepath.Join(s.dir, u)
 	p := filepath.Dir(u)
-	log.Printf("preparing: %s", p)
+	// log.Printf("preparing: %s", p)
 	if err := os.MkdirAll(p, os.ModePerm); err != nil {
-		log.Printf("could no prepare: %s: %s", p, err)
+		// log.Printf("could no prepare: %s: %s", p, err)
 	}
 	return u
 }
