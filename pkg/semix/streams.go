@@ -2,7 +2,6 @@ package semix
 
 import (
 	"context"
-	"io/ioutil"
 	"sync"
 )
 
@@ -56,6 +55,7 @@ func Normalize(ctx context.Context, s Stream) Stream {
 				}
 				if t.Err == nil {
 					t.Token.Token = NormalizeString(t.Token.Token, true)
+					t.Token.End = t.Token.Begin + len(t.Token.Token)
 				}
 				nstream <- t
 			}
@@ -172,7 +172,7 @@ func Read(ctx context.Context, ds ...Document) Stream {
 				select {
 				case <-ctx.Done():
 					return
-				case rstream <- readToken(d):
+				case rstream <- ReadStreamToken(d):
 				}
 			}(d)
 		}
@@ -181,18 +181,12 @@ func Read(ctx context.Context, ds ...Document) Stream {
 	return rstream
 }
 
-func readToken(d Document) StreamToken {
-	defer d.Close()
-	bs, err := ioutil.ReadAll(d)
+// ReadStreamToken reads a StreamToken from a document.
+// It simply wraps ReadToken and returns a StreamToken
+func ReadStreamToken(d Document) StreamToken {
+	token, err := ReadToken(d)
 	if err != nil {
 		return StreamToken{Err: err}
 	}
-	return StreamToken{
-		Token: Token{
-			Token: string(bs),
-			Path:  d.Path(),
-			Begin: 0,
-			End:   len(bs) + 2,
-		},
-	}
+	return StreamToken{Token: token}
 }

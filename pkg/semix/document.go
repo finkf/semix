@@ -3,6 +3,7 @@ package semix
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -14,6 +15,22 @@ import (
 type Document interface {
 	io.ReadCloser
 	Path() string
+}
+
+// ReadToken reads a single Token from a document.
+func ReadToken(d Document) (Token, error) {
+	defer d.Close()
+	bs, err := ioutil.ReadAll(d)
+	if err != nil {
+		return Token{}, err
+	}
+	content := string(bs)
+	return Token{
+		Token: content,
+		Path:  d.Path(),
+		Begin: 0,
+		End:   len(content),
+	}, nil
 }
 
 // ReaderDocument wraps an io.Reader.
