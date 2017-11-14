@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -33,6 +34,7 @@ func OpenDirStorage(dir string) (Storage, error) {
 	is, err := os.Open(path)
 	if err != nil {
 		// ignore io errors
+		log.Printf("ignoring error: %v", err)
 		return s, nil
 	}
 	defer is.Close()
@@ -66,6 +68,7 @@ func (s dirStorage) Put(url string, es []Entry) error {
 func (s dirStorage) write(url string, ds []dse) error {
 	path := s.path(url)
 	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
+	log.Printf("wrting %d entries to %s", len(ds), path)
 	os, err := os.OpenFile(path, flags, 0666)
 	if err != nil {
 		return fmt.Errorf("could not open %q: %v", path, err)
@@ -113,6 +116,7 @@ func (s dirStorage) Get(url string, f func(Entry)) error {
 
 func (s dirStorage) Close() error {
 	path := s.urlRegisterPath()
+	log.Printf("wrting register to %s", path)
 	os, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("cannot write %q: %v", path, err)
@@ -150,6 +154,7 @@ func writeBlock(w io.Writer, ds []dse) error {
 	if _, err := w.Write(buffer.Bytes()); err != nil {
 		return err
 	}
+	log.Printf("wrote %d entries", len(ds))
 	return nil
 }
 
@@ -169,6 +174,7 @@ func readBlock(r io.Reader) ([]dse, error) {
 	d := gob.NewDecoder(dec)
 	var ds []dse
 	err := d.Decode(&ds)
+	log.Printf("read %d entries", len(ds))
 	return ds, err
 }
 
