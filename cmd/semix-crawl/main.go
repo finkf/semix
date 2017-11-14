@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"bitbucket.org/fflo/semix/pkg/config"
@@ -29,7 +30,11 @@ var (
 	forbidden *regexp.Regexp
 	help      bool
 	max       int
-	jobs      int
+	maxjobs   int
+	links     chan *url.URL
+	crawls    chan semix.Document
+	cond      *sync.Cond
+	njobs     int
 )
 
 func init() {
@@ -40,9 +45,13 @@ func init() {
 	flag.StringVar(&conf, "config", "semix.toml", "configuration file")
 	flag.BoolVar(&help, "help", false, "print help")
 	flag.IntVar(&max, "max", 10, "max number of documents to process")
-	flag.IntVar(&jobs, "jobs", 100, "number of jobs")
+	flag.IntVar(&maxjobs, "jobs", 100, "number of jobs")
 	forbidden = regexp.MustCompile(f)
 	allowed = regexp.MustCompile(a)
+	njobs = 0
+	links = make(chan *url.URL, 1000)
+	crawls = make(chan semix.Document)
+	cond = sync.NewCond(&sync.Mutex{})
 }
 
 func main() {
@@ -54,12 +63,6 @@ func main() {
 	run(os.Args[len(os.Args)-flag.NArg():])
 }
 
-var (
-	dispatchc chan *url.URL
-	indexerc  chan webpage
-	pool      chan *url.URL
-)
-
 func run(args []string) {
 	g, d, err := config.Parse(conf)
 	if err != nil {
@@ -70,9 +73,6 @@ func run(args []string) {
 		log.Fatal(err)
 	}
 	defer idx.Close()
-	dispatchc = make(chan *url.URL, len(args))
-	indexerc = make(chan webpage)
-	pool = make(chan *url.URL, jobs)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream := index.Put(ctx, idx, semix.Filter(ctx,
@@ -84,7 +84,7 @@ func run(args []string) {
 			log.Printf("invalid url %s: %s", url, err)
 			continue
 		}
-		dispatchc <- url
+		links <- url
 	}
 	var tokens int
 	for t := range stream {
@@ -109,26 +109,17 @@ func crawl(ctx context.Context) semix.Stream {
 		defer cancel()
 		defer close(cstream)
 		go dispatcher(cctx)
-		go pooler(cctx)
 		var n int
 		for n < max {
 			select {
 			case <-ctx.Done():
 				return
-			case page := <-indexerc:
-				log.Printf("[%d] crawled page: %s", n+1, page.url)
-				token := semix.StreamToken{
-					Token: semix.Token{
-						Token: page.content,
-						Begin: 0,
-						End:   len(page.content),
-						Path:  page.url.String(),
-					},
-				}
+			case doc := <-crawls:
+				log.Printf("[%d] crawled page: %s", n+1, doc.Path())
 				select {
 				case <-ctx.Done():
 					return
-				case cstream <- token:
+				case cstream <- semix.ReadStreamToken(doc):
 					n++
 				}
 			}
@@ -144,15 +135,11 @@ loop:
 		select {
 		case <-ctx.Done():
 			return
-		case url := <-dispatchc:
+		case url := <-links:
 			if !shouldHandleURL(urlset, url) {
 				continue loop
 			}
-			select {
-			case <-ctx.Done():
-				return
-			case pool <- url:
-			}
+			go handle(ctx, url)
 		}
 	}
 }
@@ -172,21 +159,12 @@ func shouldHandleURL(urlset map[string]bool, url *url.URL) bool {
 	return true
 }
 
-func pooler(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case url := <-pool:
-			go handle(ctx, url)
-		}
-	}
-}
-
 func handle(ctx context.Context, url *url.URL) {
-	ms := time.Duration(rand.Intn(10000))
+	id := startJob()
+	defer stopJob()
+	ms := time.Duration(rand.Intn(500))
 	time.Sleep(time.Duration(ms * time.Millisecond))
-	log.Printf("sending request: [GET] %s", url)
+	log.Printf("[%d] sending request: [GET] %s", id, url)
 	res, err := http.Get(url.String())
 	if err != nil {
 		log.Printf("error: [GET] %s: %s", url, err)
@@ -204,10 +182,34 @@ func handle(ctx context.Context, url *url.URL) {
 	}
 	content := buffer.String()
 	go dispatchLinks(ctx, content, url)
+	doc, err := semix.NewHTMLDocument(url.String(), strings.NewReader(content))
+	if err != nil {
+		log.Printf("could not create document: %s", err)
+		return
+	}
 	select {
 	case <-ctx.Done():
-	case indexerc <- webpage{url, content}:
+	case crawls <- doc:
 	}
+}
+
+func startJob() int {
+	cond.L.Lock()
+	for njobs >= maxjobs {
+		cond.Wait()
+	}
+	defer cond.L.Unlock()
+	if njobs >= maxjobs {
+		panic("what?")
+	}
+	njobs++
+	return njobs
+}
+
+func stopJob() {
+	cond.L.Lock()
+	defer cond.L.Unlock()
+	njobs--
 }
 
 func dispatchLinks(ctx context.Context, content string, base *url.URL) {
@@ -229,7 +231,7 @@ func dispatchLinks(ctx context.Context, content string, base *url.URL) {
 						select {
 						case <-ctx.Done():
 							return
-						case dispatchc <- link:
+						case links <- link:
 						}
 						break
 					}
