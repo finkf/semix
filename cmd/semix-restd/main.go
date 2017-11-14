@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
@@ -44,8 +47,26 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	run(s)
+}
+
+func run(s *restd.Server) {
+	sigch := make(chan os.Signal)
+	signal.Notify(sigch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	go func() {
+		select {
+		case sig := <-sigch:
+			log.Printf("got signal: %d", sig)
+			if err := s.Close(); err != nil {
+				log.Fatalf("could not close server: %s", err)
+			}
+		}
+	}()
 	log.Printf("starting the server on %s", host)
-	log.Fatal(s.ListenAndServe())
+	err := s.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		log.Fatalf("listen and serve returned error: %s", err)
+	}
 }
 
 func server() (*restd.Server, error) {
