@@ -120,7 +120,7 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 	for t := range stream {
 		if t.Err != nil {
 			return nil, http.StatusInternalServerError,
-				fmt.Errorf("cannot index document: %v", err)
+				fmt.Errorf("cannot index document: %v", t.Err)
 		}
 		ts.Tokens = append(ts.Tokens, NewTokens(t.Token)...)
 	}
