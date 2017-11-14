@@ -54,7 +54,10 @@ func (i *index) Get(url string, f func(Entry)) error {
 }
 
 // Close closes the index and writes all buffered entries to disc.
-func (i *index) Close() error {
+func (i *index) Close() (err error) {
+	defer func() {
+		err = i.storage.Close()
+	}()
 	for url, es := range i.buffer {
 		if len(es) == 0 {
 			continue
@@ -63,7 +66,7 @@ func (i *index) Close() error {
 			return err
 		}
 	}
-	return nil
+	return err
 }
 
 // NewMemoryMap create a new in memory index, that uses

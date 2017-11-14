@@ -90,6 +90,7 @@ func (s dirStorage) Get(url string, f func(Entry)) error {
 		return fmt.Errorf("could not open %q: %v", path, err)
 	}
 	defer is.Close()
+	log.Printf("reading path %s", path)
 	for {
 		ds, err := readBlock(is)
 		if err != nil {
@@ -204,7 +205,8 @@ func decodeL(x uint8) (int, bool) {
 }
 
 func escapeURL(u string) string {
-	u = strings.Replace(u, "https?://", "", 1)
+	u = strings.Replace(u, "https://", "", 1)
+	u = strings.Replace(u, "http://", "", 1)
 	u = strings.Map(func(r rune) rune {
 		if r == '/' {
 			return '.'
