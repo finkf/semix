@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -128,11 +127,11 @@ func (s dirStorage) Close() error {
 }
 
 func (s dirStorage) path(url string) string {
-	return filepath.Join(s.dir, escapeURL(url)+".gob")
+	return s.preparePath(url + ".gob")
 }
 
 func (s dirStorage) urlRegisterPath() string {
-	return filepath.Join(s.dir, escapeURL("http://bitbucket.org/fflo/semix/url-register")+".gob")
+	return s.path("http://bitbucket.org/fflo/semix/url-register")
 }
 
 func (s dirStorage) lookup(id int) string {
@@ -204,14 +203,14 @@ func decodeL(x uint8) (int, bool) {
 	return int(x & 0x7f), x&0x80 > 0
 }
 
-func escapeURL(u string) string {
+func (s dirStorage) preparePath(u string) string {
 	u = strings.Replace(u, "https://", "", 1)
 	u = strings.Replace(u, "http://", "", 1)
-	u = strings.Map(func(r rune) rune {
-		if r == '/' {
-			return '.'
-		}
-		return r
-	}, u)
-	return url.PathEscape(u)
+	u = filepath.Join(s.dir, u)
+	p := filepath.Dir(u)
+	log.Printf("preparing: %s", p)
+	if err := os.MkdirAll(p, os.ModePerm); err != nil {
+		log.Printf("could no prepare: %s: %s", p, err)
+	}
+	return u
 }
