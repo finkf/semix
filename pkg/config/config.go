@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 
@@ -43,7 +42,6 @@ type Config struct {
 // Parse is a convinence fuction that parses a knowledge base
 // using a toml configuration file.
 func Parse(file string) (*semix.Graph, semix.Dictionary, error) {
-	log.Printf("file: %s", file)
 	c, err := Read(file)
 	if err != nil {
 		return nil, nil, err
@@ -53,19 +51,16 @@ func Parse(file string) (*semix.Graph, semix.Dictionary, error) {
 
 // Read reads a configuration from a file.
 func Read(file string) (*Config, error) {
-	log.Printf("file: %s", file)
 	var c Config
 	// c := new(Config)
 	if _, err := toml.DecodeFile(file, &c); err != nil {
 		return nil, err
 	}
-	log.Printf("%v", c)
 	return &c, nil
 }
 
 // Parse parses the configuration and returns the graph and the dictionary.
 func (c Config) Parse() (*semix.Graph, semix.Dictionary, error) {
-	log.Printf("file: %s", c.Parser.File)
 	is, err := os.Open(c.Parser.File)
 	if err != nil {
 		return nil, nil, err
@@ -91,7 +86,6 @@ func (c Config) traits() semix.Traits {
 }
 
 func (c Config) newParser(r io.Reader) (semix.Parser, error) {
-	log.Printf("%v", c)
 	switch strings.ToLower(c.Parser.Type) {
 	case RDFXML:
 		return rdfxml.NewParser(r), nil
