@@ -31,17 +31,25 @@ func (g *Graph) FindByURL(str string) (*Concept, bool) {
 }
 
 // FindByID searches a concept by its ID.
+// If a negative ID is given, a new split concept is returned,
+// that links to the concept with the according positive ID.
 func (g *Graph) FindByID(id int32) (*Concept, bool) {
 	if id == 0 {
 		return nil, false
 	}
+	var ambiguous bool
 	if id < 0 {
 		id = -id
+		ambiguous = true
 	}
 	if int(id) > len(g.cArr) {
 		return nil, false
 	}
-	return g.cArr[id-1], true
+	c := g.cArr[id-1]
+	if ambiguous {
+		return g.makeSplitConcept(c), true
+	}
+	return c, true
 }
 
 // ConceptsLen returns the number of concepts in the array.
@@ -77,4 +85,17 @@ func (g *Graph) register(url string) *Concept {
 	c.id = int32(len(g.cArr))
 	g.cMap[c.url] = c
 	return c
+}
+
+func (g *Graph) makeSplitConcept(c *Concept) *Concept {
+	split, ok := g.FindByURL(SplitURL)
+	if !ok {
+		split = g.register(SplitURL)
+	}
+	return &Concept{
+		url:   c.url,
+		Name:  c.Name,
+		id:    c.id,
+		edges: []Edge{Edge{P: split, O: c, L: -1}},
+	}
 }

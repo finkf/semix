@@ -27,8 +27,9 @@ func TestParse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("got error: %v", err)
 	}
+	// dictionray names are normalized
 	for _, name := range []string{"name", "distinct", "ambiguous", "abd", "acd",
-		"split-name", "second-split-name"} {
+		"split name", "second split name"} {
 		if _, ok := d[name]; !ok {
 			t.Fatalf("could not find %q in dictionary", name)
 		}

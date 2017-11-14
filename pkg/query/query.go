@@ -44,9 +44,13 @@ func New(query string) (Query, error) {
 	return q, nil
 }
 
+// FixFunc is used to lookup predicate and concept URLs.
+// It should return the full URL of the referenced concept.
+type FixFunc func(string) ([]string, error)
+
 // NewFix returns a new query and updates all urls in the query
 // with the given fix function.
-func NewFix(query string, fix func(string) (string, error)) (Query, error) {
+func NewFix(query string, fix FixFunc) (Query, error) {
 	q, err := New(query)
 	if err != nil {
 		return Query{}, err
@@ -60,18 +64,22 @@ func NewFix(query string, fix func(string) (string, error)) (Query, error) {
 		set: make(map[string]bool),
 	}
 	for url := range q.constraint.set {
-		newurl, err := fix(url)
+		urls, err := fix(url)
 		if err != nil {
 			return Query{}, err
 		}
-		q1.constraint.set[newurl] = true
+		for _, url := range urls {
+			q1.constraint.set[url] = true
+		}
 	}
 	for url := range q.set {
-		newurl, err := fix(url)
+		urls, err := fix(url)
 		if err != nil {
 			return Query{}, err
 		}
-		q1.set[newurl] = true
+		for _, url := range urls {
+			q1.set[url] = true
+		}
 	}
 	return q1, nil
 }

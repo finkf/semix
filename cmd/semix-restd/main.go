@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
@@ -45,12 +47,30 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("starting the server")
-	log.Fatal(s.ListenAndServe())
+	run(s)
 }
 
-func server() (*http.Server, error) {
-	index, err := index.New(dir)
+func run(s *restd.Server) {
+	sigch := make(chan os.Signal)
+	signal.Notify(sigch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	go func() {
+		select {
+		case sig := <-sigch:
+			log.Printf("got signal: %d", sig)
+			if err := s.Close(); err != nil {
+				log.Fatalf("could not close server: %s", err)
+			}
+		}
+	}()
+	log.Printf("starting the server on %s", host)
+	err := s.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		log.Fatalf("listen and serve returned error: %s", err)
+	}
+}
+
+func server() (*restd.Server, error) {
+	index, err := index.New(dir, index.DefaultBufferSize)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +88,10 @@ func server() (*http.Server, error) {
 		return nil, err
 	}
 	g, d, err := semix.Parse(parser, config.traits())
-	return restd.New(host, g, d, index), nil
+	if err != nil {
+		return nil, err
+	}
+	return restd.New(host, dir, g, d, index), nil
 }
 
 type parser struct {

@@ -169,23 +169,26 @@ func (parser *parser) addLabels(entry, url string, ambig, name bool) error {
 		return fmt.Errorf("could not expand: %v", err)
 	}
 	for _, expanded := range labels {
-		if _, ok := parser.splits[expanded]; ok {
-			parser.splits[expanded] = append(parser.splits[expanded], url)
+		normalized := NormalizeString(expanded, false)
+		if _, ok := parser.splits[normalized]; ok {
+			parser.splits[normalized] = append(parser.splits[normalized], url)
 			return nil
 		}
-		if l, ok := parser.labels[expanded]; ok && l.url != url {
-			delete(parser.labels, expanded)
-			parser.splits[expanded] = append(parser.splits[expanded], url)
-			parser.splits[expanded] = append(parser.splits[expanded], l.url)
+		if l, ok := parser.labels[normalized]; ok && l.url != url {
+			delete(parser.labels, normalized)
+			parser.splits[normalized] = append(parser.splits[normalized], url)
+			parser.splits[normalized] = append(parser.splits[normalized], l.url)
 			return nil
 		}
 		// name can/should never be part of a split
 		if name && !ambig {
 			if _, ok := parser.names[url]; !ok {
+				// the name should not be normalized, so it looks nicer.
+				// the name is still put normalized into the dictionary.
 				parser.names[url] = expanded
 			}
 		}
-		parser.labels[expanded] = label{url, ambig}
+		parser.labels[normalized] = label{url, ambig}
 	}
 	return nil
 }

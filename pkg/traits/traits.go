@@ -117,5 +117,5 @@ func (t traits) IsDistinct(url string) bool {
 }
 
 func (t traits) IsAmbiguous(url string) bool {
-	return t.d[url]
+	return t.a[url]
 }

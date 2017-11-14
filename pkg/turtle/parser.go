@@ -2,8 +2,8 @@ package turtle
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
+	"html"
 	"io"
 	"strings"
 	"unicode"
@@ -13,7 +13,7 @@ const a = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
 // Parser parses a turtle knowledge base.
 type Parser struct {
-	l lexer
+	l *lexer
 	p map[string]string
 	b string
 	n *token
@@ -22,7 +22,7 @@ type Parser struct {
 // NewParser create a new parser instance.
 func NewParser(r io.Reader) *Parser {
 	return &Parser{
-		l: lexer{r: bufio.NewReader(r)},
+		l: &lexer{r: bufio.NewReader(r)},
 		p: make(map[string]string),
 	}
 }
@@ -130,7 +130,8 @@ func (parser *Parser) nextWord() string {
 		return parser.b + t.str
 	}
 	if _, ok := parser.p[t.str[:i+1]]; !ok {
-		panic(lexerError{fmt.Errorf("invalid prefix: %q", t.str[:i])})
+		panic(lexerError{fmt.Errorf("error %d: invalid prefix: %q",
+			parser.l.line, t.str[:i])})
 	}
 	return parser.p[t.str[:i+1]] + t.str[i+1:]
 }
@@ -151,7 +152,8 @@ func (parser *Parser) next() *token {
 func (parser *Parser) eat(typ tokenType) *token {
 	next := parser.next()
 	if next.typ != typ {
-		panic(lexerError{fmt.Errorf("expected %s; got %s", typ, next.typ)})
+		panic(lexerError{fmt.Errorf("error %d: expected %s; got %s",
+			parser.l.line, typ, next.typ)})
 	}
 	return next
 }
@@ -204,10 +206,11 @@ func (t token) String() string {
 }
 
 type lexer struct {
-	r *bufio.Reader
+	r    *bufio.Reader
+	line int
 }
 
-func (l lexer) next() *token {
+func (l *lexer) next() *token {
 	l.skipWhiteSpace()
 	switch l.peekChar() {
 	case '@':
@@ -235,7 +238,7 @@ func (l lexer) next() *token {
 	}
 }
 
-func (l lexer) parseAnnotation() *token {
+func (l *lexer) parseAnnotation() *token {
 	l.eat('@')
 	str := l.nextWord(' ')
 	switch str {
@@ -244,29 +247,30 @@ func (l lexer) parseAnnotation() *token {
 	case "base":
 		return &token{str, base, false}
 	default:
-		panic(lexerError{fmt.Errorf("invalid annotation: @%s", str)})
+		panic(lexerError{fmt.Errorf("error %d: invalid annotation: @%s",
+			l.line, str)})
 	}
 }
 
-func (l lexer) skipComment() {
+func (l *lexer) skipComment() {
 	l.eat('#')
 	l.nextWord('\n')
 }
 
-func (l lexer) parseURL() *token {
+func (l *lexer) parseURL() *token {
 	l.eat('<')
 	str := l.nextWord('>')
 	return &token{str, word, false}
 }
 
-func (l lexer) parseQuotedString() *token {
+func (l *lexer) parseQuotedString() *token {
 	l.eat('"')
 	str := l.nextWord('"')
 	// TODO: unescape xml
-	return &token{str, word, true}
+	return &token{html.UnescapeString(str), word, true}
 }
 
-func (l lexer) parseString() *token {
+func (l *lexer) parseString() *token {
 	var bs []byte
 	for {
 		switch l.peekChar() {
@@ -285,47 +289,54 @@ func (l lexer) parseString() *token {
 	}
 }
 
-func (l lexer) nextWord(delim byte) string {
+func (l *lexer) nextWord(delim byte) string {
 	bs, err := l.r.ReadBytes(delim)
 	if err == io.EOF {
-		panic(lexerError{errors.New("unexpected EOF")})
+		panic(lexerError{fmt.Errorf("error %d: unexpected EOF", l.line)})
 	}
 	if err != nil {
-		panic(lexerError{err})
+		panic(lexerError{fmt.Errorf("error %d: %v", l.line, err)})
 	}
 	return string(bs[:len(bs)-1])
 }
 
-func (l lexer) eat(b byte) {
+func (l *lexer) eat(b byte) {
 	n := l.nextChar()
 	if n != b {
-		panic(lexerError{fmt.Errorf("expected %q; got %q", b, n)})
+		panic(lexerError{fmt.Errorf("error %d: expected %q; got %q",
+			l.line, b, n)})
 	}
 }
 
-func (l lexer) peekChar() byte {
+func (l *lexer) peekChar() byte {
 	b := l.nextChar()
 	if b == 0 {
 		return 0
 	}
 	if err := l.r.UnreadByte(); err != nil {
-		panic(lexerError{err})
+		panic(lexerError{fmt.Errorf("error %d: %v", l.line, err)})
+	}
+	if b == '\n' {
+		l.line--
 	}
 	return b
 }
 
-func (l lexer) nextChar() byte {
+func (l *lexer) nextChar() byte {
 	b, err := l.r.ReadByte()
 	if err == io.EOF {
 		return 0
 	}
 	if err != nil {
-		panic(lexerError{err})
+		panic(lexerError{fmt.Errorf("error %d: %v", l.line, err)})
+	}
+	if b == '\n' {
+		l.line++
 	}
 	return b
 }
 
-func (l lexer) skipWhiteSpace() {
+func (l *lexer) skipWhiteSpace() {
 	for b := l.peekChar(); unicode.IsSpace(rune(b)); b = l.peekChar() {
 		l.nextChar()
 	}

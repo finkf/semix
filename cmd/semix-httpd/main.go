@@ -64,7 +64,10 @@ func main() {
 	http.HandleFunc("/search", withLogging(withGet(handle(search))))
 	http.HandleFunc("/ctx", withLogging(withGet(handle(ctx))))
 	http.HandleFunc("/put", withLogging(handle(put)))
-	log.Printf("starting the server")
+	http.HandleFunc("/parents", withLogging(withGet(handle(parents))))
+	http.HandleFunc("/favicon.ico", withLogging(withGet(favicon)))
+	http.HandleFunc("/js/semix.js", withLogging(withGet(semixJS)))
+	log.Printf("starting the server on %s", host)
 	log.Fatal(http.ListenAndServe(host, nil))
 }
 
@@ -95,6 +98,14 @@ func handle(f func(*http.Request) (*template.Template, interface{}, status)) fun
 	}
 }
 
+func favicon(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(dir, "favicon.ico"))
+}
+
+func semixJS(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(dir, "js", "semix.js"))
+}
+
 func withLogging(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("handling request for [%s] %s", r.Method, r.RequestURI)
@@ -120,13 +131,28 @@ func search(r *http.Request) (*template.Template, interface{}, status) {
 	if err := semixdGet(fmt.Sprintf("/search?q=%s", url.QueryEscape(q)), &cs); err != nil {
 		return nil, nil, internalError(err)
 	}
-	return searchtmpl, struct{ Concepts []semix.Concept }{cs}, ok()
+	return searchtmpl, struct {
+		Title    string
+		Concepts []semix.Concept
+	}{fmt.Sprintf("%q", q), cs}, ok()
+}
+
+func parents(r *http.Request) (*template.Template, interface{}, status) {
+	var cs []semix.Concept
+	q := r.URL.Query().Get("url")
+	if err := semixdGet(fmt.Sprintf("/parents?url=%s", url.QueryEscape(q)), &cs); err != nil {
+		return nil, nil, internalError(err)
+	}
+	return searchtmpl, struct {
+		Title    string
+		Concepts []semix.Concept
+	}{fmt.Sprintf("parents of %q", q), cs}, ok()
 }
 
 func info(r *http.Request) (*template.Template, interface{}, status) {
-	q := r.URL.Query().Get("q")
+	q := r.URL.Query().Get("url")
 	var info restd.ConceptInfo
-	if err := semixdGet(fmt.Sprintf("/info?q=%s", url.QueryEscape(q)), &info); err != nil {
+	if err := semixdGet(fmt.Sprintf("/info?url=%s", url.QueryEscape(q)), &info); err != nil {
 		return nil, nil, internalError(err)
 	}
 	return infotmpl, info, ok()
@@ -142,7 +168,10 @@ func get(r *http.Request) (*template.Template, interface{}, status) {
 	if err := semixdGet(fmt.Sprintf("/get?q=%s", url.QueryEscape(q)), &ts); err != nil {
 		return nil, nil, internalError(err)
 	}
-	return gettmpl, ts, ok()
+	return gettmpl, struct {
+		Query  string
+		Tokens restd.Tokens
+	}{q, ts}, ok()
 }
 
 func ctx(r *http.Request) (*template.Template, interface{}, status) {

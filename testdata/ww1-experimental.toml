@@ -1,0 +1,24 @@
+[parser]
+file = "../ww1/ww1.ttl"
+type = "turtle"
+
+[urls]
+ignore = []
+transitive = [
+	"http://bitbucket.org/fflo/ww1/predicates/date",
+	#"http://bitbucket.org/fflo/ww1/",
+	#"http://ww1.cis.lmu.de/Type",
+	#"http://ww1.cis.lmu.de/Location",
+]
+symmetric = [
+	#"http://bitbucket.org/fflo/ww1/",
+	#"http://ww1.cis.lmu.de/Date",
+]
+name = [
+	"http://bitbucket.org/fflo/ww1/predicates/pref-name",
+]
+distinct = [
+	"http://bitbucket.org/fflo/ww1/predicates/alt-name",
+]
+ambiguous = []
+inverted = []

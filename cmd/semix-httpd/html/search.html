@@ -6,14 +6,14 @@
 	</head>
 	<body>
 		<a href="/">Home</a>
-		<h1>Search results</h1>
+		<h1>Search results for {{.Title}}</h1>
 		<ul>
 		{{range $i, $c := .Concepts}}
-			<li><a href="/info?q={{$c.URL}}">{{$c.String}}</a></li>
+			<li><a href="/info?url={{$c.URL}}">{{$c.String}}</a></li>
 			{{if $c.Ambiguous}}
 				<ul>
 					{{range $i, $e := $c.Edges}}
-						<li><a href="/info?q={{$e.O.URL}}">{{$e.O.String}}</a></li>
+						<li><a href="/info?url={{$e.O.URL}}">{{$e.O.String}}</a></li>
 					{{end}}
 				</ul>
 			{{end}}

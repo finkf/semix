@@ -1,89 +1,63 @@
 package index
 
 import (
-	"context"
-
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
-// DirIndexOpt defines a functional argument setter.
-type DirIndexOpt func(*index)
-
-// WithBufferSize sets the optional buffer size of the directory index.
-func WithBufferSize(n int) DirIndexOpt {
-	return func(i *index) {
-		i.n = n
-	}
-}
-
 const (
-	// DefaultIndexDirBufferSize is the default buffer size.
-	DefaultIndexDirBufferSize = 1024
+	// DefaultBufferSize is the default buffer size.
+	DefaultBufferSize = 1024
 )
 
 // New opens a directory index at the given directory path with
 // and the given options.
-func New(dir string, opts ...DirIndexOpt) (Interface, error) {
+func New(dir string, size int) (Interface, error) {
 	storage, err := OpenDirStorage(dir)
 	if err != nil {
 		return nil, err
 	}
-	i := &index{
+	return &index{
 		storage: storage,
-		n:       DefaultIndexDirBufferSize,
 		buffer:  make(map[string][]Entry),
-		put:     make(chan putRequest),
-		get:     make(chan getRequest),
-	}
-	for _, opt := range opts {
-		opt(i)
-	}
-	go i.run()
-	return i, nil
-}
-
-type putRequest struct {
-	token semix.Token
-	err   chan<- error
-}
-
-type getRequest struct {
-	url string
-	f   func(Entry)
-	err chan<- error
+		n:       size,
+	}, nil
 }
 
 type index struct {
 	storage Storage
 	buffer  map[string][]Entry
-	cancel  context.CancelFunc
-	put     chan putRequest
-	get     chan getRequest
-	dir     string
 	n       int
 }
 
 // Put puts a token in the index.
 func (i *index) Put(t semix.Token) error {
-	err := make(chan error)
-	i.put <- putRequest{token: t, err: err}
-	return <-err
+	return putAll(t, func(e Entry) error {
+		url := e.ConceptURL
+		i.buffer[url] = append(i.buffer[url], e)
+		if len(i.buffer[url]) == i.n {
+			if err := i.storage.Put(url, i.buffer[url]); err != nil {
+				return err
+			}
+			i.buffer[url] = make([]Entry, 0, i.n)
+		}
+		return nil
+	})
 }
 
 // Get queries the index for a concept and calls the callback function
 // for each entry in the index.
 func (i *index) Get(url string, f func(Entry)) error {
-	err := make(chan error)
-	i.get <- getRequest{url: url, f: f, err: err}
-	return <-err
+	for _, e := range i.buffer[url] {
+		f(e)
+	}
+	return i.storage.Get(url, f)
 }
 
 // Close closes the index and writes all buffered entries to disc.
-func (i *index) Close() error {
-	i.cancel()
-	close(i.put)
-	close(i.get)
-	defer i.storage.Close()
+func (i *index) Close() (err error) {
+	defer func() {
+		err = i.storage.Close()
+	}()
 	for url, es := range i.buffer {
 		if len(es) == 0 {
 			continue
@@ -92,58 +66,20 @@ func (i *index) Close() error {
 			return err
 		}
 	}
-	return nil
+	return err
 }
 
-func (i *index) run() {
-	for {
-		select {
-		case r, ok := <-i.get:
-			if !ok {
-				return
-			}
-			r.err <- i.getEntries(r.url, r.f)
-		case r, ok := <-i.put:
-			if !ok {
-				return
-			}
-			r.err <- i.putToken(r.token)
-		}
-	}
-}
-
-func (i *index) putToken(t semix.Token) error {
-	return putAll(t, func(e Entry) error {
-		url := e.ConceptURL
-		i.buffer[url] = append(i.buffer[url], e)
-		if len(i.buffer[url]) == i.n {
-			if err := i.storage.Put(url, i.buffer[url]); err != nil {
-				return err
-			}
-			i.buffer[url] = nil
-		}
-		return nil
-	})
-}
-
-func (i *index) getEntries(url string, f func(Entry)) error {
-	for _, e := range i.buffer[url] {
-		f(e)
-	}
-	return i.storage.Get(url, f)
-}
-
-// NewMapIndex create a new in memory index, that uses
+// NewMemoryMap create a new in memory index, that uses
 // a simple map of Entry slices for storage.
-func NewMapIndex() Interface {
-	return mapIndex{index: make(map[string][]Entry)}
+func NewMemoryMap() Interface {
+	return memIndex{index: make(map[string][]Entry)}
 }
 
-type mapIndex struct {
+type memIndex struct {
 	index map[string][]Entry
 }
 
-func (i mapIndex) Put(t semix.Token) error {
+func (i memIndex) Put(t semix.Token) error {
 	return putAll(t, func(e Entry) error {
 		url := e.ConceptURL
 		i.index[url] = append(i.index[url], e)
@@ -151,14 +87,14 @@ func (i mapIndex) Put(t semix.Token) error {
 	})
 }
 
-func (i mapIndex) Get(url string, f func(Entry)) error {
+func (i memIndex) Get(url string, f func(Entry)) error {
 	for _, e := range i.index[url] {
 		f(e)
 	}
 	return nil
 }
 
-func (i mapIndex) Close() error {
+func (i memIndex) Close() error {
 	return nil
 }
 
@@ -215,7 +151,11 @@ func putAllAmbiguous(t semix.Token, f func(Entry) error) error {
 	for i := 0; i < n; i++ {
 		e := c.EdgeAt(i)
 		t.Concept = e.O
-		if err := putAllWithError(t, e.L, f); err != nil {
+		l := e.L
+		if l == 0 {
+			l = -1
+		}
+		if err := putAllWithError(t, l, f); err != nil {
 			return err
 		}
 	}

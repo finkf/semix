@@ -4,8 +4,8 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<title>Semix Put</title>
 		<style>
-th, td {padding: 5px;}
-.grey{background: lightgrey;}
+			th, td {padding: 5px;}
+			.grey{background: lightgrey;}
 		</style>
 	</head>
 	<body>
@@ -31,7 +31,7 @@ th, td {padding: 5px;}
 							</a>
 						</td>
 						<td>
-							<a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a>
+							<a href="/info?url={{.Concept.URL}}">{{.Concept.String}}</a>
 						</td>
 						<td> <a target="_blank" href="{{.Path}}">{{.Path}}</a> </td>
 					</tr>
@@ -45,7 +45,7 @@ th, td {padding: 5px;}
 				<tr><td>{{$p.String}}</td></tr>
 				{{range $c}}
 				<tr>
-					<td><a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a></td>
+					<td><a href="/info?url={{.Concept.URL}}">{{.Concept.String}}</a></td>
 					<td>{{printf "%.2f" .RelativeFrequency}} ({{.N}}/{{.Total}})</td>
 				</tr>
 				{{end}}

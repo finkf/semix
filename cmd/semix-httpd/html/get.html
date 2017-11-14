@@ -3,19 +3,32 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<title>Semix Get</title>
-		<style> th, td {padding: 5px;} </style>
+		<style>
+			th, td {padding: 5px;}
+			.grey{background: lightgrey;}
+		</style>
 	</head>
 	<body>
 		<a href="/">Home</a>
-		<h1>Semix Put</h1>
-		<h2>Results</h2>
+		<h1>Semix Get</h1>
+		<h2>Results for {{printf "%s" .Query}}</h2>
 		<div id='result-table'>
 			<table>
-				{{range .Tokens}}
-				<tr>
-					<td> {{.Token}} ({{.Begin}},{{.End}}) </td>
-					<td> <a href="/info?q={{.Concept.URL}}">{{.Concept.String}}</a> </td>
-					<td> <a target="_blank" href="{{.Path}}">{{.Path}}</a> </td>
+				<th>Match</th>
+				<th>Predicate</th>
+				<th>Concept</th>
+				<th>Document</th>
+				{{range .Tokens.Tokens}}
+					{{if eq .L 0}}
+					<tr>
+					{{else}}
+					<tr class='grey'>
+					{{end}}
+					<td><a href="/ctx?url={{.Path}}&b={{.Begin}}&e={{.End}}&n=500">
+							{{.Token}} ({{.Begin}},{{.End}},{{.L}})</a></td>
+					<td><a href="/info?url={{.RelationURL}}">{{.RelationURL}}</a></td>
+					<td><a href="/info?url={{.Concept.URL}}">{{.Concept.String}}</a></td>
+					<td><a target="_blank" href="{{.Path}}">{{.Path}}</a></td>
 				</tr>
 				{{end}}
 			</table>

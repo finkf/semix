@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/index"
+	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -29,9 +30,9 @@ func (info ConceptInfo) Predicates() map[*semix.Concept][]*semix.Concept {
 
 // Token mimics semix.Token
 type Token struct {
-	Token, Path   string
-	Concept       *semix.Concept
-	Begin, End, L int
+	Token, Path, RelationURL string
+	Concept                  *semix.Concept
+	Begin, End, L            int
 }
 
 // NewTokens converts a semix.Token to an array of tokens.
@@ -71,32 +72,21 @@ type Tokens struct {
 
 // Counts returns a sorted slice of Counts ordered by the according predicates.
 func (ts Tokens) Counts() map[*semix.Concept][]Count {
-	urls := make(map[string]*semix.Concept)
-	register := func(c *semix.Concept) *semix.Concept {
-		if _, ok := urls[c.URL()]; !ok {
-			urls[c.URL()] = c
-		}
-		return urls[c.URL()]
-	}
 	m := make(map[*semix.Concept]map[*semix.Concept]int)
 	var n int
 	for _, t := range ts.Tokens {
 		n++
-		preds := make(map[*semix.Concept]bool)
+		if t.Concept.Ambiguous() {
+			continue
+		}
 		t.Concept.EachEdge(func(edge semix.Edge) {
-			p := register(edge.P)
-			o := register(edge.O)
+			p := edge.P
+			o := edge.O
 			if m[p] == nil {
 				m[p] = make(map[*semix.Concept]int)
 			}
 			m[p][o]++
-			preds[p] = true
 		})
-		/*
-			for p := range preds {
-				m[p][register(t.Concept)]++
-			}
-		*/
 	}
 	counts := make(map[*semix.Concept][]Count, len(m))
 	for p := range m {
@@ -123,18 +113,19 @@ func (c Count) RelativeFrequency() float32 {
 }
 
 // NewTokenFromEntry creates a Token from an index.Entry
-func NewTokenFromEntry(g *semix.Graph, e index.Entry) (Token, error) {
-	c, ok := g.FindByURL(e.ConceptURL)
+func NewTokenFromEntry(s searcher.Searcher, e index.Entry) (Token, error) {
+	c, ok := s.FindByURL(e.ConceptURL)
 	if !ok {
 		return Token{}, fmt.Errorf("invalid url %q", e.ConceptURL)
 	}
 	return Token{
-		Token:   e.Token,
-		Path:    e.Path,
-		Begin:   e.Begin,
-		End:     e.End,
-		L:       e.L,
-		Concept: c,
+		Token:       e.Token,
+		Path:        e.Path,
+		Begin:       e.Begin,
+		End:         e.End,
+		RelationURL: e.RelationURL,
+		L:           e.L,
+		Concept:     c,
 	}, nil
 }
 
@@ -185,6 +176,28 @@ func Search(g *semix.Graph, d semix.Dictionary, str string) []*semix.Concept {
 			}
 		}
 		// no need to check the concept, since we did this already.
+	}
+	return cs
+}
+
+// SearchParents searches the all the parent concepts of a given URL.
+func SearchParents(g *semix.Graph, url string) []*semix.Concept {
+	c, ok := g.FindByURL(url)
+	if !ok {
+		return nil
+	}
+	var cs []*semix.Concept
+	for i := 0; i < g.ConceptsLen(); i++ {
+		p := g.ConceptAt(i)
+	edges:
+		for i := 0; i < p.EdgesLen(); i++ {
+			e := p.EdgeAt(i)
+			if e.O.URL() != c.URL() {
+				continue edges
+			}
+			cs = append(cs, p)
+			break edges
+		}
 	}
 	return cs
 }

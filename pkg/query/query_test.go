@@ -71,11 +71,11 @@ func TestNewQueryFix(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.query, func(t *testing.T) {
-			q, err := NewFix(tc.query, func(url string) (string, error) {
+			q, err := NewFix(tc.query, func(url string) ([]string, error) {
 				if len(url) != 1 {
-					return "", errors.New("invalid url: " + url)
+					return nil, errors.New("invalid url: " + url)
 				}
-				return url + "X", nil
+				return []string{url + "X"}, nil
 			})
 			if tc.iserr && err == nil {
 				t.Fatalf("expected error")
