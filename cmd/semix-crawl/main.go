@@ -40,7 +40,7 @@ var (
 func init() {
 	var a, f string
 	flag.StringVar(&a, "allow", "^https?://de.wikipedia.org/wiki", "allowed url regexp")
-	flag.StringVar(&f, "forbid", "Datei:", "forbidden url regexp")
+	flag.StringVar(&f, "deny", "Datei:", "forbidden url regexp")
 	flag.StringVar(&dir, "dir", filepath.Join(os.Getenv("HOME"), "semix"), "semix index directory")
 	flag.StringVar(&conf, "config", "semix.toml", "configuration file")
 	flag.BoolVar(&help, "help", false, "print help")
