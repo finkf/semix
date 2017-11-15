@@ -39,7 +39,7 @@ func OpenDirStorage(dir string) (Storage, error) {
 	defer is.Close()
 	d := gob.NewDecoder(is)
 	if err := d.Decode(s.register); err != nil {
-		return dirStorage{}, fmt.Errorf("could not decod %q: %v", path, err)
+		return dirStorage{}, fmt.Errorf("could not decode %q: %v", path, err)
 	}
 	return s, nil
 }
