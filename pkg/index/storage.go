@@ -50,16 +50,12 @@ func (s dirStorage) Put(url string, es []Entry) error {
 	}
 	ds := make([]dse, len(es))
 	for i := range es {
-		ds[i] = dse{
-			S: es[i].Token,
-			P: es[i].Path,
-			B: uint32(es[i].Begin),
-			E: uint32(es[i].End),
-			L: encodeL(es[i].L, es[i].Ambiguous),
-		}
-		if es[i].RelationURL != "" {
-			ds[i].R = int32(s.register.Register(es[i].RelationURL))
-		}
+		ds[i] = newDSE(es[i], func(rel string) int {
+			if rel == "" {
+				return 0
+			}
+			return s.register.Register(rel)
+		})
 	}
 	return s.write(url, ds)
 }
@@ -99,17 +95,7 @@ func (s dirStorage) Get(url string, f func(Entry)) error {
 			return nil
 		}
 		for _, d := range ds {
-			l, a := decodeL(d.L)
-			f(Entry{
-				ConceptURL:  url,
-				RelationURL: s.lookup(int(d.R)),
-				Token:       d.S,
-				Path:        d.P,
-				Begin:       int(d.B),
-				End:         int(d.E),
-				L:           l,
-				Ambiguous:   a,
-			})
+			f(d.entry(url, s.lookup))
 		}
 	}
 }
@@ -176,31 +162,6 @@ func readBlock(r io.Reader) ([]dse, error) {
 	err := d.Decode(&ds)
 	log.Printf("read %d entries", len(ds))
 	return ds, err
-}
-
-// Short var names for smaller gob entries.
-// S is the string
-// P is the document path
-// B is the start position
-// E is the end position
-// R is the relation id
-type dse struct {
-	S, P string
-	B, E uint32
-	R    int32
-	L    uint8
-}
-
-func encodeL(l int, a bool) uint8 {
-	x := uint8(l) & 0x7f
-	if a {
-		x |= 0x80
-	}
-	return x
-}
-
-func decodeL(x uint8) (int, bool) {
-	return int(x & 0x7f), x&0x80 > 0
 }
 
 func (s dirStorage) preparePath(u string) string {
