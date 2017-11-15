@@ -1,3 +1,5 @@
+// +build !dse1,!dse2,!dse3,!dse4
+
 package index
 
 // Short var names for smaller gob entries.
