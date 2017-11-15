@@ -15,8 +15,8 @@ pipelines:
           - tar -cO --exclude-vcs --exclude=bitbucket-pipelines.yml . | tar -xv -C "${PACKAGE_PATH}"
           - cd "${PACKAGE_PATH}"
           - REPO=bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}
-          - go get -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle}
+          - go get -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle,disamb}
           - go get -v ${REPO}/cmd/semix-{httpd,restd}
-          - go build -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle}
+          - go build -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle,disamb}
           - go build -v ${REPO}/cmd/semix-{httpd,restd}
-          - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml,turtle}
+          - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml,turtle,disamb}
