@@ -21,6 +21,10 @@ pipelines:
           - go test -cover -race -tags isize1 ${REPO}/pkg/index
           - go build -tags isize2 ${REPO}/pkg/index
           - go test -cover -race -tags isize2 ${REPO}/pkg/index
+          - go build -tags isize3 ${REPO}/pkg/index
+          - go test -cover -race -tags isize3 ${REPO}/pkg/index
+          - go build -tags isize4 ${REPO}/pkg/index
+          - go test -cover -race -tags isize4 ${REPO}/pkg/index
           - go build -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle}
           - go build -v ${REPO}/cmd/semix-{httpd,restd}
           - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml,turtle}
