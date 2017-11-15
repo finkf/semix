@@ -1,7 +1,7 @@
 package disamb
 
 import (
-	"semix"
+	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
 // Memory is simple ringbuffer that enables counting of concepts stored
