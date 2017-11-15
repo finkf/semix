@@ -6,29 +6,26 @@ package index
 // P is the document path
 // B is the start position
 // E is the end position
-// R is the relation id
-// L stores if entries are indirect, their levenshtein distance and their ambiguity.
+// R stores the relation id, if entries are direct, their levenshtein distance
+// and their ambiguity
 type dse struct {
 	P string
-	R int32
-	L uint8
+	R relationID
 }
 
 func newDSE(e Entry, register func(string) int) dse {
 	return dse{
 		P: e.Path,
-		L: encodeL(e.L, e.Ambiguous, e.RelationURL != ""),
-		R: int32(register(e.RelationURL)),
+		R: newRelationID(register(e.RelationURL), e.L, e.Ambiguous, e.RelationURL != ""),
 	}
 }
 
 func (d dse) entry(conceptURL string, lookup func(int) string) Entry {
-	l, a, _ := decodeL(d.L)
 	return Entry{
 		ConceptURL:  conceptURL,
-		RelationURL: lookup(int(d.R)),
+		RelationURL: lookup(int(d.R.ID())),
 		Path:        d.P,
-		L:           l,
-		Ambiguous:   a,
+		L:           d.R.Distance(),
+		Ambiguous:   d.R.Ambiguous(),
 	}
 }

@@ -13,25 +13,17 @@ type dse struct {
 func newDSE(e Entry, register func(string) int) dse {
 	return dse{
 		P: e.Path,
-		L: encodeL(e.L, e.Ambiguous, e.RelationURL != ""),
+		L: dseEncodeL(e.L, e.Ambiguous, e.RelationURL != ""),
 	}
 }
 
 func (d dse) entry(conceptURL string, lookup func(int) string) Entry {
-	l, a, dir := decodeL(d.L)
-
+	l, a, dir := dseDecodeL(d.L)
 	return Entry{
 		ConceptURL:  conceptURL,
-		RelationURL: getRelationURL(dir),
+		RelationURL: dseRelationURL(dir),
 		Path:        d.P,
 		L:           l,
 		Ambiguous:   a,
 	}
-}
-
-func getRelationURL(d bool) string {
-	if d {
-		return ""
-	}
-	return "http://bitbucket.org/fflo/semix/pkg/index/indirect"
 }
