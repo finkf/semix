@@ -7,6 +7,7 @@ package index
 // B is the start position
 // E is the end position
 // R is the relation id
+// L stores if entries are indirect, their levenshtein distance and their ambiguity.
 type dse struct {
 	P string
 	R int32
