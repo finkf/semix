@@ -19,6 +19,8 @@ pipelines:
           - go get -v ${REPO}/cmd/semix-{httpd,restd}
           - go build -tags isize1 ${REPO}/pkg/index
           - go test -cover -race -tags isize1 ${REPO}/pkg/index
+          - go build -tags isize2 ${REPO}/pkg/index
+          - go test -cover -race -tags isize2 ${REPO}/pkg/index
           - go build -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle}
           - go build -v ${REPO}/cmd/semix-{httpd,restd}
           - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml,turtle}
