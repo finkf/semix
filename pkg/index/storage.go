@@ -22,8 +22,8 @@ type Storage interface {
 }
 
 type dirStorage struct {
-	dir         string
-	relationReg *semix.URLRegister
+	dir                  string
+	relationReg, fileReg *semix.URLRegister
 }
 
 // OpenDirStorage opens a new IndexStorage.
