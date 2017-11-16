@@ -22,13 +22,13 @@ type Storage interface {
 }
 
 type dirStorage struct {
-	dir      string
-	register *semix.URLRegister
+	dir         string
+	relationReg *semix.URLRegister
 }
 
 // OpenDirStorage opens a new IndexStorage.
 func OpenDirStorage(dir string) (Storage, error) {
-	s := dirStorage{dir: dir, register: semix.NewURLRegister()}
+	s := dirStorage{dir: dir, relationReg: semix.NewURLRegister()}
 	path := s.urlRegisterPath()
 	is, err := os.Open(path)
 	if err != nil {
@@ -38,7 +38,7 @@ func OpenDirStorage(dir string) (Storage, error) {
 	}
 	defer is.Close()
 	d := gob.NewDecoder(is)
-	if err := d.Decode(s.register); err != nil {
+	if err := d.Decode(s.relationReg); err != nil {
 		return dirStorage{}, fmt.Errorf("could not decode %q: %v", path, err)
 	}
 	return s, nil
@@ -54,7 +54,7 @@ func (s dirStorage) Put(url string, es []Entry) error {
 			if rel == "" {
 				return 0
 			}
-			return s.register.Register(rel)
+			return s.relationReg.Register(rel)
 		})
 	}
 	return s.write(url, ds)
@@ -109,7 +109,7 @@ func (s dirStorage) Close() error {
 	}
 	defer os.Close()
 	e := gob.NewEncoder(os)
-	return e.Encode(s.register)
+	return e.Encode(s.relationReg)
 }
 
 func (s dirStorage) path(url string) string {
@@ -121,7 +121,7 @@ func (s dirStorage) urlRegisterPath() string {
 }
 
 func (s dirStorage) lookup(id int) string {
-	if url, ok := s.register.LookupID(id); ok {
+	if url, ok := s.relationReg.LookupID(id); ok {
 		return url
 	}
 	return ""
