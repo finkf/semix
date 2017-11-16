@@ -3,6 +3,7 @@ package semix
 import (
 	"bytes"
 	"encoding/gob"
+	"os"
 )
 
 // URLRegister is used to map urls to unique ids and vice versa.
@@ -16,6 +17,34 @@ func NewURLRegister() *URLRegister {
 	return &URLRegister{
 		urls: make(map[string]int),
 	}
+}
+
+// ReadURLRegister reads a URLRegister from a gob encoded file.
+// If the given file does not exist, a new empty register is returned.
+func ReadURLRegister(path string) (*URLRegister, error) {
+	is, err := os.Open(path)
+	if os.IsNotExist(err) {
+		return NewURLRegister(), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer is.Close()
+	register := NewURLRegister()
+	if err := gob.NewDecoder(is).Decode(register); err != nil {
+		return nil, err
+	}
+	return register, nil
+}
+
+// Write writes a URLRegister into a gob encode file.
+func (r *URLRegister) Write(path string) error {
+	os, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer os.Close()
+	return gob.NewEncoder(os).Encode(r)
 }
 
 // Register registers a new url and returs its associated id.
