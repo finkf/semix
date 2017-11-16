@@ -34,13 +34,17 @@ func (m Memory) Each(f func(*semix.Concept)) {
 	}
 }
 
-// Elements returns the number of different concepts in the memory.
-func (m Memory) Elements() int {
-	set := make(map[string]bool)
+// Elements returns the set of unique concepts in the memory.
+func (m Memory) Elements() []*semix.Concept {
+	set := make(map[string]*semix.Concept)
 	m.Each(func(c *semix.Concept) {
-		set[c.URL()] = true
+		set[c.URL()] = c
 	})
-	return len(set)
+	res := make([]*semix.Concept, 0, len(set))
+	for _, c := range set {
+		res = append(res, c)
+	}
+	return res
 }
 
 // Count returns the number of concepts with the given url in the memory.

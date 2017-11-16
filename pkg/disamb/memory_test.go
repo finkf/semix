@@ -53,7 +53,7 @@ func TestMemory(t *testing.T) {
 			if got := m.Count("A"); got != tc.c {
 				t.Fatalf("expected %d; got %d", tc.c, got)
 			}
-			if got := m.Elements(); got != tc.e {
+			if got := len(m.Elements()); got != tc.e {
 				t.Fatalf("expected %d; got %d", tc.e, got)
 			}
 		})
