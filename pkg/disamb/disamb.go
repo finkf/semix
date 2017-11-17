@@ -2,8 +2,11 @@ package disamb
 
 import "bitbucket.org/fflo/semix/pkg/semix"
 
-// Decider is an interface
+// Decider defines the interface for the disambiguation.
 type Decider interface {
+	// Decide returns the disambiguated concept or nil if the
+	// concept could not be disambiguated. It is an error
+	// to call Decide with a non-ambigiuous concept.
 	Decide(*semix.Concept) *semix.Concept
 }
 
@@ -30,12 +33,4 @@ func (d Disambiguator) Disambiguate(c *semix.Concept) *semix.Concept {
 	}
 	d.Memory.Push(decided)
 	return decided
-}
-
-func maxConcept(cs []*semix.Concept, scores []float64) *semix.Concept {
-	return nil
-}
-
-func referencedConcepts(c *semix.Concept) []*semix.Concept {
-	return nil
 }
