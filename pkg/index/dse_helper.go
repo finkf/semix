@@ -1,4 +1,4 @@
-// +build isize3 isize4
+// +build isize3 isize4 isize5
 
 package index
 
