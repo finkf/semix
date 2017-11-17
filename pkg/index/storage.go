@@ -173,7 +173,6 @@ func preparePath(dir, u string) string {
 	u = strings.Replace(u, "http://", "", 1)
 	u = filepath.Join(dir, u)
 	p := filepath.Dir(u)
-	log.Printf("preparing: %s", p)
 	if err := os.MkdirAll(p, os.ModePerm); err != nil {
 		log.Printf("could no prepare: %s: %s", p, err)
 	}
