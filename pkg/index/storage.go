@@ -118,7 +118,7 @@ func (s dirStorage) lookupURLs(relURL, docURL string) (int, int) {
 		relID = s.relationReg.Register(relURL)
 	}
 	if docURL != "" {
-		docID = s.documentReg.Register(relURL)
+		docID = s.documentReg.Register(docURL)
 	}
 	return relID, docID
 }
