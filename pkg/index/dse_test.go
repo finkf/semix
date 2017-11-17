@@ -1,5 +1,3 @@
-// +build !isize1,!isize2,!isize3,!isize4
-
 package index
 
 import (
@@ -62,9 +60,7 @@ func TestDSE(t *testing.T) {
 		t.Run(fmt.Sprintf("%v", tc), func(t *testing.T) {
 			dse := newDSE(tc, testDSELookupIDsFunc)
 			e := dse.entry("T", testDSELookupURLsFunc)
-			if tc != e {
-				t.Errorf("expected %v; got %v", tc, e)
-			}
+			testEntries(t, e, tc)
 		})
 	}
 }

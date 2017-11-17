@@ -2,6 +2,8 @@
 
 package index
 
+import "testing"
+
 // Short var names for smaller gob entries.
 // S is the string
 // P is the document id
@@ -37,5 +39,12 @@ func (d dse) entry(conceptURL string, lookup lookupIDsFunc) Entry {
 		End:         int(d.E),
 		L:           d.R.Distance(),
 		Ambiguous:   d.R.Ambiguous(),
+	}
+}
+
+func testEntries(t *testing.T, a, b Entry) {
+	t.Helper()
+	if a != b {
+		t.Fatalf("expected %v; got %v", b, a)
 	}
 }

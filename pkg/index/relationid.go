@@ -1,3 +1,5 @@
+// +build isize1 isize2 !isize1,!isize2,!isize3,!isize4
+
 package index
 
 type relationID uint32
