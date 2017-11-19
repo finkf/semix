@@ -67,7 +67,7 @@ func (p prefix) String() string {
 }
 
 type infix struct {
-	op          rune
+	op          operator
 	left, right ast
 }
 

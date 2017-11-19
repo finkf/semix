@@ -39,10 +39,17 @@ func newParser(r io.Reader) *parser {
 	p.registerPrefixParseFunc('-', p.parsePrefix)
 	p.registerPrefixParseFunc(scanner.Int, p.parseNum)
 	p.registerPrefixParseFunc(scanner.Float, p.parseNum)
+	p.registerInfixParseFunc('-', p.parseInfix)
+	p.registerInfixParseFunc('+', p.parseInfix)
+	p.registerInfixParseFunc('*', p.parseInfix)
+	p.registerInfixParseFunc('/', p.parseInfix)
+	p.registerInfixParseFunc('=', p.parseInfix)
+	p.registerInfixParseFunc('>', p.parseInfix)
+	p.registerInfixParseFunc('<', p.parseInfix)
 	return p
 }
 
-type infixParseFunc func() ast
+type infixParseFunc func(ast) ast
 
 func (p *parser) registerInfixParseFunc(tok rune, f infixParseFunc) {
 	if p.infixParseFuncs == nil {
@@ -75,6 +82,9 @@ func (p *parser) parse() (a ast, err error) {
 func (p *parser) parseExpression() ast {
 	peek := p.peek()
 	if f, ok := p.prefixParseFuncs[peek]; ok {
+		return f()
+	}
+	if f, ok := p.infixParseFuncs[peek]; ok {
 		return f()
 	}
 	dief(p.scanner, "invalid: %s", scanner.TokenString(peek))
@@ -110,18 +120,15 @@ loop:
 }
 
 func (p *parser) parsePrefix() ast {
-	switch p.peek() {
-	case '-':
-		p.eat('-')
-		return prefix{op: minus, expr: p.parseExpression()}
-	case '!':
-		p.eat('!')
-		return prefix{op: bang, expr: p.parseExpression()}
-	default:
-		dief(p.scanner, `expected "!" or "-"; got %s`,
-			scanner.TokenString(p.peek()))
-	}
-	panic("ureacheable")
+	op := p.peek()
+	p.eat('!', '-')
+	return prefix{op: operator(op), expr: p.parseExpression()}
+}
+
+func (p *parser) parseInfix(left ast) ast {
+	op := p.peek()
+	p.eat('-', '+', '*', '/', '=', '<', '>')
+	return infix{left: left, op: operator(op), right: p.parseExpression()}
 }
 
 func (p *parser) parseStr() str {

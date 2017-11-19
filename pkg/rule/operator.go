@@ -44,5 +44,5 @@ func (o operator) precedence() precedence {
 	case minus:
 		return line
 	}
-	panic("invalid operator")
+	return lowest
 }
