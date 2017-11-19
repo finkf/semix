@@ -22,6 +22,8 @@ func TestParser(t *testing.T) {
 		{"4a.2", "", true},
 		{"10", "10.000000", false},
 		{"100a", "", true},
+		{"- 10", "-10.000000", false},
+		{"! 10", "!10.000000", false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {

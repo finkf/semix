@@ -18,18 +18,46 @@ const (
 )
 
 type parser struct {
-	scanner *scanner.Scanner
-	p       rune
+	scanner          *scanner.Scanner
+	p                rune
+	prefixParseFuncs map[rune]prefixParseFunc
+	infixParseFuncs  map[rune]infixParseFunc
 }
 
 func newParser(r io.Reader) *parser {
-	scanner := &scanner.Scanner{
+	s := &scanner.Scanner{
 		Error: die,
 		Mode:  ruleTokens,
 	}
-	scanner.Init(r)
-	scanner.Filename = "rule"
-	return &parser{scanner: scanner}
+	s.Init(r)
+	s.Filename = "rule"
+	p := &parser{
+		scanner: s,
+	}
+	p.registerPrefixParseFunc('{', p.parseSet)
+	p.registerPrefixParseFunc('!', p.parsePrefix)
+	p.registerPrefixParseFunc('-', p.parsePrefix)
+	p.registerPrefixParseFunc(scanner.Int, p.parseNum)
+	p.registerPrefixParseFunc(scanner.Float, p.parseNum)
+	return p
+}
+
+type infixParseFunc func() ast
+
+func (p *parser) registerInfixParseFunc(tok rune, f infixParseFunc) {
+	if p.infixParseFuncs == nil {
+		p.infixParseFuncs = make(map[rune]infixParseFunc)
+	}
+	p.infixParseFuncs[tok] = f
+}
+
+type prefixParseFunc func() ast
+
+func (p *parser) registerPrefixParseFunc(tok rune, f prefixParseFunc) {
+	if p.prefixParseFuncs == nil {
+		p.prefixParseFuncs = make(map[rune]prefixParseFunc)
+	}
+	p.prefixParseFuncs[tok] = f
 }
 
 func (p *parser) parse() (a ast, err error) {
@@ -39,21 +67,21 @@ func (p *parser) parse() (a ast, err error) {
 			err = errors.New(r.msg)
 		}
 	}()
-	switch p.peek() {
-	case '{':
-		a = p.parseSet()
-	case scanner.Float:
-		a = p.parseNum()
-	case scanner.Int:
-		a = p.parseNum()
-	default:
-		dief(p.scanner, "invalid: %s", scanner.TokenString(p.peek()))
-	}
+	a = p.parseExpression()
 	p.eat(scanner.EOF)
 	return a, nil
 }
 
-func (p *parser) parseSet() set {
+func (p *parser) parseExpression() ast {
+	peek := p.peek()
+	if f, ok := p.prefixParseFuncs[peek]; ok {
+		return f()
+	}
+	dief(p.scanner, "invalid: %s", scanner.TokenString(peek))
+	panic("ureacheable")
+}
+
+func (p *parser) parseSet() ast {
 	p.eat('{')
 	set := make(set)
 	for _, str := range p.parseStrList('}') {
@@ -81,6 +109,21 @@ loop:
 	return strs
 }
 
+func (p *parser) parsePrefix() ast {
+	switch p.peek() {
+	case '-':
+		p.eat('-')
+		return prefix{op: minus, expr: p.parseExpression()}
+	case '!':
+		p.eat('!')
+		return prefix{op: bang, expr: p.parseExpression()}
+	default:
+		dief(p.scanner, `expected "!" or "-"; got %s`,
+			scanner.TokenString(p.peek()))
+	}
+	panic("ureacheable")
+}
+
 func (p *parser) parseStr() str {
 	_, s := p.eat(scanner.String)
 	s, err := strconv.Unquote(s)
@@ -90,7 +133,7 @@ func (p *parser) parseStr() str {
 	return str(s)
 }
 
-func (p *parser) parseNum() num {
+func (p *parser) parseNum() ast {
 	_, str := p.eat(scanner.Float, scanner.Int)
 	n, err := strconv.ParseFloat(str, 64)
 	if err != nil {
@@ -114,7 +157,7 @@ func (p *parser) eat(toks ...rune) (rune, string) {
 	}
 	dief(p.scanner, "expected %s; got %s",
 		strings.Join(xs, " or "), scanner.TokenString(p.p))
-	panic("not reached")
+	panic("ureacheable")
 }
 
 func (p *parser) peek() rune {
