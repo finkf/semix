@@ -16,7 +16,7 @@ type ast interface {
 	visit(visitor)
 }
 
-type set map[string]bool
+type set map[str]bool
 
 func (s set) visit(v visitor) {
 	v.visitSet(s)
@@ -25,7 +25,7 @@ func (s set) visit(v visitor) {
 func (s set) String() string {
 	var strs []string
 	for str := range s {
-		strs = append(strs, fmt.Sprintf("%q", str))
+		strs = append(strs, str.String())
 	}
 	sort.Strings(strs)
 	return fmt.Sprintf("{%s}", strings.Join(strs, ","))

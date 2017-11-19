@@ -63,8 +63,8 @@ func (p *parser) parseSet() set {
 	return set
 }
 
-func (p *parser) parseStrList(end rune) []string {
-	var strs []string
+func (p *parser) parseStrList(end rune) []str {
+	var strs []str
 loop:
 	for p.peek() != end {
 		strs = append(strs, p.parseStr())
@@ -81,13 +81,13 @@ loop:
 	return strs
 }
 
-func (p *parser) parseStr() string {
-	_, str := p.eat(scanner.String)
-	str, err := strconv.Unquote(str)
+func (p *parser) parseStr() str {
+	_, s := p.eat(scanner.String)
+	s, err := strconv.Unquote(s)
 	if err != nil {
 		dief(p.scanner, "invalid string: %s", err)
 	}
-	return str
+	return str(s)
 }
 
 func (p *parser) parseNum() num {
