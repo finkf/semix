@@ -11,7 +11,7 @@ type visitor interface {
 	visitSet(set)
 	visitStr(str)
 	visitNum(num)
-	visitInfix(interfix)
+	visitInfix(infix)
 	visitPrefix(prefix)
 }
 
@@ -35,7 +35,7 @@ func (p *astprinter) visitNum(n num) {
 	p.buffer.WriteString(n.String())
 }
 
-func (p *astprinter) visitInfix(i interfix) {
+func (p *astprinter) visitInfix(i infix) {
 	p.buffer.WriteString(i.String())
 }
 
@@ -66,16 +66,16 @@ func (p prefix) String() string {
 	return fmt.Sprintf("%c%s", p.op, printer)
 }
 
-type interfix struct {
+type infix struct {
 	op          rune
 	left, right ast
 }
 
-func (i interfix) visit(v visitor) {
+func (i infix) visit(v visitor) {
 	v.visitInfix(i)
 }
 
-func (i interfix) String() string {
+func (i infix) String() string {
 	l := newAstPrinter()
 	r := newAstPrinter()
 	i.left.visit(l)
