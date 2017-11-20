@@ -40,6 +40,8 @@ func TestParser(t *testing.T) {
 		{"1+2*3", "(1.00+(2.00*3.00))", false},
 		{"1/2-3", "((1.00/2.00)-3.00)", false},
 		{`{"a","b"}-{"b"}`, `({"a","b"}-{"b"})`, false},
+		{"(1+2)*3", "((1.00+2.00)*3.00)", false},
+		{"1/(2-3)", "(1.00/(2.00-3.00))", false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {

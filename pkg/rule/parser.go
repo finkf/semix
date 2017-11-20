@@ -37,6 +37,7 @@ func newParser(r io.Reader) *parser {
 	p.registerPrefixParseFunc('{', p.parseSet)
 	p.registerPrefixParseFunc('!', p.parsePrefix)
 	p.registerPrefixParseFunc('-', p.parsePrefix)
+	p.registerPrefixParseFunc('(', p.parseGroup)
 	p.registerPrefixParseFunc(scanner.Ident, p.parseBool)
 	p.registerPrefixParseFunc(scanner.Int, p.parseNum)
 	p.registerPrefixParseFunc(scanner.Float, p.parseNum)
@@ -94,6 +95,13 @@ func (p *parser) parseExpression(prec int) ast {
 		left = f(left)
 	}
 	return left
+}
+
+func (p *parser) parseGroup() ast {
+	p.eat('(')
+	ast := p.parseExpression(lowest)
+	p.eat(')')
+	return ast
 }
 
 func (p *parser) parseSet() ast {
