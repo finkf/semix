@@ -1,15 +1,13 @@
 package rule
 
-type precedence int
-
 const (
-	lowest  precedence = iota + 1
-	equals             // =
-	compare            // <, >
-	line               // +, -
-	dot                // *, /
-	neg                // !,-
-	call               // func()
+	lowest  = iota + 1
+	equals  // =
+	compare // <, >
+	line    // +, -
+	dot     // *, /
+	neg     // !,-
+	call    // func()
 )
 
 type operator rune
@@ -25,23 +23,23 @@ const (
 	bang  operator = '!'
 )
 
-func (o operator) precedence() precedence {
-	switch o {
-	case bang:
+func precedence(tok rune) int {
+	switch tok {
+	case '!':
 		return neg
-	case eq:
+	case '=':
 		return equals
-	case gt:
+	case '>':
 		return compare
-	case lt:
+	case '<':
 		return compare
-	case div:
+	case '/':
 		return dot
-	case mul:
+	case '*':
 		return dot
-	case plus:
+	case '+':
 		return line
-	case minus:
+	case '-':
 		return line
 	}
 	return lowest

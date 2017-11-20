@@ -75,18 +75,18 @@ func (p *parser) parse() (a ast, err error) {
 			err = errors.New(r.msg)
 		}
 	}()
-	a = p.parseExpression()
+	a = p.parseExpression(lowest)
 	p.eat(scanner.EOF)
 	return a, nil
 }
 
-func (p *parser) parseExpression() ast {
+func (p *parser) parseExpression(prec int) ast {
 	f, ok := p.prefixParseFuncs[p.peek()]
 	if !ok {
 		dief(p.scanner, "invalid expression: %s", scanner.TokenString(p.peek()))
 	}
 	left := f()
-	for p.peek() != scanner.EOF {
+	for p.peek() != scanner.EOF && prec < precedence(p.peek()) {
 		f, ok := p.infixParseFuncs[p.peek()]
 		if !ok {
 			return left
@@ -127,13 +127,15 @@ loop:
 func (p *parser) parsePrefix() ast {
 	op := p.peek()
 	p.eat('!', '-')
-	return prefix{op: operator(op), expr: p.parseExpression()}
+	prec := precedence(op)
+	return prefix{op: operator(op), expr: p.parseExpression(prec)}
 }
 
 func (p *parser) parseInfix(left ast) ast {
 	op := p.peek()
 	p.eat('-', '+', '*', '/', '=', '<', '>')
-	return infix{left: left, op: operator(op), right: p.parseExpression()}
+	prec := precedence(op)
+	return infix{left: left, op: operator(op), right: p.parseExpression(prec)}
 }
 
 func (p *parser) parseStr() str {
