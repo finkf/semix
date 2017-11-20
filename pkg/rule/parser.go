@@ -127,8 +127,7 @@ loop:
 func (p *parser) parsePrefix() ast {
 	op := p.peek()
 	p.eat('!', '-')
-	prec := precedence(op)
-	return prefix{op: operator(op), expr: p.parseExpression(prec)}
+	return prefix{op: operator(op), expr: p.parseExpression(neg)}
 }
 
 func (p *parser) parseInfix(left ast) ast {

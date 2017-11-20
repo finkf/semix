@@ -68,7 +68,7 @@ func (p prefix) visit(v visitor) {
 func (p prefix) String() string {
 	printer := newAstPrinter()
 	p.expr.visit(printer)
-	return fmt.Sprintf("%c%s", p.op, printer)
+	return fmt.Sprintf("(%c%s)", p.op, printer)
 }
 
 type infix struct {
@@ -85,7 +85,7 @@ func (i infix) String() string {
 	r := newAstPrinter()
 	i.left.visit(l)
 	i.right.visit(r)
-	return fmt.Sprintf("%s%c%s", l, i.op, r)
+	return fmt.Sprintf("(%s%c%s)", l, i.op, r)
 }
 
 type set map[str]bool
