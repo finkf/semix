@@ -120,7 +120,7 @@ func (n num) visit(v visitor) {
 }
 
 func (n num) String() string {
-	return fmt.Sprintf("%f", n)
+	return fmt.Sprintf("%.2f", n)
 }
 
 type boolean bool
