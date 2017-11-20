@@ -14,6 +14,7 @@ func TestParser(t *testing.T) {
 		{`{"abc", "def"}`, `{"abc","def"}`, false},
 		{`{}`, `{}`, false},
 		{`{"abc"}`, `{"abc"}`, false},
+		{`{"abc",}`, `{"abc"}`, false},
 		{`{"abc" "def"}`, ``, true},
 		{`{"abc\" "def"}`, ``, true},
 		{`{1,2}`, ``, true},
