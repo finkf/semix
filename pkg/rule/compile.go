@@ -1,6 +1,8 @@
 package rule
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -25,43 +27,75 @@ func (r Rule) String() string {
 }
 
 // Compile compiles a rule from an expression.
-func Compile(expr string) (Rule, error) {
+func Compile(expr string) (r Rule, err error) {
+	defer func() {
+		if e, ok := recover().(compileError); ok {
+			r = nil
+			err = errors.New(e.msg)
+		}
+	}()
 	ast, err := newParser(strings.NewReader(expr)).parse()
 	if err != nil {
 		return nil, err
 	}
-	return compileAST(ast)
+	typecheck(ast)
+	return compileAST(ast), nil
 }
 
-func compileAST(ast ast) (Rule, error) {
+func compileAST(ast ast) Rule {
 	switch ast.Type() {
 	case astInfix:
 		return compileInfixAST(ast.(infix))
 	case astNum:
-		return []optcode{optcode{code: optPushNum, arg: float64(ast.(num))}}, nil
+		return []optcode{optcode{code: optPushNum, arg: float64(ast.(num))}}
 	default:
 		panic("invalid ast type")
 	}
 }
 
-func compileInfixAST(i infix) (Rule, error) {
+func compileInfixAST(i infix) Rule {
 	// if i.left.Type() != i.right.Type() {
 	// 	log.Printf("%d <-> %d", i.left.Type(), i.right.Type())
 	// 	return nil, fmt.Errorf("type error: %s", i)
 	// }
-	left, err := compileAST(i.left)
-	if err != nil {
-		return nil, err
-	}
-	right, err := compileAST(i.right)
-	if err != nil {
-		return nil, err
-	}
+	left := compileAST(i.left)
+	right := compileAST(i.right)
 	var rule Rule
 	rule = append(rule, left...)
 	rule = append(rule, right...)
 	rule = append(rule, optcode{code: optCode(i.op)})
-	return rule, nil
+	return rule
+}
+
+func typecheck(ast ast) astType {
+	switch t := ast.(type) {
+	case prefix:
+		at := typecheck(t.expr)
+		if t.op == '!' && at != astBoolean {
+			abortCompilation("invalid type in prefix expression: %s", ast)
+		}
+		if t.op == '-' && at != astNum {
+			abortCompilation("invalid type in prefix expression: %s", ast)
+		}
+		return at
+	case infix:
+		l := typecheck(t.left)
+		r := typecheck(t.right)
+		if l != r {
+			abortCompilation("types in infix expression do not match: %s", ast)
+		}
+		return l
+	default:
+		return ast.Type()
+	}
+}
+
+type compileError struct {
+	msg string
+}
+
+func abortCompilation(f string, args ...interface{}) {
+	panic(compileError{fmt.Sprintf(f, args...)})
 }
 
 func optCode(op operator) int {
