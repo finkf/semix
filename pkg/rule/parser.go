@@ -105,30 +105,24 @@ func (p *parser) parseGroup() ast {
 }
 
 func (p *parser) parseSet() ast {
-	p.eat('{')
 	set := make(set)
-	for _, str := range p.parseStrList('}') {
+	for _, str := range p.parseStrList() {
 		set[str] = true
 	}
-	p.eat('}')
 	return set
 }
 
-func (p *parser) parseStrList(end rune) []str {
+func (p *parser) parseStrList() []str {
+	p.eat('{')
 	var strs []str
-loop:
-	for p.peek() != end {
+	for p.peek() != '}' {
 		strs = append(strs, p.parseStr())
-		switch next := p.peek(); next {
-		case ',':
-			p.eat(',')
-		case end:
-			break loop
-		default:
-			dief(p.scanner, `expected "," or "%c"; got %s`,
-				end, scanner.TokenString(next))
+		tok, _ := p.eat(',', '}')
+		if tok == '}' {
+			return strs
 		}
 	}
+	p.eat('}')
 	return strs
 }
 
