@@ -80,15 +80,19 @@ func (p *parser) parse() (a ast, err error) {
 }
 
 func (p *parser) parseExpression() ast {
-	peek := p.peek()
-	if f, ok := p.prefixParseFuncs[peek]; ok {
-		return f()
+	f, ok := p.prefixParseFuncs[p.peek()]
+	if !ok {
+		dief(p.scanner, "invalid expression: %s", scanner.TokenString(p.peek()))
 	}
-	if f, ok := p.infixParseFuncs[peek]; ok {
-		return f()
+	left := f()
+	for p.peek() != scanner.EOF {
+		f, ok := p.infixParseFuncs[p.peek()]
+		if !ok {
+			return left
+		}
+		left = f(left)
 	}
-	dief(p.scanner, "invalid: %s", scanner.TokenString(peek))
-	panic("ureacheable")
+	return left
 }
 
 func (p *parser) parseSet() ast {
