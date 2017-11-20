@@ -28,6 +28,8 @@ func TestParser(t *testing.T) {
 		{"false", "false", false},
 		{"! false", "!false", false},
 		{"! true", "!true", false},
+		{"tue", "", true},
+		{"flse", "", true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
