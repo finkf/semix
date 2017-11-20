@@ -11,6 +11,7 @@ type visitor interface {
 	visitSet(set)
 	visitStr(str)
 	visitNum(num)
+	visitBoolean(boolean)
 	visitInfix(infix)
 	visitPrefix(prefix)
 }
@@ -33,6 +34,10 @@ func (p *astprinter) visitStr(s str) {
 
 func (p *astprinter) visitNum(n num) {
 	p.buffer.WriteString(n.String())
+}
+
+func (p *astprinter) visitBoolean(b boolean) {
+	p.buffer.WriteString(b.String())
 }
 
 func (p *astprinter) visitInfix(i infix) {
@@ -116,4 +121,14 @@ func (n num) visit(v visitor) {
 
 func (n num) String() string {
 	return fmt.Sprintf("%f", n)
+}
+
+type boolean bool
+
+func (b boolean) visit(v visitor) {
+	v.visitBoolean(b)
+}
+
+func (b boolean) String() string {
+	return fmt.Sprintf("%t", b)
 }

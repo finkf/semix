@@ -37,6 +37,7 @@ func newParser(r io.Reader) *parser {
 	p.registerPrefixParseFunc('{', p.parseSet)
 	p.registerPrefixParseFunc('!', p.parsePrefix)
 	p.registerPrefixParseFunc('-', p.parsePrefix)
+	p.registerPrefixParseFunc(scanner.Ident, p.parseBool)
 	p.registerPrefixParseFunc(scanner.Int, p.parseNum)
 	p.registerPrefixParseFunc(scanner.Float, p.parseNum)
 	p.registerInfixParseFunc('-', p.parseInfix)
@@ -142,6 +143,18 @@ func (p *parser) parseStr() str {
 		dief(p.scanner, "invalid string: %s", err)
 	}
 	return str(s)
+}
+
+func (p *parser) parseBool() ast {
+	switch _, str := p.eat(scanner.Ident); str {
+	case "true":
+		return boolean(true)
+	case "false":
+		return boolean(false)
+	default:
+		dief(p.scanner, "invalid identifier: %s", str)
+	}
+	panic("unreacheable")
 }
 
 func (p *parser) parseNum() ast {
