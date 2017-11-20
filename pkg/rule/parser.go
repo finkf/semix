@@ -155,9 +155,25 @@ func (p *parser) parseBool() ast {
 	case "false":
 		return boolean(false)
 	default:
-		dief(p.scanner, "invalid identifier: %s", str)
+		if p.peek() != '(' {
+			dief(p.scanner, "invalid identifier: %s", str)
+		}
+		return function{name: str, args: p.parseArgs()}
 	}
-	panic("unreacheable")
+}
+
+func (p *parser) parseArgs() []ast {
+	p.eat('(')
+	var args []ast
+	for p.peek() != ')' {
+		args = append(args, p.parseExpression(lowest))
+		tok, _ := p.eat(',', ')')
+		if tok == ')' {
+			return args
+		}
+	}
+	p.eat(')')
+	return args
 }
 
 func (p *parser) parseNum() ast {

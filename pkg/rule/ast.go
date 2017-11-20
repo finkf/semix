@@ -14,6 +14,7 @@ type visitor interface {
 	visitBoolean(boolean)
 	visitInfix(infix)
 	visitPrefix(prefix)
+	visitFunction(function)
 }
 
 type astprinter struct {
@@ -46,6 +47,10 @@ func (p *astprinter) visitInfix(i infix) {
 
 func (p *astprinter) visitPrefix(x prefix) {
 	p.buffer.WriteString(x.String())
+}
+
+func (p *astprinter) visitFunction(f function) {
+	p.buffer.WriteString(f.String())
 }
 
 func (p astprinter) String() string {
@@ -101,6 +106,25 @@ func (s set) String() string {
 	}
 	sort.Strings(strs)
 	return fmt.Sprintf("{%s}", strings.Join(strs, ","))
+}
+
+type function struct {
+	name string
+	args []ast
+}
+
+func (f function) visit(v visitor) {
+	v.visitFunction(f)
+}
+
+func (f function) String() string {
+	var strs []string
+	for _, arg := range f.args {
+		p := newAstPrinter()
+		arg.visit(p)
+		strs = append(strs, fmt.Sprintf("%s", p))
+	}
+	return fmt.Sprintf("%s(%s)", f.name, strings.Join(strs, ","))
 }
 
 type str string
