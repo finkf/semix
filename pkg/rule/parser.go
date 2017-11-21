@@ -30,7 +30,7 @@ type parser struct {
 
 func newParser(r io.Reader) *parser {
 	s := &scanner.Scanner{
-		Error: die,
+		Error: parseErrorFunc,
 		Mode:  ruleTokens,
 	}
 	s.Init(r)
@@ -74,8 +74,7 @@ func (p *parser) parse() (a ast, err error) {
 func (p *parser) parseExpression(prec int) ast {
 	f, ok := p.prefixParseFuncs[p.peek()]
 	if !ok {
-		parserFatalf(p.scanner, "invalid expression: %s",
-			scanner.TokenString(p.peek()))
+		p.fatalf("invalid expression: %s", scanner.TokenString(p.peek()))
 	}
 	left := f()
 	for p.peek() != scanner.EOF && prec < precedence(p.peek()) {
@@ -134,7 +133,7 @@ func (p *parser) parseStr() ast {
 	_, s := p.eat(scanner.String)
 	s, err := strconv.Unquote(s)
 	if err != nil {
-		parserFatalf(p.scanner, "invalid string: %s", err)
+		p.fatalf("invalid string: %s", err)
 	}
 	return str(s)
 }
@@ -147,7 +146,7 @@ func (p *parser) parseBool() ast {
 		return boolean(false)
 	default:
 		if p.peek() != '(' {
-			parserFatalf(p.scanner, "invalid identifier: %s", str)
+			p.fatalf("invalid identifier: %s", str)
 		}
 		return function{name: str, args: p.parseArgs()}
 	}
@@ -171,7 +170,7 @@ func (p *parser) parseNum() ast {
 	_, str := p.eat(scanner.Float, scanner.Int)
 	n, err := strconv.ParseFloat(str, 64)
 	if err != nil {
-		parserFatalf(p.scanner, "could not parse number %q: %s", str, err)
+		p.fatalf("could not parse number %q: %s", str, err)
 	}
 	return num(n)
 }
@@ -189,7 +188,7 @@ func (p *parser) eat(toks ...rune) (rune, string) {
 	for _, tok := range toks {
 		xs = append(xs, scanner.TokenString(tok))
 	}
-	parserFatalf(p.scanner, "expected %s; got %s",
+	p.fatalf("expected %s; got %s",
 		strings.Join(xs, " or "), scanner.TokenString(p.p))
 	panic("ureacheable")
 }
@@ -205,11 +204,11 @@ type parseError struct {
 	msg string
 }
 
-func die(s *scanner.Scanner, msg string) {
+func parseErrorFunc(s *scanner.Scanner, msg string) {
 	panic(parseError{fmt.Sprintf("%s: %s", s.Position, msg)})
 }
 
-func parserFatalf(s *scanner.Scanner, f string, args ...interface{}) {
+func (p *parser) fatalf(f string, args ...interface{}) {
 	msg := fmt.Sprintf(f, args...)
-	die(s, msg)
+	parseErrorFunc(p.scanner, msg)
 }
