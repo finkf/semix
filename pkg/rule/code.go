@@ -11,13 +11,20 @@ func (s *stack) pop1() float64 {
 	return res
 }
 
-func (s *stack) popBool() bool {
-	return !(s.pop1() == 0)
-}
-
 func (s *stack) pop2() (float64, float64) {
 	a := s.pop1()
 	b := s.pop1()
+	// switch arguments
+	return b, a
+}
+
+func (s *stack) popBool1() bool {
+	return !(s.pop1() == 0)
+}
+
+func (s *stack) popBool2() (bool, bool) {
+	a := s.popBool1()
+	b := s.popBool1()
 	// switch arguments
 	return b, a
 }
@@ -37,19 +44,21 @@ func (s *stack) pushBool(b bool) {
 type opcode int
 
 const (
-	opPusNum opcode = iota
+	opPushNUM opcode = iota
 	opPushID
-	opPushTrue
-	opPushFalse
+	opPushTRUE
+	opPushFALSE
 	opEQ
 	opLT
 	opGT
-	opNot
-	opNeg
-	opAdd
-	opSub
-	opDiv
-	opMul
+	opNOT
+	opNEG
+	opADD
+	opSUB
+	opDIV
+	opMUL
+	opOR
+	opAND
 )
 
 type instruction struct {
@@ -59,20 +68,20 @@ type instruction struct {
 
 func booleanInstruction(b bool) instruction {
 	if b {
-		return instruction{opcode: opPushTrue}
+		return instruction{opcode: opPushTRUE}
 	}
-	return instruction{opcode: opPushFalse}
+	return instruction{opcode: opPushFALSE}
 }
 
 func (i instruction) call(stack *stack) {
 	switch i.opcode {
-	case opPusNum:
+	case opPushNUM:
 		stack.push(i.arg)
 	case opPushID:
 		panic("opPushID: not implemented")
-	case opPushTrue:
+	case opPushTRUE:
 		stack.pushBool(true)
-	case opPushFalse:
+	case opPushFALSE:
 		stack.pushBool(false)
 	case opEQ:
 		a, b := stack.pop2()
@@ -83,22 +92,28 @@ func (i instruction) call(stack *stack) {
 	case opGT:
 		a, b := stack.pop2()
 		stack.pushBool(a > b)
-	case opNot:
-		stack.pushBool(!stack.popBool())
-	case opNeg:
+	case opNOT:
+		stack.pushBool(!stack.popBool1())
+	case opNEG:
 		stack.push(-stack.pop1())
-	case opAdd:
+	case opADD:
 		a, b := stack.pop2()
 		stack.push(a + b)
-	case opSub:
+	case opSUB:
 		a, b := stack.pop2()
 		stack.push(a - b)
-	case opMul:
+	case opMUL:
 		a, b := stack.pop2()
 		stack.push(a * b)
-	case opDiv:
+	case opDIV:
 		a, b := stack.pop2()
 		stack.push(a / b)
+	case opOR:
+		a, b := stack.popBool2()
+		stack.pushBool(a || b)
+	case opAND:
+		a, b := stack.popBool2()
+		stack.pushBool(a && b)
 	default:
 		panic("invalid opcode")
 	}
@@ -106,32 +121,36 @@ func (i instruction) call(stack *stack) {
 
 func (i instruction) String() string {
 	switch i.opcode {
-	case opPusNum:
-		return fmt.Sprintf("opPush(%.2f)", i.arg)
+	case opPushNUM:
+		return fmt.Sprintf("opPUSH(%.2f)", i.arg)
 	case opPushID:
-		return fmt.Sprintf("opPush(%d)", int(i.arg))
-	case opPushTrue:
-		return fmt.Sprintf("opPush(%t)", true)
-	case opPushFalse:
-		return fmt.Sprintf("opPush(%t)", false)
+		return fmt.Sprintf("opPUSH(%d)", int(i.arg))
+	case opPushTRUE:
+		return fmt.Sprintf("opPUSH(%t)", true)
+	case opPushFALSE:
+		return fmt.Sprintf("opPUSH(%t)", false)
 	case opEQ:
 		return "opEQ"
 	case opLT:
 		return "opLT"
 	case opGT:
 		return "opGT"
-	case opNot:
-		return "opNot"
-	case opNeg:
-		return "opNeg"
-	case opAdd:
-		return "opAdd"
-	case opSub:
-		return "opSub"
-	case opMul:
-		return "opMul"
-	case opDiv:
-		return "opDiv"
+	case opNOT:
+		return "opNOT"
+	case opNEG:
+		return "opNEG"
+	case opADD:
+		return "opADD"
+	case opSUB:
+		return "opSUB"
+	case opMUL:
+		return "opMUL"
+	case opDIV:
+		return "opDIV"
+	case opOR:
+		return "opOR"
+	case opAND:
+		return "opAND"
 	default:
 		panic("invalid opcode")
 	}

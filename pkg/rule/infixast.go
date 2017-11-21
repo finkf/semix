@@ -45,12 +45,16 @@ func (i infix) check() astType {
 	panic("unreacheable")
 }
 
-func (i infix) compile(func(string) int) Rule {
+func (i infix) compile(f func(string) int) Rule {
 	switch i.left.check() {
 	case astBoolean:
 		switch i.op {
 		case '=':
-			return i.compileBooleanEQ()
+			return i.compileBooleanEQ(f)
+		case '+':
+			return i.compileBooleanOR(f)
+		case '*':
+			return i.compileBooleanAND(f)
 		default:
 			panic("invalid operator")
 		}
@@ -74,8 +78,16 @@ func (i infix) compile(func(string) int) Rule {
 	// panic("unreacheable")
 }
 
-func (i infix) compileBooleanEQ() Rule {
-	return Rule{booleanInstruction(i.left.(boolean) == i.right.(boolean))}
+func (i infix) compileBooleanEQ(f func(string) int) Rule {
+	return i.combine(f, instruction{opcode: opEQ})
+}
+
+func (i infix) compileBooleanOR(f func(string) int) Rule {
+	return i.combine(f, instruction{opcode: opOR})
+}
+
+func (i infix) compileBooleanAND(f func(string) int) Rule {
+	return i.combine(f, instruction{opcode: opAND})
 }
 
 func (i infix) compileStrEQ() Rule {
@@ -88,6 +100,13 @@ func (i infix) compileStrLT() Rule {
 
 func (i infix) compileStrGT() Rule {
 	return Rule{booleanInstruction(i.left.(str) > i.right.(str))}
+}
+
+func (i infix) combine(f func(string) int, instr instruction) Rule {
+	rule := i.left.compile(f)
+	rule = append(rule, i.right.compile(f)...)
+	return append(rule, instr)
+
 }
 
 func (i infix) String() string {
