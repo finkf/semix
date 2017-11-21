@@ -1,9 +1,20 @@
 package rule
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
+
+func checkSyntax(ast ast) (t astType, err error) {
+	defer func() {
+		if e, ok := recover().(astError); ok {
+			err = errors.New(e.msg)
+		}
+	}()
+	t = ast.check()
+	return t, nil
+}
 
 func TestSyntaxCheck(t *testing.T) {
 	tests := []struct {
@@ -75,20 +86,7 @@ func TestCompile(t *testing.T) {
 		want  float64
 		iserr bool
 	}{
-		{"2+3", 5, false},
-		{"2+true", 0, true},
-		{"2+3+1", 6, false},
-		{"2*3+1", 7, false},
-		{"2+3*3", 11, false},
-		{"2-3*3", -7, false},
-		{"2-3/3+1", 2, false},
-		{"2/3", 2.0 / 3.0, false},
-		{"2/3>1/2", 1, false},
-		{"2/3<1/2", 0, false},
-		{"2/3=1/2", 0, false},
-		{"2/4=0.5", 1, false},
-		{"2/4>0.5", 0, false},
-		{"2/4<0.5", 0, false},
+		{"-2", -2, false},
 	}
 
 	for _, tc := range tests {
