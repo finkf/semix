@@ -57,16 +57,18 @@ func (f function) elementsCheck() astType {
 }
 
 func (f function) countsCheck() astType {
-	if len(f.args) == 0 {
+	if len(f.args) != 1 {
 		astFatalf("invalid arguments: %s", f)
 	}
-	for _, arg := range f.args {
-		t := arg.check()
-		if t != astSet && t != astStr {
-			astFatalf("invalid arguments: %s", f)
-		}
+	switch f.args[0].check() {
+	case astSet:
+		return astSet
+	case astStr:
+		return astNum
+	default:
+		astFatalf("invalid arguments: %s", f)
 	}
-	return astNumArray
+	panic("unreacheable")
 }
 
 func (f function) lenCheck() astType {
@@ -80,24 +82,9 @@ func (f function) lenCheck() astType {
 	return astNum
 }
 func (f function) minMaxCheck() astType {
-	if len(f.args) == 0 {
-		astFatalf("invalid arguments: %s", f)
-	}
-	t := f.args[0].check()
-	if t == astBoolean {
-		for i := 1; i < len(f.args); i++ {
-			if f.args[i].check() != astBoolean {
-				astFatalf("invalid arguments: %s", f)
-			}
-		}
-		return astBoolean
-	}
-	if t != astNum && t != astNumArray {
-		astFatalf("invalid arguments: %s", f)
-	}
-	for i := 1; i < len(f.args); i++ {
-		tt := f.args[i].check()
-		if tt != astNum && tt != astNumArray {
+	for _, arg := range f.args {
+		t := arg.check()
+		if t != astBoolean && t != astNum && t != astSet {
 			astFatalf("invalid arguments: %s", f)
 		}
 	}

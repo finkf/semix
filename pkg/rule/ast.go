@@ -16,7 +16,6 @@ const (
 	astBoolean
 	astPrefix
 	astInfix
-	astNumArray
 )
 
 type ast interface {
