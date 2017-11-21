@@ -44,6 +44,7 @@ func TestSyntaxCheck(t *testing.T) {
 		{`len(es()-{"topnode"})`, astNum, false},
 		{`len("abc")`, astNum, false},
 		{"min(true,false,false,true)", astNum, false},
+		{`cs({"a","b"})`, astSet, false},
 		{"2-true", 0, true},
 		{"false+2", 0, true},
 		{"false/true", 0, true},
@@ -59,6 +60,8 @@ func TestSyntaxCheck(t *testing.T) {
 		{`c({"abc"},1.0,true)`, 0, true},
 		{`len("ab","foo")`, 0, true},
 		{`len(1.0)`, 0, true},
+		{`LEN(1.0)`, 0, true},
+		{`c(1.0)`, 0, true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
