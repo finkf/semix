@@ -2,6 +2,7 @@ package rule
 
 import (
 	"errors"
+	"math"
 	"strings"
 	"testing"
 )
@@ -162,7 +163,10 @@ func TestExecuteRule(t *testing.T) {
 		{`1-len({"a","b","c"})=-2`, 1, false},
 		{`log(exp(1+1))=2*1`, 1, false},
 		{`pow(1*2,2+1)=8`, 1, false},
+		{"min()", -math.MaxFloat64, false},
+		{"max()", math.MaxFloat64, false},
 		{`min(true,true,false)`, 0, false},
+		// {`max(1,2,3+5)`, 8, false},
 		{"-{}", 0, true},
 		{"-es()", 0, true},
 		{`{"a","not","b"}`, 0, true},
