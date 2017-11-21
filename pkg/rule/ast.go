@@ -21,6 +21,7 @@ const (
 type ast interface {
 	fmt.Stringer
 	typ() astType
+	// returnTyp() astType
 }
 
 type prefix struct {
@@ -31,6 +32,10 @@ type prefix struct {
 func (prefix) typ() astType {
 	return astPrefix
 }
+
+// func (p prefix) returnTyp() astType {
+//
+// }
 
 func (p prefix) String() string {
 	return fmt.Sprintf("(%c%s)", p.op, p.expr)

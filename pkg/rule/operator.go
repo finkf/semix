@@ -20,13 +20,10 @@ const (
 	mul   operator = '*'
 	plus  operator = '+'
 	minus operator = '-'
-	bang  operator = '!'
 )
 
 func precedence(tok rune) int {
 	switch tok {
-	case '!':
-		return neg
 	case '=':
 		return equals
 	case '>':

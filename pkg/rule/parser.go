@@ -40,7 +40,6 @@ func newParser(r io.Reader) *parser {
 	}
 	p.prefixParseFuncs = map[rune]prefixParseFunc{
 		'{':           p.parseSet,
-		'!':           p.parsePrefix,
 		'-':           p.parsePrefix,
 		'(':           p.parseGroup,
 		scanner.Ident: p.parseBool,
