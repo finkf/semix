@@ -87,6 +87,11 @@ func TestCompile(t *testing.T) {
 		iserr bool
 	}{
 		{"-2", -2, false},
+		{"--2", 2, false},
+		{"-true", 0, false},
+		{"-false", 1, false},
+		{"--true", 1, false},
+		{"--false", 0, false},
 	}
 
 	for _, tc := range tests {
