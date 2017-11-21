@@ -17,6 +17,10 @@ const (
 		scanner.ScanRawStrings
 )
 
+type infixParseFunc func(ast) ast
+
+type prefixParseFunc func() ast
+
 type parser struct {
 	scanner          *scanner.Scanner
 	p                rune
@@ -34,39 +38,25 @@ func newParser(r io.Reader) *parser {
 	p := &parser{
 		scanner: s,
 	}
-	p.registerPrefixParseFunc('{', p.parseSet)
-	p.registerPrefixParseFunc('!', p.parsePrefix)
-	p.registerPrefixParseFunc('-', p.parsePrefix)
-	p.registerPrefixParseFunc('(', p.parseGroup)
-	p.registerPrefixParseFunc(scanner.Ident, p.parseBool)
-	p.registerPrefixParseFunc(scanner.Int, p.parseNum)
-	p.registerPrefixParseFunc(scanner.Float, p.parseNum)
-	p.registerInfixParseFunc('-', p.parseInfix)
-	p.registerInfixParseFunc('+', p.parseInfix)
-	p.registerInfixParseFunc('*', p.parseInfix)
-	p.registerInfixParseFunc('/', p.parseInfix)
-	p.registerInfixParseFunc('=', p.parseInfix)
-	p.registerInfixParseFunc('>', p.parseInfix)
-	p.registerInfixParseFunc('<', p.parseInfix)
+	p.prefixParseFuncs = map[rune]prefixParseFunc{
+		'{':           p.parseSet,
+		'!':           p.parsePrefix,
+		'-':           p.parsePrefix,
+		'(':           p.parseGroup,
+		scanner.Ident: p.parseBool,
+		scanner.Int:   p.parseNum,
+		scanner.Float: p.parseNum,
+	}
+	p.infixParseFuncs = map[rune]infixParseFunc{
+		'-': p.parseInfix,
+		'+': p.parseInfix,
+		'*': p.parseInfix,
+		'/': p.parseInfix,
+		'=': p.parseInfix,
+		'>': p.parseInfix,
+		'<': p.parseInfix,
+	}
 	return p
-}
-
-type infixParseFunc func(ast) ast
-
-func (p *parser) registerInfixParseFunc(tok rune, f infixParseFunc) {
-	if p.infixParseFuncs == nil {
-		p.infixParseFuncs = make(map[rune]infixParseFunc)
-	}
-	p.infixParseFuncs[tok] = f
-}
-
-type prefixParseFunc func() ast
-
-func (p *parser) registerPrefixParseFunc(tok rune, f prefixParseFunc) {
-	if p.prefixParseFuncs == nil {
-		p.prefixParseFuncs = make(map[rune]prefixParseFunc)
-	}
-	p.prefixParseFuncs[tok] = f
 }
 
 func (p *parser) parse() (a ast, err error) {
