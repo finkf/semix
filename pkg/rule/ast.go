@@ -38,7 +38,9 @@ func (p prefix) check() astType {
 	if p.op != '-' {
 		astFatalf("invalid prefix operator in: %s", p)
 	}
-	return checkTypIn(p, p.expr.check(), astBoolean, astNum)
+	t := p.expr.check()
+	checkTypIn(p, t, astBoolean, astNum)
+	return t
 }
 
 func (p prefix) String() string {
@@ -62,19 +64,25 @@ func (i infix) check() astType {
 	}
 	switch i.op {
 	case '=':
-		return left
+		return astBoolean
 	case '>':
-		return checkTypIn(i, left, astNum, astStr)
+		checkTypIn(i, left, astNum, astStr)
+		return astBoolean
 	case '<':
-		return checkTypIn(i, left, astNum, astStr)
+		checkTypIn(i, left, astNum, astStr)
+		return astBoolean
 	case '+':
-		return checkTypIn(i, left, astBoolean, astNum, astSet, astStr)
+		checkTypIn(i, left, astBoolean, astNum, astSet, astStr)
+		return left
 	case '-':
-		return checkTypIn(i, left, astNum, astSet)
+		checkTypIn(i, left, astNum, astSet)
+		return left
 	case '/':
-		return checkTypIn(i, left, astNum)
+		checkTypIn(i, left, astNum)
+		return left
 	case '*':
-		return checkTypIn(i, left, astBoolean, astNum, astSet)
+		checkTypIn(i, left, astBoolean, astNum, astSet)
+		return left
 	default:
 		astFatalf("invalid expression: %s", i)
 	}
@@ -150,10 +158,10 @@ type astError struct {
 	msg string
 }
 
-func checkTypIn(ast ast, t astType, set ...astType) astType {
+func checkTypIn(ast ast, t astType, set ...astType) {
 	for _, s := range set {
 		if t == s {
-			return t
+			return
 		}
 	}
 	astFatalf("invalid expression: %s", ast)
