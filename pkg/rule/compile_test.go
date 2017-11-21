@@ -116,7 +116,18 @@ func TestCompile(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
-			rule, err := Compile(tc.test)
+			rule, err := Compile(tc.test, func(str string) int {
+				switch str {
+				case "a":
+					return 1
+				case "b":
+					return 2
+				case "c":
+					return 3
+				default:
+					return -1
+				}
+			})
 			if tc.iserr {
 				if err == nil {
 					t.Fatalf("expected error")
