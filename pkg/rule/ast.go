@@ -20,7 +20,7 @@ const (
 
 type ast interface {
 	fmt.Stringer
-	Type() astType
+	typ() astType
 }
 
 type prefix struct {
@@ -28,7 +28,7 @@ type prefix struct {
 	expr ast
 }
 
-func (prefix) Type() astType {
+func (prefix) typ() astType {
 	return astPrefix
 }
 
@@ -41,7 +41,7 @@ type infix struct {
 	left, right ast
 }
 
-func (infix) Type() astType {
+func (infix) typ() astType {
 	return astInfix
 }
 
@@ -51,7 +51,7 @@ func (i infix) String() string {
 
 type set map[str]bool
 
-func (set) Type() astType {
+func (set) typ() astType {
 	return astSet
 }
 
@@ -69,7 +69,7 @@ type function struct {
 	args []ast
 }
 
-func (function) Type() astType {
+func (function) typ() astType {
 	return astFunction
 }
 
@@ -93,7 +93,7 @@ func (s str) String() string {
 
 type num float64
 
-func (num) Type() astType {
+func (num) typ() astType {
 	return astNum
 }
 
@@ -103,7 +103,7 @@ func (n num) String() string {
 
 type boolean bool
 
-func (boolean) Type() astType {
+func (boolean) typ() astType {
 	return astBoolean
 }
 

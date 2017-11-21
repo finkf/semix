@@ -43,7 +43,7 @@ func Compile(expr string) (r Rule, err error) {
 }
 
 func compileAST(ast ast) Rule {
-	switch ast.Type() {
+	switch ast.typ() {
 	case astInfix:
 		return compileInfixAST(ast.(infix))
 	case astNum:
@@ -86,7 +86,7 @@ func typecheck(ast ast) astType {
 		}
 		return l
 	default:
-		return ast.Type()
+		return ast.typ()
 	}
 }
 
