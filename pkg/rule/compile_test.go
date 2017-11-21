@@ -83,11 +83,14 @@ func TestSyntaxCheck(t *testing.T) {
 	}
 }
 
-func TestCompile(t *testing.T) {
+func TestCompileRule(t *testing.T) {
 	tests := []struct {
 		test, want string
 	}{
-		{"-2", "opPUSH(2.00);opNEG"},
+		{"-2", "PUSH 2.00;NEG;"},
+		{"min(1)", "PUSH 1.00;PUSH 1;MIN;"},
+		{"max(1,2)", "PUSH 1.00;PUSH 2.00;PUSH 2;MAX;"},
+		{"max({})", "PUSH 0;MAX;"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
@@ -100,7 +103,6 @@ func TestCompile(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestExecuteRule(t *testing.T) {
@@ -160,6 +162,7 @@ func TestExecuteRule(t *testing.T) {
 		{`1-len({"a","b","c"})=-2`, 1, false},
 		{`log(exp(1+1))=2*1`, 1, false},
 		{`pow(1*2,2+1)=8`, 1, false},
+		{`min(true,true,false)`, 0, false},
 		{"-{}", 0, true},
 		{"-es()", 0, true},
 		{`{"a","not","b"}`, 0, true},

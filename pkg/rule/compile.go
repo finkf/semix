@@ -22,7 +22,7 @@ func (r Rule) String() string {
 	for _, rule := range r {
 		strs = append(strs, rule.String())
 	}
-	return strings.Join(strs, ";")
+	return strings.Join(strs, ";") + ";"
 }
 
 // Compile compiles a rule from an expression.

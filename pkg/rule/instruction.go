@@ -31,6 +31,8 @@ const (
 	opLOG
 	opEXP
 	opPOW
+	opMIN
+	opMAX
 )
 
 type instruction struct {
@@ -110,6 +112,12 @@ func (i instruction) call(stack *stack) {
 	case opPOW:
 		a, b := stack.pop2()
 		stack.push(math.Pow(a, b))
+	case opMIN:
+		a := stack.popArray1()
+		stack.push(arrayMIN(a))
+	case opMAX:
+		a := stack.popArray1()
+		stack.push(arrayMAX(a))
 	default:
 		panic("invalid opcode")
 	}
@@ -130,49 +138,53 @@ func arrayEQ(a, b []float64) bool {
 func (i instruction) String() string {
 	switch i.opcode {
 	case opPushNUM:
-		return fmt.Sprintf("opPUSH(%.2f)", i.arg)
+		return fmt.Sprintf("PUSH %.2f", i.arg)
 	case opPushID:
-		return fmt.Sprintf("opPUSH(%d)", int(i.arg))
+		return fmt.Sprintf("PUSH %d", int(i.arg))
 	case opPushTRUE:
-		return fmt.Sprintf("opPUSH(%t)", true)
+		return fmt.Sprintf("PUSH %t", true)
 	case opPushFALSE:
-		return fmt.Sprintf("opPUSH(%t)", false)
+		return fmt.Sprintf("PUSH %t", false)
 	case opEQ:
-		return "opEQ"
+		return "EQ"
 	case opLT:
-		return "opLT"
+		return "LT"
 	case opGT:
-		return "opGT"
+		return "GT"
 	case opNOT:
-		return "opNOT"
+		return "NOT"
 	case opNEG:
-		return "opNEG"
+		return "NEG"
 	case opADD:
-		return "opADD"
+		return "ADD"
 	case opSUB:
-		return "opSUB"
+		return "SUB"
 	case opMUL:
-		return "opMUL"
+		return "MUL"
 	case opDIV:
-		return "opDIV"
+		return "DIV"
 	case opOR:
-		return "opOR"
+		return "OR"
 	case opAND:
-		return "opAND"
+		return "AND"
 	case opSetEQ:
-		return "opSetEQ"
+		return "SEQ"
 	case opSetU:
-		return "opSetU"
+		return "SU"
 	case opSetSUB:
-		return "opSetSUB"
+		return "SSUB"
 	case opLEN:
-		return "opLEN"
+		return "LEN"
 	case opLOG:
-		return "opLOG"
+		return "LOG"
 	case opEXP:
-		return "opEXP"
+		return "EXP"
 	case opPOW:
-		return "opPOW"
+		return "POW"
+	case opMIN:
+		return "MIN"
+	case opMAX:
+		return "MAX"
 	default:
 		panic("invalid opcode")
 	}
@@ -238,4 +250,26 @@ func arraySUB(a, b []float64) []float64 {
 		res = append(res, a[i])
 	}
 	return res
+}
+
+func arrayMIN(a []float64) float64 {
+	if len(a) == 0 {
+		return -math.MaxFloat64
+	}
+	min := a[0]
+	for i := 1; i < len(a); i++ {
+		min = math.Min(min, a[i])
+	}
+	return min
+}
+
+func arrayMAX(a []float64) float64 {
+	if len(a) == 0 {
+		return math.MaxFloat64
+	}
+	max := a[0]
+	for i := 1; i < len(a); i++ {
+		max = math.Max(max, a[i])
+	}
+	return max
 }

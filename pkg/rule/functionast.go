@@ -55,16 +55,22 @@ func (f function) compile(l func(string) int) Rule {
 	case "len":
 		switch f.args[0].check() {
 		case astStr:
-			return Rule{instruction{opcode: opPushID, arg: float64(len(f.args[0].(str)))}}
+			return Rule{
+				instruction{opcode: opPushID, arg: float64(len(f.args[0].(str)))},
+			}
 		case astSet:
 			return append(f.combine(l, f.args[0]), instruction{opcode: opLEN})
 		default:
 			panic("invalid arg type")
 		}
+	case "max":
+		return append(f.minMaxCombine(l), instruction{opcode: opMAX})
+	case "min":
+		return append(f.minMaxCombine(l), instruction{opcode: opMIN})
 	case "log":
-		return append(f.combine(l, f.args[0]), instruction{opcode: opLOG})
+		return append(f.combine(l, f.args...), instruction{opcode: opLOG})
 	case "exp":
-		return append(f.combine(l, f.args[0]), instruction{opcode: opEXP})
+		return append(f.combine(l, f.args...), instruction{opcode: opEXP})
 	case "pow":
 		return append(f.combine(l, f.args...), instruction{opcode: opPOW})
 	}
@@ -106,9 +112,12 @@ func (f function) lenCheck() astType {
 }
 
 func (f function) minMaxCheck() astType {
+	if len(f.args) == 1 && f.args[0].check() == astSet {
+		return astNum
+	}
 	for _, arg := range f.args {
 		t := arg.check()
-		if t != astBoolean && t != astNum && t != astSet {
+		if t != astBoolean && t != astNum {
 			astFatalf("invalid arguments: %s", f)
 		}
 	}
@@ -125,7 +134,21 @@ func (f function) numCheck(n int) astType {
 		}
 	}
 	return astNum
+}
 
+func (f function) minMaxCombine(g func(string) int) Rule {
+	if len(f.args) == 0 {
+		return Rule{instruction{opcode: opPushID, arg: 0}}
+	}
+	var rule Rule
+	for _, arg := range f.args {
+		if arg.check() == astSet {
+			return arg.compile(g)
+		}
+		rule = append(rule, arg.compile(g)...)
+	}
+	rule = append(rule, instruction{opcode: opPushID, arg: float64(len(rule))})
+	return rule
 }
 
 func (f function) combine(g func(string) int, args ...ast) Rule {
