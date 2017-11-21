@@ -50,56 +50,50 @@ func (i infix) compile(f func(string) int) Rule {
 	case astBoolean:
 		switch i.op {
 		case '=':
-			return i.compileBooleanEQ(f)
+			return i.combine(f, instruction{opcode: opEQ})
 		case '+':
-			return i.compileBooleanOR(f)
+			return i.combine(f, instruction{opcode: opOR})
 		case '*':
-			return i.compileBooleanAND(f)
+			return i.combine(f, instruction{opcode: opAND})
+		default:
+			panic("invalid operator")
+		}
+	case astNum:
+		switch i.op {
+		case '=':
+			return i.combine(f, instruction{opcode: opEQ})
+		case '<':
+			return i.combine(f, instruction{opcode: opLT})
+		case '>':
+			return i.combine(f, instruction{opcode: opGT})
+		case '+':
+			return i.combine(f, instruction{opcode: opADD})
+		case '-':
+			return i.combine(f, instruction{opcode: opSUB})
+		case '*':
+			return i.combine(f, instruction{opcode: opMUL})
+		case '/':
+			return i.combine(f, instruction{opcode: opDIV})
 		default:
 			panic("invalid operator")
 		}
 	case astStr:
 		switch i.op {
 		case '=':
-			return i.compileStrEQ()
+			return Rule{booleanInstruction(i.left.(str) == i.right.(str))}
 		case '<':
-			return i.compileStrLT()
+			return Rule{booleanInstruction(i.left.(str) < i.right.(str))}
 		case '>':
-			return i.compileStrGT()
+			return Rule{booleanInstruction(i.left.(str) > i.right.(str))}
 		default:
 			panic("invalid operator")
 		}
-	// case astNum:
 	// case astSet:
 	default:
 		panic("invalid type")
 	}
 	// astFatalf("cannot compile %s: not implemented", i)
 	// panic("unreacheable")
-}
-
-func (i infix) compileBooleanEQ(f func(string) int) Rule {
-	return i.combine(f, instruction{opcode: opEQ})
-}
-
-func (i infix) compileBooleanOR(f func(string) int) Rule {
-	return i.combine(f, instruction{opcode: opOR})
-}
-
-func (i infix) compileBooleanAND(f func(string) int) Rule {
-	return i.combine(f, instruction{opcode: opAND})
-}
-
-func (i infix) compileStrEQ() Rule {
-	return Rule{booleanInstruction(i.left.(str) == i.right.(str))}
-}
-
-func (i infix) compileStrLT() Rule {
-	return Rule{booleanInstruction(i.left.(str) < i.right.(str))}
-}
-
-func (i infix) compileStrGT() Rule {
-	return Rule{booleanInstruction(i.left.(str) > i.right.(str))}
 }
 
 func (i infix) combine(f func(string) int, instr instruction) Rule {
