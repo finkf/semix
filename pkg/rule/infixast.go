@@ -19,6 +19,7 @@ func (i infix) check() astType {
 	}
 	switch i.op {
 	case '=':
+		checkTypIn(i, left, astBoolean, astNum, astSet, astStr)
 		return astBoolean
 	case '>':
 		checkTypIn(i, left, astNum, astStr)
@@ -43,9 +44,32 @@ func (i infix) check() astType {
 	}
 	panic("unreacheable")
 }
+
 func (i infix) compile(func(string) int) Rule {
-	astFatalf("cannot compile %s: not implemented", i)
-	panic("unreacheable")
+	switch i.left.check() {
+	case astStr:
+		switch i.op {
+		case '=':
+			return i.compileStrEQ()
+		default:
+			panic("invalid operator")
+		}
+	// case astNum:
+	// case astBoolean:
+	// case astSet:
+	default:
+		panic("invalid type")
+	}
+	// astFatalf("cannot compile %s: not implemented", i)
+	// panic("unreacheable")
+}
+
+func (i infix) compileStrEQ() Rule {
+	b := i.left.(str) == i.right.(str)
+	if b {
+		return Rule{instruction{opcode: opPushTrue}}
+	}
+	return Rule{instruction{opcode: opPushFalse}}
 }
 
 func (i infix) String() string {
