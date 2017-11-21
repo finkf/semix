@@ -104,6 +104,25 @@ func TestCompile(t *testing.T) {
 		{"4/2=2", 1, false},
 		{"2+3*2=8", 1, false},
 		{"2+3*2=10", 0, false},
+		{`{"a","b","c"}`, 3, false},
+		{`{"a","b","c"}={"b","c","a"}`, 1, false},
+		{`{}={}`, 1, false},
+		{`{"a","b"}={"c","a"}`, 0, false},
+		{`{}={"c","a"}`, 0, false},
+		{`{"a","b","c"}={"a"}`, 0, false},
+		{`{"a","b","c"}+{"a"}={"a","b","c"}`, 1, false},
+		{`{"a","b"}+{"a"}={"a","b"}`, 1, false},
+		{`{"a","b"}+{"c"}={"a","b","c"}`, 1, false},
+		{`{"b"}+{"a"}={"a","b"}`, 1, false},
+		{`{}+{"a"}={"a"}`, 1, false},
+		{`{"b"}+{}={"b"}`, 1, false},
+		{`{"a"}*{"b"}={}`, 1, false},
+		{`{"a"}*{"a","b"}={"a"}`, 1, false},
+		{`{"a","c"}*{"a","b"}={"a"}`, 1, false},
+		{`{"a","c"}*{"a","c"}={"a","c"}`, 1, false},
+		{`{"a","c"}-{"a","c"}={}`, 1, false},
+		{`{"a","c"}-{"a","b"}={"c"}`, 1, false},
+		{`{"a","b"}-{"c"}={"a","b"}`, 1, false},
 		{`"abc"="abc"`, 1, false},
 		{`"bc"="abc"`, 0, false},
 		{`"abc"<"def"`, 1, false},
@@ -112,6 +131,7 @@ func TestCompile(t *testing.T) {
 		{`"def"<"abc"`, 0, false},
 		{"-{}", 0, true},
 		{"-es()", 0, true},
+		{`{"a","not","b"}`, 0, true},
 	}
 
 	for _, tc := range tests {
@@ -137,7 +157,6 @@ func TestCompile(t *testing.T) {
 			if err != nil {
 				t.Fatalf("got error: %s", err)
 			}
-			// t.Logf("rule = %s", rule)
 			if got := rule.Execute(); got != tc.want {
 				t.Fatalf("expected %f; got %f", tc.want, got)
 			}

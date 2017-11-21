@@ -1,6 +1,8 @@
 package rule
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type stack []float64
 
@@ -29,6 +31,21 @@ func (s *stack) popBool2() (bool, bool) {
 	return b, a
 }
 
+func (s *stack) popArray1() []float64 {
+	n := int(s.pop1())
+	n = len(*s) - n
+	a := (*s)[n:]
+	*s = (*s)[:n]
+	return a
+}
+
+func (s *stack) popArray2() ([]float64, []float64) {
+	a := s.popArray1()
+	b := s.popArray1()
+	// switch arguments
+	return b, a
+}
+
 func (s *stack) push(x float64) {
 	*s = append(*s, x)
 }
@@ -39,6 +56,11 @@ func (s *stack) pushBool(b bool) {
 	} else {
 		*s = append(*s, 0)
 	}
+}
+
+func (s *stack) pushArray(a []float64) {
+	*s = append(*s, a...)
+	*s = append(*s, float64(len(a)))
 }
 
 type opcode int
@@ -59,6 +81,10 @@ const (
 	opMUL
 	opOR
 	opAND
+	opSetEQ
+	opSetU
+	opSetI
+	opSetSUB
 )
 
 type instruction struct {
@@ -78,7 +104,7 @@ func (i instruction) call(stack *stack) {
 	case opPushNUM:
 		stack.push(i.arg)
 	case opPushID:
-		panic("opPushID: not implemented")
+		stack.push(i.arg)
 	case opPushTRUE:
 		stack.pushBool(true)
 	case opPushFALSE:
@@ -114,9 +140,33 @@ func (i instruction) call(stack *stack) {
 	case opAND:
 		a, b := stack.popBool2()
 		stack.pushBool(a && b)
+	case opSetEQ:
+		a, b := stack.popArray2()
+		stack.pushBool(arrayEQ(a, b))
+	case opSetU:
+		a, b := stack.popArray2()
+		stack.pushArray(arrayU(a, b))
+	case opSetI:
+		a, b := stack.popArray2()
+		stack.pushArray(arrayI(a, b))
+	case opSetSUB:
+		a, b := stack.popArray2()
+		stack.pushArray(arraySUB(a, b))
 	default:
 		panic("invalid opcode")
 	}
+}
+
+func arrayEQ(a, b []float64) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func (i instruction) String() string {
@@ -151,7 +201,75 @@ func (i instruction) String() string {
 		return "opOR"
 	case opAND:
 		return "opAND"
+	case opSetEQ:
+		return "opSetEQ"
+	case opSetU:
+		return "opSetU"
+	case opSetSUB:
+		return "opSetSUB"
 	default:
 		panic("invalid opcode")
 	}
+}
+
+func arrayU(a, b []float64) []float64 {
+	res := make([]float64, 0, len(a)+len(b))
+	var i, j int
+	for i, j = 0, 0; i < len(a) && j < len(b); {
+		if a[i] < b[j] {
+			res = append(res, a[i])
+			i++
+		} else if b[j] < a[i] {
+			res = append(res, b[j])
+			j++
+		} else {
+			res = append(res, a[i])
+			i++
+			j++
+		}
+	}
+	for ; i < len(a); i++ {
+		res = append(res, a[i])
+	}
+	for ; j < len(b); j++ {
+		res = append(res, b[j])
+	}
+	return res
+}
+
+func arrayI(a, b []float64) []float64 {
+	res := make([]float64, 0, (len(a)+len(b))/2)
+	var i, j int
+	for i, j = 0, 0; i < len(a) && j < len(b); {
+		if a[i] < b[j] {
+			i++
+		} else if b[j] < a[i] {
+			j++
+		} else {
+			res = append(res, a[i])
+			i++
+			j++
+		}
+	}
+	return res
+}
+
+func arraySUB(a, b []float64) []float64 {
+	res := make([]float64, 0, len(a))
+	var i, j int
+	for i, j = 0, 0; i < len(a) && j < len(b); {
+		if a[i] < b[j] {
+			res = append(res, a[i])
+			i++
+		} else if b[j] < a[i] {
+			j++
+		} else {
+			i++
+			j++
+		}
+	}
+	for ; i < len(a); i++ {
+		res = append(res, a[i])
+	}
+	return res
 }

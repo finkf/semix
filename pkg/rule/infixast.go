@@ -1,6 +1,8 @@
 package rule
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type infix struct {
 	op          operator
@@ -77,6 +79,19 @@ func (i infix) compile(f func(string) int) Rule {
 		default:
 			panic("invalid operator")
 		}
+	case astSet:
+		switch i.op {
+		case '=':
+			return i.combine(f, instruction{opcode: opSetEQ})
+		case '+':
+			return i.combine(f, instruction{opcode: opSetU})
+		case '*':
+			return i.combine(f, instruction{opcode: opSetI})
+		case '-':
+			return i.combine(f, instruction{opcode: opSetSUB})
+		default:
+			panic("invalid operator")
+		}
 	case astStr:
 		switch i.op {
 		case '=':
@@ -88,7 +103,6 @@ func (i infix) compile(f func(string) int) Rule {
 		default:
 			panic("invalid operator")
 		}
-	// case astSet:
 	default:
 		panic("invalid type")
 	}

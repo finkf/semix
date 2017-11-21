@@ -75,9 +75,22 @@ func (s set) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(strs, ","))
 }
 
-func (s set) compile(func(string) int) Rule {
-	astFatalf("cannot compile %s", s)
-	panic("unreacheable")
+func (s set) compile(f func(string) int) Rule {
+	ids := make([]int, 0, len(s))
+	for str := range s {
+		id := f(string(str))
+		if id <= 0 {
+			astFatalf("cannot find %q", str)
+		}
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	rule := make(Rule, len(ids)+1)
+	for i, id := range ids {
+		rule[i] = instruction{opcode: opPushID, arg: float64(id)}
+	}
+	rule[len(rule)-1] = instruction{opcode: opPushID, arg: float64(len(ids))}
+	return rule
 }
 
 type str string

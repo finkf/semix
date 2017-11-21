@@ -31,9 +31,15 @@ func (r Rule) String() string {
 // error will be returned from Compile.
 func Compile(expr string, lookup func(string) int) (r Rule, err error) {
 	defer func() {
-		if e, ok := recover().(astError); ok {
-			r = nil
-			err = errors.New(e.msg)
+		if e := recover(); e != nil {
+			switch t := e.(type) {
+			case astError:
+				err = errors.New(t.msg)
+			case error:
+				err = t
+			case string:
+				err = errors.New(t)
+			}
 		}
 	}()
 	ast, err := newParser(strings.NewReader(expr)).parse()
