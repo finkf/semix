@@ -94,6 +94,10 @@ func TestCompile(t *testing.T) {
 		{"--false", 0, false},
 		{`"abc"="abc"`, 1, false},
 		{`"bc"="abc"`, 0, false},
+		{`"abc"<"def"`, 1, false},
+		{`"abc">"def"`, 0, false},
+		{`"def">"abc"`, 1, false},
+		{`"def"<"abc"`, 0, false},
 		{"-{}", 0, true},
 		{"-es()", 0, true},
 	}

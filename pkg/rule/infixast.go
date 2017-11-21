@@ -51,6 +51,10 @@ func (i infix) compile(func(string) int) Rule {
 		switch i.op {
 		case '=':
 			return i.compileStrEQ()
+		case '<':
+			return i.compileStrLT()
+		case '>':
+			return i.compileStrGT()
 		default:
 			panic("invalid operator")
 		}
@@ -66,6 +70,22 @@ func (i infix) compile(func(string) int) Rule {
 
 func (i infix) compileStrEQ() Rule {
 	b := i.left.(str) == i.right.(str)
+	if b {
+		return Rule{instruction{opcode: opPushTrue}}
+	}
+	return Rule{instruction{opcode: opPushFalse}}
+}
+
+func (i infix) compileStrLT() Rule {
+	b := i.left.(str) < i.right.(str)
+	if b {
+		return Rule{instruction{opcode: opPushTrue}}
+	}
+	return Rule{instruction{opcode: opPushFalse}}
+}
+
+func (i infix) compileStrGT() Rule {
+	b := i.left.(str) > i.right.(str)
 	if b {
 		return Rule{instruction{opcode: opPushTrue}}
 	}
