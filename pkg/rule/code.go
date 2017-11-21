@@ -35,19 +35,19 @@ func (s *stack) pushBool(b bool) {
 }
 
 const (
-	optPushNum = iota
-	optPushID
-	optPushTrue
-	optPushFalse
-	optEQ
-	optLT
-	optGT
-	optNot
-	optNeg
-	optAdd
-	optSub
-	optDiv
-	optMul
+	opPusNum = iota
+	opPushID
+	opPushTrue
+	opPushFalse
+	opEQ
+	opLT
+	opGT
+	opNot
+	opNeg
+	opAdd
+	opSub
+	opDiv
+	opMul
 )
 
 type optcode struct {
@@ -57,73 +57,73 @@ type optcode struct {
 
 func (o optcode) call(stack *stack) {
 	switch o.code {
-	case optPushNum:
+	case opPusNum:
 		stack.push(o.arg)
-	case optPushID:
-		panic("optPushID: not implemented")
-	case optPushTrue:
+	case opPushID:
+		panic("opPushID: not implemented")
+	case opPushTrue:
 		stack.pushBool(true)
-	case optPushFalse:
+	case opPushFalse:
 		stack.pushBool(false)
-	case optEQ:
+	case opEQ:
 		a, b := stack.pop2()
 		stack.pushBool(a == b)
-	case optLT:
+	case opLT:
 		a, b := stack.pop2()
 		stack.pushBool(a < b)
-	case optGT:
+	case opGT:
 		a, b := stack.pop2()
 		stack.pushBool(a > b)
-	case optNot:
+	case opNot:
 		stack.pushBool(!stack.popBool())
-	case optNeg:
+	case opNeg:
 		stack.push(-stack.pop1())
-	case optAdd:
+	case opAdd:
 		a, b := stack.pop2()
 		stack.push(a + b)
-	case optSub:
+	case opSub:
 		a, b := stack.pop2()
 		stack.push(a - b)
-	case optMul:
+	case opMul:
 		a, b := stack.pop2()
 		stack.push(a * b)
-	case optDiv:
+	case opDiv:
 		a, b := stack.pop2()
 		stack.push(a / b)
 	default:
-		panic("invalid opt code")
+		panic("invalid opcode")
 	}
 }
 
 func (o optcode) String() string {
 	switch o.code {
-	case optPushNum:
-		return fmt.Sprintf("push(%.2f)", o.arg)
-	case optPushID:
-		return fmt.Sprintf("push(%d)", int(o.arg))
-	case optPushTrue:
-		return fmt.Sprintf("push(%t)", true)
-	case optPushFalse:
-		return fmt.Sprintf("push(%t)", false)
-	case optEQ:
-		return "optEQ"
-	case optLT:
-		return "optLT"
-	case optGT:
-		return "optGT"
-	case optNot:
-		return "optNot"
-	case optNeg:
-		return "optNeg"
-	case optAdd:
-		return "optAdd"
-	case optSub:
-		return "optSub"
-	case optMul:
-		return "optMul"
-	case optDiv:
-		return "optDiv"
+	case opPusNum:
+		return fmt.Sprintf("opPush(%.2f)", o.arg)
+	case opPushID:
+		return fmt.Sprintf("opPush(%d)", int(o.arg))
+	case opPushTrue:
+		return fmt.Sprintf("opPush(%t)", true)
+	case opPushFalse:
+		return fmt.Sprintf("opPush(%t)", false)
+	case opEQ:
+		return "opEQ"
+	case opLT:
+		return "opLT"
+	case opGT:
+		return "opGT"
+	case opNot:
+		return "opNot"
+	case opNeg:
+		return "opNeg"
+	case opAdd:
+		return "opAdd"
+	case opSub:
+		return "opSub"
+	case opMul:
+		return "opMul"
+	case opDiv:
+		return "opDiv"
 	default:
-		panic("invalid opt code")
+		panic("invalid opcode")
 	}
 }
