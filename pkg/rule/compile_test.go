@@ -102,6 +102,8 @@ func TestCompile(t *testing.T) {
 		{"-3*5<8+3", 1, false},
 		{"-3*5>8-3", 0, false},
 		{"4/2=2", 1, false},
+		{"2+3*2=8", 1, false},
+		{"2+3*2=10", 0, false},
 		{`"abc"="abc"`, 1, false},
 		{`"bc"="abc"`, 0, false},
 		{`"abc"<"def"`, 1, false},
