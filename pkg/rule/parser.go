@@ -74,7 +74,8 @@ func (p *parser) parse() (a ast, err error) {
 func (p *parser) parseExpression(prec int) ast {
 	f, ok := p.prefixParseFuncs[p.peek()]
 	if !ok {
-		parserFatalf(p.scanner, "invalid expression: %s %s", scanner.TokenString(p.peek()), p.scanner.TokenText())
+		parserFatalf(p.scanner, "invalid expression: %s",
+			scanner.TokenString(p.peek()))
 	}
 	left := f()
 	for p.peek() != scanner.EOF && prec < precedence(p.peek()) {
