@@ -85,6 +85,7 @@ const (
 	opSetU
 	opSetI
 	opSetSUB
+	opLEN
 )
 
 type instruction struct {
@@ -152,6 +153,9 @@ func (i instruction) call(stack *stack) {
 	case opSetSUB:
 		a, b := stack.popArray2()
 		stack.pushArray(arraySUB(a, b))
+	case opLEN:
+		a := stack.popArray1()
+		stack.push(float64(len(a)))
 	default:
 		panic("invalid opcode")
 	}
@@ -207,6 +211,8 @@ func (i instruction) String() string {
 		return "opSetU"
 	case opSetSUB:
 		return "opSetSUB"
+	case opLEN:
+		return "opLEN"
 	default:
 		panic("invalid opcode")
 	}

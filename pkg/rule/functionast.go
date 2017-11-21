@@ -44,7 +44,18 @@ func (f function) check() astType {
 	panic("unreacheable")
 }
 
-func (f function) compile(func(string) int) Rule {
+func (f function) compile(l func(string) int) Rule {
+	switch f.name {
+	case "len":
+		switch f.args[0].check() {
+		case astStr:
+			return Rule{instruction{opcode: opPushID, arg: float64(len(f.args[0].(str)))}}
+		case astSet:
+			return append(f.args[0].compile(l), instruction{opcode: opLEN})
+		default:
+			panic("invalid arg type")
+		}
+	}
 	astFatalf("cannot compile %s: not implemented", f)
 	panic("unreacheable")
 }
@@ -81,6 +92,7 @@ func (f function) lenCheck() astType {
 	}
 	return astNum
 }
+
 func (f function) minMaxCheck() astType {
 	for _, arg := range f.args {
 		t := arg.check()
