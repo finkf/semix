@@ -51,12 +51,12 @@ const (
 )
 
 type instruction struct {
-	arg  float64
-	code int
+	arg    float64
+	opcode int
 }
 
 func (i instruction) call(stack *stack) {
-	switch i.code {
+	switch i.opcode {
 	case opPusNum:
 		stack.push(i.arg)
 	case opPushID:
@@ -96,7 +96,7 @@ func (i instruction) call(stack *stack) {
 }
 
 func (i instruction) String() string {
-	switch i.code {
+	switch i.opcode {
 	case opPusNum:
 		return fmt.Sprintf("opPush(%.2f)", i.arg)
 	case opPushID:

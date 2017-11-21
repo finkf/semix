@@ -51,9 +51,9 @@ func (p prefix) String() string {
 func (p prefix) compile(f func(string) int) Rule {
 	rule := p.expr.compile(f)
 	if p.expr.check() == astBoolean {
-		return append(rule, instruction{code: opNot})
+		return append(rule, instruction{opcode: opNot})
 	}
-	return append(rule, instruction{code: opNeg})
+	return append(rule, instruction{opcode: opNeg})
 }
 
 type infix struct {
@@ -165,7 +165,7 @@ func (n num) String() string {
 }
 
 func (n num) compile(func(string) int) Rule {
-	return Rule{instruction{code: opPusNum, arg: float64(n)}}
+	return Rule{instruction{opcode: opPusNum, arg: float64(n)}}
 }
 
 type boolean bool
@@ -184,9 +184,9 @@ func (b boolean) String() string {
 
 func (b boolean) compile(func(string) int) Rule {
 	if b {
-		return Rule{instruction{code: opPushTrue}}
+		return Rule{instruction{opcode: opPushTrue}}
 	}
-	return Rule{instruction{code: opPushFalse}}
+	return Rule{instruction{opcode: opPushFalse}}
 }
 
 type astError struct {
