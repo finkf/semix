@@ -57,6 +57,13 @@ type instruction struct {
 	opcode opcode
 }
 
+func booleanInstruction(b bool) instruction {
+	if b {
+		return instruction{opcode: opPushTrue}
+	}
+	return instruction{opcode: opPushFalse}
+}
+
 func (i instruction) call(stack *stack) {
 	switch i.opcode {
 	case opPusNum:

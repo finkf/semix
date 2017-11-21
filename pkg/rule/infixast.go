@@ -47,6 +47,13 @@ func (i infix) check() astType {
 
 func (i infix) compile(func(string) int) Rule {
 	switch i.left.check() {
+	case astBoolean:
+		switch i.op {
+		case '=':
+			return i.compileBooleanEQ()
+		default:
+			panic("invalid operator")
+		}
 	case astStr:
 		switch i.op {
 		case '=':
@@ -59,7 +66,6 @@ func (i infix) compile(func(string) int) Rule {
 			panic("invalid operator")
 		}
 	// case astNum:
-	// case astBoolean:
 	// case astSet:
 	default:
 		panic("invalid type")
@@ -68,28 +74,20 @@ func (i infix) compile(func(string) int) Rule {
 	// panic("unreacheable")
 }
 
+func (i infix) compileBooleanEQ() Rule {
+	return Rule{booleanInstruction(i.left.(boolean) == i.right.(boolean))}
+}
+
 func (i infix) compileStrEQ() Rule {
-	b := i.left.(str) == i.right.(str)
-	if b {
-		return Rule{instruction{opcode: opPushTrue}}
-	}
-	return Rule{instruction{opcode: opPushFalse}}
+	return Rule{booleanInstruction(i.left.(str) == i.right.(str))}
 }
 
 func (i infix) compileStrLT() Rule {
-	b := i.left.(str) < i.right.(str)
-	if b {
-		return Rule{instruction{opcode: opPushTrue}}
-	}
-	return Rule{instruction{opcode: opPushFalse}}
+	return Rule{booleanInstruction(i.left.(str) < i.right.(str))}
 }
 
 func (i infix) compileStrGT() Rule {
-	b := i.left.(str) > i.right.(str)
-	if b {
-		return Rule{instruction{opcode: opPushTrue}}
-	}
-	return Rule{instruction{opcode: opPushFalse}}
+	return Rule{booleanInstruction(i.left.(str) > i.right.(str))}
 }
 
 func (i infix) String() string {
