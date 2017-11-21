@@ -39,12 +39,13 @@ func newParser(r io.Reader) *parser {
 		scanner: s,
 	}
 	p.prefixParseFuncs = map[rune]prefixParseFunc{
-		'{':           p.parseSet,
-		'-':           p.parsePrefix,
-		'(':           p.parseGroup,
-		scanner.Ident: p.parseBool,
-		scanner.Int:   p.parseNum,
-		scanner.Float: p.parseNum,
+		'{':            p.parseSet,
+		'-':            p.parsePrefix,
+		'(':            p.parseGroup,
+		scanner.Ident:  p.parseBool,
+		scanner.Int:    p.parseNum,
+		scanner.Float:  p.parseNum,
+		scanner.String: p.parseStr,
 	}
 	p.infixParseFuncs = map[rune]infixParseFunc{
 		'-': p.parseInfix,
@@ -73,7 +74,7 @@ func (p *parser) parse() (a ast, err error) {
 func (p *parser) parseExpression(prec int) ast {
 	f, ok := p.prefixParseFuncs[p.peek()]
 	if !ok {
-		dief(p.scanner, "invalid expression: %s", scanner.TokenString(p.peek()))
+		parserFatalf(p.scanner, "invalid expression: %s %s", scanner.TokenString(p.peek()), p.scanner.TokenText())
 	}
 	left := f()
 	for p.peek() != scanner.EOF && prec < precedence(p.peek()) {
@@ -105,7 +106,7 @@ func (p *parser) parseStrList() []str {
 	p.eat('{')
 	var strs []str
 	for p.peek() != '}' {
-		strs = append(strs, p.parseStr())
+		strs = append(strs, p.parseStr().(str))
 		tok, _ := p.eat(',', '}')
 		if tok == '}' {
 			return strs
@@ -128,11 +129,11 @@ func (p *parser) parseInfix(left ast) ast {
 	return infix{left: left, op: operator(op), right: p.parseExpression(prec)}
 }
 
-func (p *parser) parseStr() str {
+func (p *parser) parseStr() ast {
 	_, s := p.eat(scanner.String)
 	s, err := strconv.Unquote(s)
 	if err != nil {
-		dief(p.scanner, "invalid string: %s", err)
+		parserFatalf(p.scanner, "invalid string: %s", err)
 	}
 	return str(s)
 }
@@ -145,7 +146,7 @@ func (p *parser) parseBool() ast {
 		return boolean(false)
 	default:
 		if p.peek() != '(' {
-			dief(p.scanner, "invalid identifier: %s", str)
+			parserFatalf(p.scanner, "invalid identifier: %s", str)
 		}
 		return function{name: str, args: p.parseArgs()}
 	}
@@ -169,7 +170,7 @@ func (p *parser) parseNum() ast {
 	_, str := p.eat(scanner.Float, scanner.Int)
 	n, err := strconv.ParseFloat(str, 64)
 	if err != nil {
-		dief(p.scanner, "could not parse number %q: %s", str, err)
+		parserFatalf(p.scanner, "could not parse number %q: %s", str, err)
 	}
 	return num(n)
 }
@@ -187,7 +188,7 @@ func (p *parser) eat(toks ...rune) (rune, string) {
 	for _, tok := range toks {
 		xs = append(xs, scanner.TokenString(tok))
 	}
-	dief(p.scanner, "expected %s; got %s",
+	parserFatalf(p.scanner, "expected %s; got %s",
 		strings.Join(xs, " or "), scanner.TokenString(p.p))
 	panic("ureacheable")
 }
@@ -207,7 +208,7 @@ func die(s *scanner.Scanner, msg string) {
 	panic(parseError{fmt.Sprintf("%s: %s", s.Position, msg)})
 }
 
-func dief(s *scanner.Scanner, f string, args ...interface{}) {
+func parserFatalf(s *scanner.Scanner, f string, args ...interface{}) {
 	msg := fmt.Sprintf(f, args...)
 	die(s, msg)
 }

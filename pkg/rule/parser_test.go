@@ -50,6 +50,7 @@ func TestParser(t *testing.T) {
 		{"min()", "min()", false},
 		{"max(1,2,3", "", true},
 		{`max({"abc","def"},1/2-3)`, `max({"abc","def"},((1.00/2.00)-3.00))`, false},
+		{`min(len({"a","b"}),cs("foo"))`, `min(len({"a","b"}),cs("foo"))`, false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {

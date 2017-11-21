@@ -42,6 +42,16 @@ func Compile(expr string) (r Rule, err error) {
 	return compileAST(ast), nil
 }
 
+func checkSyntax(ast ast) (t astType, err error) {
+	defer func() {
+		if e, ok := recover().(astError); ok {
+			err = errors.New(e.msg)
+		}
+	}()
+	t = ast.check()
+	return t, nil
+}
+
 func compileAST(ast ast) Rule {
 	switch ast.typ() {
 	case astInfix:

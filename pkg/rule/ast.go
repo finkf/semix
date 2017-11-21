@@ -16,12 +16,13 @@ const (
 	astBoolean
 	astPrefix
 	astInfix
+	astNumArray
 )
 
 type ast interface {
 	fmt.Stringer
 	typ() astType
-	// returnTyp() astType
+	check() astType
 }
 
 type prefix struct {
@@ -33,9 +34,12 @@ func (prefix) typ() astType {
 	return astPrefix
 }
 
-// func (p prefix) returnTyp() astType {
-//
-// }
+func (p prefix) check() astType {
+	if p.op != '-' {
+		astFatalf("invalid prefix operator in: %s", p)
+	}
+	return checkTypIn(p, p.expr.check(), astBoolean, astNum)
+}
 
 func (p prefix) String() string {
 	return fmt.Sprintf("(%c%s)", p.op, p.expr)
@@ -50,6 +54,33 @@ func (infix) typ() astType {
 	return astInfix
 }
 
+func (i infix) check() astType {
+	left := i.left.check()
+	right := i.right.check()
+	if left != right {
+		astFatalf("invalid expression: %s", i)
+	}
+	switch i.op {
+	case '=':
+		return left
+	case '>':
+		return checkTypIn(i, left, astNum, astStr)
+	case '<':
+		return checkTypIn(i, left, astNum, astStr)
+	case '+':
+		return checkTypIn(i, left, astBoolean, astNum, astSet, astStr)
+	case '-':
+		return checkTypIn(i, left, astNum, astSet)
+	case '/':
+		return checkTypIn(i, left, astNum)
+	case '*':
+		return checkTypIn(i, left, astBoolean, astNum, astSet)
+	default:
+		astFatalf("invalid expression: %s", i)
+	}
+	panic("unreacheable")
+}
+
 func (i infix) String() string {
 	return fmt.Sprintf("(%s%c%s)", i.left, i.op, i.right)
 }
@@ -57,6 +88,10 @@ func (i infix) String() string {
 type set map[str]bool
 
 func (set) typ() astType {
+	return astSet
+}
+
+func (set) check() astType {
 	return astSet
 }
 
@@ -69,26 +104,13 @@ func (s set) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(strs, ","))
 }
 
-type function struct {
-	name string
-	args []ast
-}
-
-func (function) typ() astType {
-	return astFunction
-}
-
-func (f function) String() string {
-	var strs []string
-	for _, arg := range f.args {
-		strs = append(strs, arg.String())
-	}
-	return fmt.Sprintf("%s(%s)", f.name, strings.Join(strs, ","))
-}
-
 type str string
 
-func (str) Type() astType {
+func (str) typ() astType {
+	return astStr
+}
+
+func (str) check() astType {
 	return astStr
 }
 
@@ -102,6 +124,10 @@ func (num) typ() astType {
 	return astNum
 }
 
+func (num) check() astType {
+	return astNum
+}
+
 func (n num) String() string {
 	return fmt.Sprintf("%.2f", n)
 }
@@ -112,6 +138,28 @@ func (boolean) typ() astType {
 	return astBoolean
 }
 
+func (boolean) check() astType {
+	return astBoolean
+}
+
 func (b boolean) String() string {
 	return fmt.Sprintf("%t", b)
+}
+
+type astError struct {
+	msg string
+}
+
+func checkTypIn(ast ast, t astType, set ...astType) astType {
+	for _, s := range set {
+		if t == s {
+			return t
+		}
+	}
+	astFatalf("invalid expression: %s", ast)
+	panic("unreacheable")
+}
+
+func astFatalf(f string, args ...interface{}) {
+	panic(astError{msg: fmt.Sprintf(f, args)})
 }
