@@ -37,6 +37,7 @@ func Compile(expr string) (r Rule, err error) {
 	if err != nil {
 		return nil, err
 	}
+	ast.check()
 	r = ast.compile(func(str string) int {
 		return -1
 	})
