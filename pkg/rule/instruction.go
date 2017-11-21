@@ -30,6 +30,7 @@ const (
 	opLEN
 	opLOG
 	opEXP
+	opPOW
 )
 
 type instruction struct {
@@ -106,6 +107,9 @@ func (i instruction) call(stack *stack) {
 	case opEXP:
 		a := stack.pop1()
 		stack.push(math.Exp(a))
+	case opPOW:
+		a, b := stack.pop2()
+		stack.push(math.Pow(a, b))
 	default:
 		panic("invalid opcode")
 	}
@@ -167,6 +171,8 @@ func (i instruction) String() string {
 		return "opLOG"
 	case opEXP:
 		return "opEXP"
+	case opPOW:
+		return "opPOW"
 	default:
 		panic("invalid opcode")
 	}

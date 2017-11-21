@@ -159,6 +159,7 @@ func TestExecuteRule(t *testing.T) {
 		{`len({"a","b","c"})+1=4`, 1, false},
 		{`1-len({"a","b","c"})=-2`, 1, false},
 		{`log(exp(1+1))=2*1`, 1, false},
+		{`pow(1*2,2+1)=8`, 1, false},
 		{"-{}", 0, true},
 		{"-es()", 0, true},
 		{`{"a","not","b"}`, 0, true},

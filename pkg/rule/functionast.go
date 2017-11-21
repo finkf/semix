@@ -39,9 +39,11 @@ func (f function) check() astType {
 	case "cs":
 		return f.countsCheck()
 	case "log":
-		return f.num1Check()
+		return f.numCheck(1)
 	case "exp":
-		return f.num1Check()
+		return f.numCheck(1)
+	case "pow":
+		return f.numCheck(2)
 	default:
 		astFatalf("invalid function name: %s", f)
 	}
@@ -63,6 +65,8 @@ func (f function) compile(l func(string) int) Rule {
 		return append(f.combine(l, f.args[0]), instruction{opcode: opLOG})
 	case "exp":
 		return append(f.combine(l, f.args[0]), instruction{opcode: opEXP})
+	case "pow":
+		return append(f.combine(l, f.args...), instruction{opcode: opPOW})
 	}
 	astFatalf("cannot compile %s: not implemented", f)
 	panic("unreacheable")
@@ -111,12 +115,14 @@ func (f function) minMaxCheck() astType {
 	return astNum
 }
 
-func (f function) num1Check() astType {
-	if len(f.args) != 1 {
+func (f function) numCheck(n int) astType {
+	if len(f.args) != n {
 		astFatalf("invalid arguments: %s", f)
 	}
-	if f.args[0].check() != astNum {
-		astFatalf("invalid arguments: %s", f)
+	for i := 0; i < n; i++ {
+		if f.args[0].check() != astNum {
+			astFatalf("invalid arguments: %s", f)
+		}
 	}
 	return astNum
 
