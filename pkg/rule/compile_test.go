@@ -92,6 +92,8 @@ func TestCompile(t *testing.T) {
 		{"-false", 1, false},
 		{"--true", 1, false},
 		{"--false", 0, false},
+		{"-{}", 0, true},
+		{"-es()", 0, true},
 	}
 
 	for _, tc := range tests {
