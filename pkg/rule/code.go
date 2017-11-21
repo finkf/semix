@@ -34,8 +34,10 @@ func (s *stack) pushBool(b bool) {
 	}
 }
 
+type opcode int
+
 const (
-	opPusNum = iota
+	opPusNum opcode = iota
 	opPushID
 	opPushTrue
 	opPushFalse
@@ -52,7 +54,7 @@ const (
 
 type instruction struct {
 	arg    float64
-	opcode int
+	opcode opcode
 }
 
 func (i instruction) call(stack *stack) {
