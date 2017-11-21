@@ -6,7 +6,7 @@ import (
 )
 
 // Rule represents a compiled rule.
-type Rule []optcode
+type Rule []instruction
 
 // Execute executes a rule and returns its result.
 func (r Rule) Execute() float64 {

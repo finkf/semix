@@ -50,15 +50,15 @@ const (
 	opMul
 )
 
-type optcode struct {
+type instruction struct {
 	arg  float64
 	code int
 }
 
-func (o optcode) call(stack *stack) {
-	switch o.code {
+func (i instruction) call(stack *stack) {
+	switch i.code {
 	case opPusNum:
-		stack.push(o.arg)
+		stack.push(i.arg)
 	case opPushID:
 		panic("opPushID: not implemented")
 	case opPushTrue:
@@ -95,12 +95,12 @@ func (o optcode) call(stack *stack) {
 	}
 }
 
-func (o optcode) String() string {
-	switch o.code {
+func (i instruction) String() string {
+	switch i.code {
 	case opPusNum:
-		return fmt.Sprintf("opPush(%.2f)", o.arg)
+		return fmt.Sprintf("opPush(%.2f)", i.arg)
 	case opPushID:
-		return fmt.Sprintf("opPush(%d)", int(o.arg))
+		return fmt.Sprintf("opPush(%d)", int(i.arg))
 	case opPushTrue:
 		return fmt.Sprintf("opPush(%t)", true)
 	case opPushFalse:
