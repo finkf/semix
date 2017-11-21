@@ -37,10 +37,13 @@ func (s *stack) pushBool(b bool) {
 const (
 	optPushNum = iota
 	optPushID
+	optPushTrue
+	optPushFalse
 	optEQ
 	optLT
 	optGT
 	optNot
+	optNeg
 	optAdd
 	optSub
 	optDiv
@@ -58,6 +61,10 @@ func (o optcode) call(stack *stack) {
 		stack.push(o.arg)
 	case optPushID:
 		panic("optPushID: not implemented")
+	case optPushTrue:
+		stack.pushBool(true)
+	case optPushFalse:
+		stack.pushBool(false)
 	case optEQ:
 		a, b := stack.pop2()
 		stack.pushBool(a == b)
@@ -69,6 +76,8 @@ func (o optcode) call(stack *stack) {
 		stack.pushBool(a > b)
 	case optNot:
 		stack.pushBool(!stack.popBool())
+	case optNeg:
+		stack.push(-stack.pop1())
 	case optAdd:
 		a, b := stack.pop2()
 		stack.push(a + b)
@@ -89,9 +98,13 @@ func (o optcode) call(stack *stack) {
 func (o optcode) String() string {
 	switch o.code {
 	case optPushNum:
-		return fmt.Sprintf("pushNum(%.2f)", o.arg)
+		return fmt.Sprintf("push(%.2f)", o.arg)
 	case optPushID:
-		return fmt.Sprintf("pushID(%d)", int(o.arg))
+		return fmt.Sprintf("push(%d)", int(o.arg))
+	case optPushTrue:
+		return fmt.Sprintf("push(%t)", true)
+	case optPushFalse:
+		return fmt.Sprintf("push(%t)", false)
 	case optEQ:
 		return "optEQ"
 	case optLT:
@@ -100,6 +113,8 @@ func (o optcode) String() string {
 		return "optGT"
 	case optNot:
 		return "optNot"
+	case optNeg:
+		return "optNeg"
 	case optAdd:
 		return "optAdd"
 	case optSub:

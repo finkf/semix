@@ -23,6 +23,7 @@ type ast interface {
 	fmt.Stringer
 	typ() astType
 	check() astType
+	compile(func(string) int) Rule
 }
 
 type prefix struct {
@@ -45,6 +46,14 @@ func (p prefix) check() astType {
 
 func (p prefix) String() string {
 	return fmt.Sprintf("(%c%s)", p.op, p.expr)
+}
+
+func (p prefix) compile(f func(string) int) Rule {
+	rule := p.expr.compile(f)
+	if p.expr.check() == astBoolean {
+		return append(rule, optcode{code: optNot})
+	}
+	return append(rule, optcode{code: optNeg})
 }
 
 type infix struct {
@@ -93,6 +102,11 @@ func (i infix) String() string {
 	return fmt.Sprintf("(%s%c%s)", i.left, i.op, i.right)
 }
 
+func (i infix) compile(func(string) int) Rule {
+	astFatalf("cannot compile %s: not implemented", i)
+	panic("unreacheable")
+}
+
 type set map[str]bool
 
 func (set) typ() astType {
@@ -112,6 +126,11 @@ func (s set) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(strs, ","))
 }
 
+func (s set) compile(func(string) int) Rule {
+	astFatalf("cannot compile %s", s)
+	panic("unreacheable")
+}
+
 type str string
 
 func (str) typ() astType {
@@ -124,6 +143,11 @@ func (str) check() astType {
 
 func (s str) String() string {
 	return fmt.Sprintf("%q", string(s))
+}
+
+func (s str) compile(func(string) int) Rule {
+	astFatalf("cannot compile %s", s)
+	panic("unreacheable")
 }
 
 type num float64
@@ -140,6 +164,10 @@ func (n num) String() string {
 	return fmt.Sprintf("%.2f", n)
 }
 
+func (n num) compile(func(string) int) Rule {
+	return Rule{optcode{code: optPushNum, arg: float64(n)}}
+}
+
 type boolean bool
 
 func (boolean) typ() astType {
@@ -152,6 +180,13 @@ func (boolean) check() astType {
 
 func (b boolean) String() string {
 	return fmt.Sprintf("%t", b)
+}
+
+func (b boolean) compile(func(string) int) Rule {
+	if b {
+		return Rule{optcode{code: optPushTrue}}
+	}
+	return Rule{optcode{code: optPushFalse}}
 }
 
 type astError struct {

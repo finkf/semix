@@ -44,6 +44,11 @@ func (f function) check() astType {
 	panic("unreacheable")
 }
 
+func (f function) compile(func(string) int) Rule {
+	astFatalf("cannot compile %s: not implemented", f)
+	panic("unreacheable")
+}
+
 func (f function) elementsCheck() astType {
 	if len(f.args) != 0 {
 		astFatalf("invalid arguments: %s", f)
