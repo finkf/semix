@@ -85,6 +85,26 @@ func TestSyntaxCheck(t *testing.T) {
 
 func TestCompile(t *testing.T) {
 	tests := []struct {
+		test, want string
+	}{
+		{"-2", "opPUSH(2.00);opNEG"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.test, func(t *testing.T) {
+			rule, err := Compile(tc.test, func(str string) int { return -1 })
+			if err != nil {
+				t.Fatalf("got error: %s", err)
+			}
+			if got := rule.String(); got != tc.want {
+				t.Fatalf("expected %s; got %s", tc.want, got)
+			}
+		})
+	}
+
+}
+
+func TestExecuteRule(t *testing.T) {
+	tests := []struct {
 		test  string
 		want  float64
 		iserr bool
@@ -142,7 +162,6 @@ func TestCompile(t *testing.T) {
 		{"-es()", 0, true},
 		{`{"a","not","b"}`, 0, true},
 	}
-
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
 			rule, err := Compile(tc.test, func(str string) int {
