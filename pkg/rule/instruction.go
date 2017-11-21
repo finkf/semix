@@ -2,6 +2,7 @@ package rule
 
 import (
 	"fmt"
+	"math"
 )
 
 type opcode int
@@ -27,6 +28,8 @@ const (
 	opSetI
 	opSetSUB
 	opLEN
+	opLOG
+	opEXP
 )
 
 type instruction struct {
@@ -97,6 +100,12 @@ func (i instruction) call(stack *stack) {
 	case opLEN:
 		a := stack.popArray1()
 		stack.push(float64(len(a)))
+	case opLOG:
+		a := stack.pop1()
+		stack.push(math.Log(a))
+	case opEXP:
+		a := stack.pop1()
+		stack.push(math.Exp(a))
 	default:
 		panic("invalid opcode")
 	}
@@ -154,6 +163,10 @@ func (i instruction) String() string {
 		return "opSetSUB"
 	case opLEN:
 		return "opLEN"
+	case opLOG:
+		return "opLOG"
+	case opEXP:
+		return "opEXP"
 	default:
 		panic("invalid opcode")
 	}

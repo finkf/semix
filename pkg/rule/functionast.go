@@ -38,6 +38,10 @@ func (f function) check() astType {
 		return f.countsCheck()
 	case "cs":
 		return f.countsCheck()
+	case "log":
+		return f.num1Check()
+	case "exp":
+		return f.num1Check()
 	default:
 		astFatalf("invalid function name: %s", f)
 	}
@@ -51,10 +55,14 @@ func (f function) compile(l func(string) int) Rule {
 		case astStr:
 			return Rule{instruction{opcode: opPushID, arg: float64(len(f.args[0].(str)))}}
 		case astSet:
-			return append(f.args[0].compile(l), instruction{opcode: opLEN})
+			return append(f.combine(l, f.args[0]), instruction{opcode: opLEN})
 		default:
 			panic("invalid arg type")
 		}
+	case "log":
+		return append(f.combine(l, f.args[0]), instruction{opcode: opLOG})
+	case "exp":
+		return append(f.combine(l, f.args[0]), instruction{opcode: opEXP})
 	}
 	astFatalf("cannot compile %s: not implemented", f)
 	panic("unreacheable")
@@ -101,4 +109,23 @@ func (f function) minMaxCheck() astType {
 		}
 	}
 	return astNum
+}
+
+func (f function) num1Check() astType {
+	if len(f.args) != 1 {
+		astFatalf("invalid arguments: %s", f)
+	}
+	if f.args[0].check() != astNum {
+		astFatalf("invalid arguments: %s", f)
+	}
+	return astNum
+
+}
+
+func (f function) combine(g func(string) int, args ...ast) Rule {
+	var rule Rule
+	for _, arg := range args {
+		rule = append(rule, arg.compile(g)...)
+	}
+	return rule
 }
