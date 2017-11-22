@@ -1,6 +1,16 @@
 package traits
 
-import "bitbucket.org/fflo/semix/pkg/semix"
+// Interface defines the interface for the different traits of predicates.
+type Interface interface {
+	Ignore(string) bool
+	IsSymmetric(string) bool
+	IsTransitive(string) bool
+	IsName(string) bool
+	IsDistinct(string) bool
+	IsAmbiguous(string) bool
+	IsInverted(string) bool
+	IsRule(string) bool
+}
 
 // Option speciefies an Option to set up a traits instance.
 type Option func(traits)
@@ -79,7 +89,7 @@ func WithRulePredicates(urls ...string) Option {
 
 // New returns a new traits instance.
 // You can set the various urls manually.
-func New(opts ...Option) semix.Traits {
+func New(opts ...Option) Interface {
 	t := traits{
 		i: make(traitSet),
 		t: make(traitSet),

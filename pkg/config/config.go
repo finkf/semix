@@ -76,7 +76,7 @@ func (c Config) Parse() (*semix.Graph, semix.Dictionary, error) {
 
 // Traits returns a new Traits interface using the configuration
 // of this config file.
-func (c Config) Traits() semix.Traits {
+func (c Config) Traits() traits.Interface {
 	return traits.New(
 		traits.WithIgnorePredicates(c.Predicates.Ignore...),
 		traits.WithTransitivePredicates(c.Predicates.Transitive...),
