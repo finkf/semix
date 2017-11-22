@@ -12,8 +12,8 @@ type Memory struct {
 	end    int
 }
 
-// NewMemory creates a new Memory with a fixed size.
-func NewMemory(n int) *Memory {
+// New creates a new Memory with a fixed size.
+func New(n int) *Memory {
 	return &Memory{buffer: make([]*semix.Concept, n)}
 }
 

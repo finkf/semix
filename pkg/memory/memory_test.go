@@ -43,7 +43,7 @@ func TestMemory(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(fmt.Sprintf("%d", tc.n), func(t *testing.T) {
-			m := NewMemory(5)
+			m := New(5)
 			for _, url := range tc.urls {
 				m.Push(semix.NewConcept(url))
 			}
