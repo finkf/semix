@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	index "bitbucket.org/fflo/semix/pkg/index"
+	"bitbucket.org/fflo/semix/pkg/index"
 )
 
 // Execute executes a query on the given index and returns a slice
