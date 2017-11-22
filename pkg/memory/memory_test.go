@@ -1,4 +1,4 @@
-package disamb
+package memory
 
 import (
 	"fmt"
