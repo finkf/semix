@@ -22,26 +22,21 @@ type Storage interface {
 }
 
 type dirStorage struct {
-	dir      string
-	register *semix.URLRegister
+	dir                      string
+	relationReg, documentReg *semix.URLRegister
 }
 
 // OpenDirStorage opens a new IndexStorage.
 func OpenDirStorage(dir string) (Storage, error) {
-	s := dirStorage{dir: dir, register: semix.NewURLRegister()}
-	path := s.urlRegisterPath()
-	is, err := os.Open(path)
+	rel, err := semix.ReadURLRegister(relationRegisterPath(dir))
 	if err != nil {
-		// ignore io errors
-		log.Printf("ignoring error: %v", err)
-		return s, nil
+		return dirStorage{}, err
 	}
-	defer is.Close()
-	d := gob.NewDecoder(is)
-	if err := d.Decode(s.register); err != nil {
-		return dirStorage{}, fmt.Errorf("could not decod %q: %v", path, err)
+	doc, err := semix.ReadURLRegister(documentRegisterPath(dir))
+	if err != nil {
+		return dirStorage{}, err
 	}
-	return s, nil
+	return dirStorage{dir, rel, doc}, nil
 }
 
 func (s dirStorage) Put(url string, es []Entry) error {
@@ -50,22 +45,13 @@ func (s dirStorage) Put(url string, es []Entry) error {
 	}
 	ds := make([]dse, len(es))
 	for i := range es {
-		ds[i] = dse{
-			S: es[i].Token,
-			P: es[i].Path,
-			B: uint32(es[i].Begin),
-			E: uint32(es[i].End),
-			L: encodeL(es[i].L, es[i].Ambiguous),
-		}
-		if es[i].RelationURL != "" {
-			ds[i].R = int32(s.register.Register(es[i].RelationURL))
-		}
+		ds[i] = newDSE(es[i], s.lookupURLs)
 	}
 	return s.write(url, ds)
 }
 
 func (s dirStorage) write(url string, ds []dse) error {
-	path := s.path(url)
+	path := preparePath(s.dir, url)
 	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
 	log.Printf("wrting %d entries to %s", len(ds), path)
 	os, err := os.OpenFile(path, flags, 0666)
@@ -80,7 +66,7 @@ func (s dirStorage) write(url string, ds []dse) error {
 }
 
 func (s dirStorage) Get(url string, f func(Entry)) error {
-	path := s.path(url)
+	path := preparePath(s.dir, url)
 	is, err := os.Open(path)
 	if os.IsNotExist(err) { // nothing in the index
 		return nil
@@ -99,46 +85,42 @@ func (s dirStorage) Get(url string, f func(Entry)) error {
 			return nil
 		}
 		for _, d := range ds {
-			l, a := decodeL(d.L)
-			f(Entry{
-				ConceptURL:  url,
-				RelationURL: s.lookup(int(d.R)),
-				Token:       d.S,
-				Path:        d.P,
-				Begin:       int(d.B),
-				End:         int(d.E),
-				L:           l,
-				Ambiguous:   a,
-			})
+			f(d.entry(url, s.lookupIDs))
 		}
 	}
 }
 
 func (s dirStorage) Close() error {
-	path := s.urlRegisterPath()
-	log.Printf("wrting register to %s", path)
-	os, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("cannot write %q: %v", path, err)
+	if err := s.relationReg.Write(relationRegisterPath(s.dir)); err != nil {
+		return err
 	}
-	defer os.Close()
-	e := gob.NewEncoder(os)
-	return e.Encode(s.register)
+	return s.documentReg.Write(documentRegisterPath(s.dir))
 }
 
-func (s dirStorage) path(url string) string {
-	return s.preparePath(url + ".gob")
-}
+type lookupIDsFunc func(int, int) (string, string)
 
-func (s dirStorage) urlRegisterPath() string {
-	return s.path("http://bitbucket.org/fflo/semix/url-register")
-}
-
-func (s dirStorage) lookup(id int) string {
-	if url, ok := s.register.LookupID(id); ok {
-		return url
+func (s dirStorage) lookupIDs(relID, docID int) (string, string) {
+	var relURL, docURL string
+	if url, ok := s.relationReg.LookupID(relID); ok {
+		relURL = url
 	}
-	return ""
+	if url, ok := s.documentReg.LookupID(docID); ok {
+		docURL = url
+	}
+	return relURL, docURL
+}
+
+type lookupURLsFunc func(string, string) (int, int)
+
+func (s dirStorage) lookupURLs(relURL, docURL string) (int, int) {
+	var relID, docID int
+	if relURL != "" {
+		relID = s.relationReg.Register(relURL)
+	}
+	if docURL != "" {
+		docID = s.documentReg.Register(docURL)
+	}
+	return relID, docID
 }
 
 func writeBlock(w io.Writer, ds []dse) error {
@@ -178,37 +160,19 @@ func readBlock(r io.Reader) ([]dse, error) {
 	return ds, err
 }
 
-// Short var names for smaller gob entries.
-// S is the string
-// P is the document path
-// B is the start position
-// E is the end position
-// R is the relation id
-type dse struct {
-	S, P string
-	B, E uint32
-	R    int32
-	L    uint8
+func relationRegisterPath(dir string) string {
+	return preparePath(dir, "http://bitbucket.org/fflo/semix/relation-register.gob")
 }
 
-func encodeL(l int, a bool) uint8 {
-	x := uint8(l) & 0x7f
-	if a {
-		x |= 0x80
-	}
-	return x
+func documentRegisterPath(dir string) string {
+	return preparePath(dir, "http://bitbucket.org/fflo/semix/document-register.gob")
 }
 
-func decodeL(x uint8) (int, bool) {
-	return int(x & 0x7f), x&0x80 > 0
-}
-
-func (s dirStorage) preparePath(u string) string {
+func preparePath(dir, u string) string {
 	u = strings.Replace(u, "https://", "", 1)
 	u = strings.Replace(u, "http://", "", 1)
-	u = filepath.Join(s.dir, u)
+	u = filepath.Join(dir, u)
 	p := filepath.Dir(u)
-	log.Printf("preparing: %s", p)
 	if err := os.MkdirAll(p, os.ModePerm); err != nil {
 		log.Printf("could no prepare: %s: %s", p, err)
 	}
