@@ -78,7 +78,7 @@ func (q Query) Execute(idx index.Interface) ([]index.Entry, error) {
 func (q Query) ExecuteFunc(idx index.Interface, f func(index.Entry)) error {
 	for url := range q.set {
 		err := idx.Get(url, func(e index.Entry) {
-			if e.L <= q.l && q.constraint.match(e) {
+			if q.match(e) {
 				f(e)
 			}
 		})
@@ -87,6 +87,10 @@ func (q Query) ExecuteFunc(idx index.Interface, f func(index.Entry)) error {
 		}
 	}
 	return nil
+}
+
+func (q Query) match(e index.Entry) bool {
+	return ((q.a && (e.L < 0)) || (e.L <= q.l)) && q.constraint.match(e)
 }
 
 // String returns a string representing the query.
@@ -128,9 +132,6 @@ func (s set) String() string {
 }
 
 func (s set) in(url string) bool {
-	if url == "" {
-		return len(s) == 0
-	}
 	_, ok := s[url]
 	return ok
 }
@@ -156,8 +157,9 @@ func (c constraint) String() string {
 // !not & in  -> true
 // not & !in  -> true
 func (c constraint) match(i index.Entry) bool {
-	if c.not && i.RelationURL == "" {
-		return false
+	// direct hits (with no relation URL) are always returned!
+	if i.RelationURL == "" {
+		return true
 	}
 	return c.not != c.in(i.RelationURL)
 }
