@@ -75,6 +75,11 @@ func commonPrefix(a, b string) int {
 	return pref
 }
 
+// NewConceptWithID creates a new Concept with a fixed ID.
+func NewConceptWithID(url string, id int32) *Concept {
+	return &Concept{url: url, id: id}
+}
+
 // NewConcept create a new Concept with the given URL.
 func NewConcept(url string) *Concept {
 	return &Concept{url: url}
