@@ -1,0 +1,29 @@
+[parser]
+file = "testdata/test.toml"
+type = "TESTTYPE"
+
+[predicates]
+ignore = [
+	"http://example.org/ignore",
+]
+transitive = [
+	"http://example.org/transitive",
+]
+symmetric = [
+	"http://example.org/symmetric",
+]
+name = [
+	"http://example.org/name",
+	]
+distinct = [
+	"http://example.org/distinct",
+]
+rule = [
+	"http://example.org/rule",
+]
+ambiguous = [
+	"http://example.org/ambiguous",
+]
+inverted = [
+	"http://example.org/inverted",
+]

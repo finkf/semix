@@ -23,7 +23,7 @@ type parser struct {
 	File, Type string
 }
 
-type urls struct {
+type predicates struct {
 	Ignore     []string
 	Transitive []string
 	Symmetric  []string
@@ -31,12 +31,13 @@ type urls struct {
 	Distinct   []string
 	Ambiguous  []string
 	Inverted   []string
+	Rule       []string
 }
 
 // Config represents the configuration for a knowledge base.
 type Config struct {
-	Parser parser
-	URLs   urls
+	Parser     parser
+	Predicates predicates
 }
 
 // Parse is a convinence fuction that parses a knowledge base
@@ -70,18 +71,21 @@ func (c Config) Parse() (*semix.Graph, semix.Dictionary, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	return semix.Parse(parser, c.traits())
+	return semix.Parse(parser, c.Traits())
 }
 
-func (c Config) traits() semix.Traits {
+// Traits returns a new Traits interface using the configuration
+// of this config file.
+func (c Config) Traits() semix.Traits {
 	return traits.New(
-		traits.WithIgnoreURLs(c.URLs.Ignore...),
-		traits.WithTransitiveURLs(c.URLs.Transitive...),
-		traits.WithSymmetricURLs(c.URLs.Symmetric...),
-		traits.WithNameURLs(c.URLs.Name...),
-		traits.WithAmbiguousURLs(c.URLs.Ambiguous...),
-		traits.WithDistinctURLs(c.URLs.Distinct...),
-		traits.WithInvertedURLs(c.URLs.Inverted...),
+		traits.WithIgnorePredicates(c.Predicates.Ignore...),
+		traits.WithTransitivePredicates(c.Predicates.Transitive...),
+		traits.WithSymmetricPredicates(c.Predicates.Symmetric...),
+		traits.WithNamePredicates(c.Predicates.Name...),
+		traits.WithAmbiguousPredicates(c.Predicates.Ambiguous...),
+		traits.WithDistinctPredicates(c.Predicates.Distinct...),
+		traits.WithInvertedPredicates(c.Predicates.Inverted...),
+		traits.WithRulePredicates(c.Predicates.Rule...),
 	)
 }
 
@@ -92,6 +96,6 @@ func (c Config) newParser(r io.Reader) (semix.Parser, error) {
 	case Turtle:
 		return turtle.NewParser(r), nil
 	default:
-		return nil, fmt.Errorf("invalid file type: %s", c.Parser.Type)
+		return nil, fmt.Errorf("invalid parser type: %s", c.Parser.Type)
 	}
 }

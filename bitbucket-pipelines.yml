@@ -29,4 +29,4 @@ pipelines:
           - go test -cover -race -tags isize5 ${REPO}/pkg/index
           - go build -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle,config}
           - go build -v ${REPO}/cmd/semix-{httpd,restd,crawl}
-          - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml,turtle}
+          - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml,turtle,config}

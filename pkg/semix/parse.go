@@ -19,6 +19,7 @@ type Traits interface {
 	IsDistinct(string) bool
 	IsAmbiguous(string) bool
 	IsInverted(string) bool
+	IsRule(string) bool
 }
 
 // Dictionary is a dictionary that maps the labels of the concepts
