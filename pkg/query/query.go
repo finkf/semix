@@ -90,7 +90,7 @@ func (q Query) ExecuteFunc(idx index.Interface, f func(index.Entry)) error {
 }
 
 func (q Query) match(e index.Entry) bool {
-	return ((q.a && (e.L < 0)) || (e.L <= q.l)) && q.constraint.match(e)
+	return q.a == e.Ambiguous && e.L <= q.l && q.constraint.match(e)
 }
 
 // String returns a string representing the query.
