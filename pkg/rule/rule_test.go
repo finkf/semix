@@ -17,6 +17,18 @@ func checkSyntax(ast ast) (t astType, err error) {
 	return t, nil
 }
 
+func lookupID(str string) int {
+	switch str {
+	case "a":
+		return 1
+	case "b":
+		return 2
+	case "c":
+		return 3
+	}
+	return -1
+}
+
 func TestSyntaxCheck(t *testing.T) {
 	tests := []struct {
 		test  string
@@ -97,7 +109,7 @@ func TestCompileRule(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
-			rule, err := Compile(tc.test, func(str string) int { return -1 })
+			rule, err := Compile(tc.test, lookupID)
 			if err != nil {
 				t.Fatalf("got error: %s", err)
 			}
@@ -168,25 +180,16 @@ func TestExecuteRule(t *testing.T) {
 		{"min()", -math.MaxFloat64, false},
 		{"max()", math.MaxFloat64, false},
 		{`min(true,true,false)`, 0, false},
-		// {`max(1,2,3+5)`, 8, false},
+		{`max(1,2,3+5)`, 8, false},
+		{`min(-1,2,-3*5)`, -15, false},
+		{`min(-1,2,-3*5)`, -15, false},
 		{"-{}", 0, true},
 		{"-es()", 0, true},
 		{`{"a","not","b"}`, 0, true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
-			rule, err := Compile(tc.test, func(str string) int {
-				switch str {
-				case "a":
-					return 1
-				case "b":
-					return 2
-				case "c":
-					return 3
-				default:
-					return -1
-				}
-			})
+			rule, err := Compile(tc.test, lookupID)
 			if tc.iserr {
 				if err == nil {
 					t.Fatalf("expected error")
