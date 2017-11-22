@@ -60,8 +60,6 @@ func (f function) compile(l func(string) int) Rule {
 			}
 		case astSet:
 			return append(f.combine(l, f.args[0]), instruction{opcode: opLEN})
-		default:
-			panic("invalid arg type")
 		}
 	case "max":
 		return append(f.minMaxCombine(l), instruction{opcode: opMAX})
@@ -74,7 +72,7 @@ func (f function) compile(l func(string) int) Rule {
 	case "pow":
 		return append(f.combine(l, f.args...), instruction{opcode: opPOW})
 	}
-	astFatalf("cannot compile %s: not implemented", f)
+	astFatalf("cannot compile %s: invalid type or instruction")
 	panic("unreacheable")
 }
 
@@ -94,9 +92,8 @@ func (f function) countsCheck() astType {
 		return astSet
 	case astStr:
 		return astNum
-	default:
-		astFatalf("invalid arguments: %s", f)
 	}
+	astFatalf("invalid arguments: %s", f)
 	panic("unreacheable")
 }
 

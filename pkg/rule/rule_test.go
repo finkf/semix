@@ -184,6 +184,7 @@ func TestExecuteRule(t *testing.T) {
 		{`max(1,2,3+5)`, 8, false},
 		{`min(-1,2,-3*5)`, -15, false},
 		{`min(-1,2,-3*5)`, -15, false},
+		{`min({"a","b","c"})`, 1, false}, // a little bit silly: this checks for the *minimal ID*.
 		{"-{}", 0, true},
 		{"-es()", 0, true},
 		{`{"a","not","b"}`, 0, true},
