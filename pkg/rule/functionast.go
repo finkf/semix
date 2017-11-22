@@ -84,17 +84,18 @@ func (f function) elementsCheck() astType {
 }
 
 func (f function) countsCheck() astType {
-	if len(f.args) != 1 {
+	if len(f.args) == 0 {
 		astFatalf("invalid arguments: %s", f)
 	}
-	switch f.args[0].check() {
-	case astSet:
+	if len(f.args) == 1 && f.args[0].check() == astSet {
 		return astSet
-	case astStr:
-		return astNum
 	}
-	astFatalf("invalid arguments: %s", f)
-	panic("unreacheable")
+	for _, arg := range f.args {
+		if arg.check() != astStr {
+			astFatalf("invalid arguments: %s", f)
+		}
+	}
+	return astSet
 }
 
 func (f function) lenCheck() astType {
@@ -126,7 +127,7 @@ func (f function) numCheck(n int) astType {
 		astFatalf("invalid arguments: %s", f)
 	}
 	for i := 0; i < n; i++ {
-		if f.args[0].check() != astNum {
+		if f.args[i].check() != astNum {
 			astFatalf("invalid arguments: %s", f)
 		}
 	}

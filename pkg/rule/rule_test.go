@@ -50,7 +50,8 @@ func TestSyntaxCheck(t *testing.T) {
 		{`"ab"<"cd"`, astBoolean, false},
 		{`"ab">"cd"`, astBoolean, false},
 		{`{"a","b"}+es()`, astSet, false},
-		{`min(len({"a","b"}),cs("foo"))`, astNum, false},
+		{`min(len({"a","b"}),len("foo"))`, astNum, false},
+		{`c("a","b")+cs("c","d")`, astSet, false},
 		{"max()", astNum, false},
 		{"min(1.0,false,false,true)", astNum, false},
 		{"min(true,false,1.0,true)", astNum, false},
@@ -75,6 +76,9 @@ func TestSyntaxCheck(t *testing.T) {
 		{`len(1.0)`, 0, true},
 		{`LEN(1.0)`, 0, true},
 		{`c(1.0)`, 0, true},
+		{"log()", 0, true},
+		{"exp(1.0,2.0,3.0)", 0, true},
+		{"pow(1.0,{})", 0, true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
@@ -88,6 +92,9 @@ func TestSyntaxCheck(t *testing.T) {
 					t.Fatalf("expected error")
 				}
 				return
+			}
+			if err != nil {
+				t.Fatalf("go error: %s", err)
 			}
 			if got != tc.want {
 				t.Fatalf("expected %d; got %d", tc.want, got)
