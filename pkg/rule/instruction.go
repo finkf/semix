@@ -132,10 +132,10 @@ func (i instruction) call(mem *memory.Memory, stack *stack) {
 		stack.push(arrayMAX(a))
 	case opSC:
 		a := stack.pop1()
-		stack.push(float64(countSC(mem, int(a))))
+		stack.push(float64(mem.CountIf(equalsID(int(a)))))
 	case opSCS:
 		a := stack.pop1()
-		stack.push(float64(countSCS(mem, int(a))))
+		stack.push(float64(mem.CountIfS(equalsID(int(a)))))
 	case opC:
 		a := stack.popArray1()
 		stack.pushArray(countC(mem, a))
@@ -143,9 +143,9 @@ func (i instruction) call(mem *memory.Memory, stack *stack) {
 		a := stack.popArray1()
 		stack.pushArray(countCS(mem, a))
 	case opE:
-		stack.pushArray(elems(mem))
+		stack.pushArray(elems(mem.Elements()))
 	case opES:
-		stack.pushArray(elemsS(mem))
+		stack.pushArray(elems(mem.ElementsS()))
 	case opMemN:
 		stack.push(float64(mem.N()))
 	case opMemLEN:
@@ -321,78 +321,44 @@ func arrayMAX(a []float64) float64 {
 	return max
 }
 
-func elemsS(mem *memory.Memory) []float64 {
-	ids := make(map[int]bool, mem.N())
-	eachS(mem, func(c *semix.Concept) {
-		ids[absID(c.ID())] = true
-	})
-	return toset(ids)
+func elems(es []*semix.Concept) []float64 {
+	res := make([]float64, 0, len(es))
+	for _, e := range es {
+		res = append(res, float64(absID(e.ID())))
+	}
+	sort.Float64s(res)
+	return res
 }
 
-func elems(mem *memory.Memory) []float64 {
-	ids := make(map[int]bool, mem.N())
-	mem.Each(func(c *semix.Concept) {
-		ids[absID(c.ID())] = true
-	})
-	return toset(ids)
+func countset(counts map[int]int, ids []float64) []float64 {
+	res := make([]float64, 0, len(counts))
+	for _, id := range ids {
+		res = append(res, float64(counts[int(id)]))
+	}
+	sort.Float64s(res)
+	return res
 }
 
 func countC(mem *memory.Memory, ids []float64) []float64 {
-	counts := make(map[int]bool, mem.N())
-	for _, id := range ids {
-		mem.Each(func(c *semix.Concept) {
-			counts[countSC(mem, int(id))] = true
-		})
-	}
-	return toset(counts)
+	counts := make(map[int]int, mem.N())
+	mem.Each(func(c *semix.Concept) {
+		counts[absID(c.ID())]++
+	})
+	return countset(counts, ids)
 }
 
 func countCS(mem *memory.Memory, ids []float64) []float64 {
-	counts := make(map[int]bool, mem.N())
-	for _, id := range ids {
-		eachS(mem, func(c *semix.Concept) {
-			counts[countSC(mem, int(id))] = true
-		})
+	counts := make(map[int]int, mem.N())
+	mem.EachS(func(c *semix.Concept) {
+		counts[absID(c.ID())]++
+	})
+	return countset(counts, ids)
+}
+
+func equalsID(id int) func(*semix.Concept) bool {
+	return func(c *semix.Concept) bool {
+		return absID(c.ID()) == id
 	}
-	return toset(counts)
-}
-
-func countSC(mem *memory.Memory, id int) int {
-	var count int
-	mem.Each(func(c *semix.Concept) {
-		if absID(c.ID()) == id {
-			count++
-		}
-	})
-	return count
-}
-
-func countSCS(mem *memory.Memory, id int) int {
-	var count int
-	eachS(mem, func(c *semix.Concept) {
-		if absID(c.ID()) == id {
-			count++
-		}
-	})
-	return count
-}
-
-func eachS(mem *memory.Memory, f func(*semix.Concept)) {
-	mem.Each(func(c *semix.Concept) {
-		f(c)
-		c.EachEdge(func(e semix.Edge) {
-			f(e.O)
-		})
-	})
-}
-
-func toset(ids map[int]bool) []float64 {
-	set := make([]float64, 0, len(ids))
-	for id := range ids {
-		set = append(set, float64(id))
-	}
-	sort.Float64s(set)
-	return set
 }
 
 func absID(id int32) int {
