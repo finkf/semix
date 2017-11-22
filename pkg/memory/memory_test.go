@@ -44,10 +44,13 @@ func TestMemory(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(fmt.Sprintf("%d", tc.n), func(t *testing.T) {
 			m := New(5)
+			if got := m.N(); got != 5 {
+				t.Fatalf("expected %d; got %d", 5, got)
+			}
 			for _, url := range tc.urls {
 				m.Push(semix.NewConcept(url))
 			}
-			if got := m.N(); got != tc.n {
+			if got := m.Len(); got != tc.n {
 				t.Fatalf("expected %d; got %d", tc.n, got)
 			}
 			if got := m.Count("A"); got != tc.c {

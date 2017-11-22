@@ -58,8 +58,13 @@ func (m Memory) Count(url string) int {
 	return n
 }
 
-// N returns the size of them memory.
+// N returns the maximal number of elements in the memory.
 func (m Memory) N() int {
+	return len(m.buffer)
+}
+
+// Len returns the number of elements in the memory.
+func (m Memory) Len() int {
 	return m.end
 }
 
