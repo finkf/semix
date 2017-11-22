@@ -41,9 +41,8 @@ func (i infix) check() astType {
 	case '*':
 		checkTypIn(i, left, astBoolean, astNum, astSet)
 		return left
-	default:
-		astFatalf("invalid expression: %s", i)
 	}
+	astFatalf("invalid expression: %s", i)
 	panic("unreacheable")
 }
 
@@ -57,8 +56,6 @@ func (i infix) compile(f func(string) int) Rule {
 			return i.combine(f, instruction{opcode: opOR})
 		case '*':
 			return i.combine(f, instruction{opcode: opAND})
-		default:
-			panic("invalid operator")
 		}
 	case astNum:
 		switch i.op {
@@ -76,8 +73,6 @@ func (i infix) compile(f func(string) int) Rule {
 			return i.combine(f, instruction{opcode: opMUL})
 		case '/':
 			return i.combine(f, instruction{opcode: opDIV})
-		default:
-			panic("invalid operator")
 		}
 	case astSet:
 		switch i.op {
@@ -89,8 +84,6 @@ func (i infix) compile(f func(string) int) Rule {
 			return i.combine(f, instruction{opcode: opSetI})
 		case '-':
 			return i.combine(f, instruction{opcode: opSetSUB})
-		default:
-			panic("invalid operator")
 		}
 	case astStr:
 		switch i.op {
@@ -100,14 +93,10 @@ func (i infix) compile(f func(string) int) Rule {
 			return Rule{booleanInstruction(i.left.(str) < i.right.(str))}
 		case '>':
 			return Rule{booleanInstruction(i.left.(str) > i.right.(str))}
-		default:
-			panic("invalid operator")
 		}
-	default:
-		panic("invalid type")
 	}
-	// astFatalf("cannot compile %s: not implemented", i)
-	// panic("unreacheable")
+	astFatalf("invalid type or operator: %s", i)
+	panic("unreacheable")
 }
 
 func (i infix) combine(f func(string) int, instr instruction) Rule {
