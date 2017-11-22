@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -53,7 +52,7 @@ func (s dirStorage) Put(url string, es []Entry) error {
 func (s dirStorage) write(url string, ds []dse) error {
 	path := preparePath(s.dir, url)
 	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
-	log.Printf("wrting %d entries to %s", len(ds), path)
+	// log.Printf("wrting %d entries to %s", len(ds), path)
 	os, err := os.OpenFile(path, flags, 0666)
 	if err != nil {
 		return fmt.Errorf("could not open %q: %v", path, err)
@@ -75,7 +74,7 @@ func (s dirStorage) Get(url string, f func(Entry)) error {
 		return fmt.Errorf("could not open %q: %v", path, err)
 	}
 	defer is.Close()
-	log.Printf("reading path %s", path)
+	// log.Printf("reading path %s", path)
 	for {
 		ds, err := readBlock(is)
 		if err != nil {
@@ -136,7 +135,7 @@ func writeBlock(w io.Writer, ds []dse) error {
 	if _, err := w.Write(buffer.Bytes()); err != nil {
 		return err
 	}
-	log.Printf("wrote %d entries", len(ds))
+	// log.Printf("wrote %d entries", len(ds))
 	return nil
 }
 
@@ -156,7 +155,7 @@ func readBlock(r io.Reader) ([]dse, error) {
 	d := gob.NewDecoder(dec)
 	var ds []dse
 	err := d.Decode(&ds)
-	log.Printf("read %d entries", len(ds))
+	// log.Printf("read %d entries", len(ds))
 	return ds, err
 }
 
@@ -174,7 +173,7 @@ func preparePath(dir, u string) string {
 	u = filepath.Join(dir, u)
 	p := filepath.Dir(u)
 	if err := os.MkdirAll(p, os.ModePerm); err != nil {
-		log.Printf("could no prepare: %s: %s", p, err)
+		// log.Printf("could no prepare: %s: %s", p, err)
 	}
 	return u
 }
