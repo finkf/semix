@@ -17,5 +17,6 @@ name = [
 distinct = [
 	"http://ww1.cis.lmu.de/AltName",
 ]
+rules = []
 ambiguous = []
 inverted = []

@@ -20,5 +20,6 @@ name = [
 distinct = [
 	"http://bitbucket.org/fflo/ww1/predicates/alt-name",
 ]
+rules = []
 ambiguous = []
 inverted = []

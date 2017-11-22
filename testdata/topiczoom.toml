@@ -17,5 +17,8 @@ name = [
 distinct = [
 	"http://www.w3.org/2004/02/skos/core#altLabel",
 ]
+rules = [
+    "http://rdf.internal.topiczoom.de/predicates/rule",
+]
 ambiguous = []
 inverted = []
