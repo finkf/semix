@@ -75,9 +75,31 @@ func commonPrefix(a, b string) int {
 	return pref
 }
 
-// NewConcept create a new Concept with the given URL.
-func NewConcept(url string) *Concept {
-	return &Concept{url: url}
+// WithID returns a configuration function that sets the concept's ID.
+func WithID(id int) func(*Concept) {
+	return func(c *Concept) {
+		c.id = int32(id)
+	}
+}
+
+// WithEdges returns a configuration function that sets the edges.
+// Each pair (p,o) in cs is set to the edge pointing to o with the predicate p.
+func WithEdges(cs ...*Concept) func(*Concept) {
+	return func(c *Concept) {
+		for i := 1; i < len(cs); i += 2 {
+			c.edges = append(c.edges, Edge{P: cs[i-1], O: cs[i]})
+		}
+	}
+}
+
+// NewConcept create a new Concept with the given URL
+// and configuration functions.
+func NewConcept(url string, cfs ...func(*Concept)) *Concept {
+	c := &Concept{url: url}
+	for _, cf := range cfs {
+		cf(c)
+	}
+	return c
 }
 
 // ID returns the unique ID of the concept.
