@@ -134,7 +134,7 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 	}
 	q := r.URL.Query().Get("q")
 	log.Printf("query: %s", q)
-	qu, err := query.NewFix(q, h.getFixFunc())
+	qu, err := query.New(q, h.getFixFunc())
 	if err != nil {
 		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)
 	}
@@ -156,7 +156,7 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 	return ts, http.StatusOK, nil
 }
 
-func (h handle) getFixFunc() query.FixFunc {
+func (h handle) getFixFunc() query.LookupFunc {
 	return func(arg string) ([]string, error) {
 		cs := h.searcher.SearchConcepts(arg, 1)
 		if len(cs) == 0 {
