@@ -83,19 +83,20 @@ func (f function) elementsCheck() astType {
 	return astSet
 }
 
+// c/cs is overloaded. It accepts either one string and returns its count,
+// or it accepts a set and returns the array of its counts.
 func (f function) countsCheck() astType {
-	if len(f.args) == 0 {
+	if len(f.args) != 1 {
 		astFatalf("invalid arguments: %s", f)
 	}
-	if len(f.args) == 1 && f.args[0].check() == astSet {
+	switch f.args[0].check() {
+	case astSet:
 		return astSet
+	case astStr:
+		return astNum
 	}
-	for _, arg := range f.args {
-		if arg.check() != astStr {
-			astFatalf("invalid arguments: %s", f)
-		}
-	}
-	return astSet
+	astFatalf("invalid arguments: %s", f)
+	panic("unreacheable")
 }
 
 func (f function) lenCheck() astType {
