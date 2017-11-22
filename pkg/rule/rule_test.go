@@ -5,6 +5,9 @@ import (
 	"math"
 	"strings"
 	"testing"
+
+	"bitbucket.org/fflo/semix/pkg/memory"
+	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
 func checkSyntax(ast ast) (t astType, err error) {
@@ -17,7 +20,7 @@ func checkSyntax(ast ast) (t astType, err error) {
 	return t, nil
 }
 
-func lookupID(str string) int {
+func testLookupID(str string) int {
 	switch str {
 	case "a":
 		return 1
@@ -27,6 +30,14 @@ func lookupID(str string) int {
 		return 3
 	}
 	return -1
+}
+
+func testMemory() *memory.Memory {
+	m := memory.New(5)
+	m.Push(semix.NewConceptWithID("a", 1))
+	m.Push(semix.NewConceptWithID("b", 2))
+	m.Push(semix.NewConceptWithID("a", 1))
+	return m
 }
 
 func TestSyntaxCheck(t *testing.T) {
@@ -61,6 +72,8 @@ func TestSyntaxCheck(t *testing.T) {
 		{`len("abc")`, astNum, false},
 		{"min(true,false,false,true)", astNum, false},
 		{`cs({"a","b"})`, astSet, false},
+		{`e()+es()`, astSet, false},
+		// errors
 		{"2-true", 0, true},
 		{"false+2", 0, true},
 		{"false/true", 0, true},
@@ -77,6 +90,8 @@ func TestSyntaxCheck(t *testing.T) {
 		{`len("ab","foo")`, 0, true},
 		{`len(1.0)`, 0, true},
 		{`LEN(1.0)`, 0, true},
+		{`es(1.0)`, 0, true},
+		{`e({"a"})`, 0, true},
 		{`cs()`, 0, true},
 		{`c(1.0)`, 0, true},
 		{"log()", 0, true},
@@ -111,16 +126,29 @@ func TestCompileRule(t *testing.T) {
 		test, want string
 	}{
 		{"-2", "PUSH 2.00;NEG;"},
+		{"-true*false", "PUSH true;NOT;PUSH false;AND;"},
+		{"false+true", "PUSH false;PUSH true;OR;"},
+		{"8<3*3", "PUSH 8.00;PUSH 3.00;PUSH 3.00;MUL;LT;"},
+		{"8=3/1", "PUSH 8.00;PUSH 3.00;PUSH 1.00;DIV;EQ;"},
+		{"8>3", "PUSH 8.00;PUSH 3.00;GT;"},
 		{"min(1)", "PUSH 1.00;PUSH 1;MIN;"},
 		{"max(1,2)", "PUSH 1.00;PUSH 2.00;PUSH 2;MAX;"},
 		{"max({})", "PUSH 0;MAX;"},
 		{"min(1+2,3-4)", "PUSH 1.00;PUSH 2.00;ADD;PUSH 3.00;PUSH 4.00;SUB;PUSH 2;MIN;"},
+		{`{"a"}={"b"}`, "PUSH 1;PUSH 1;PUSH 2;PUSH 1;SEQ;"},
+		{`log(len({"c"}))`, "PUSH 3;PUSH 1;LEN;LOG;"},
+		{`exp(1)`, "PUSH 1.00;EXP;"},
 		{"pow(1,2)", "PUSH 1.00;PUSH 2.00;POW;"},
 		{`min({"a","b","c"})`, "PUSH 1;PUSH 2;PUSH 3;PUSH 3;MIN;"},
+		{`{"a"}+es()`, "PUSH 1;PUSH 1;ES;SU;"},
+		{`e()-{"a"}`, "E;PUSH 1;PUSH 1;SSUB;"},
+		{`c("a")+cs("b")`, "PUSH 1;SC;PUSH 2;SCS;ADD;"},
+		{`c({"a","b"})`, "PUSH 1;PUSH 2;PUSH 2;C;"},
+		{`cs({"a","b"})`, "PUSH 1;PUSH 2;PUSH 2;CS;"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
-			rule, err := Compile(tc.test, lookupID)
+			rule, err := Compile(tc.test, testLookupID)
 			if err != nil {
 				t.Fatalf("got error: %s", err)
 			}
@@ -201,7 +229,7 @@ func TestExecuteRule(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
-			rule, err := Compile(tc.test, lookupID)
+			rule, err := Compile(tc.test, testLookupID)
 			if tc.iserr {
 				if err == nil {
 					t.Fatalf("expected error")
@@ -211,7 +239,7 @@ func TestExecuteRule(t *testing.T) {
 			if err != nil {
 				t.Fatalf("got error: %s", err)
 			}
-			if got := rule.Execute(); got != tc.want {
+			if got := rule.Execute(testMemory()); got != tc.want {
 				t.Fatalf("expected %f; got %f", tc.want, got)
 			}
 		})

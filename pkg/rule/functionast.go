@@ -2,6 +2,7 @@ package rule
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -61,6 +62,14 @@ func (f function) compile(l func(string) int) Rule {
 		case astSet:
 			return append(f.combine(l, f.args[0]), instruction{opcode: opLEN})
 		}
+	case "e":
+		return Rule{instruction{opcode: opE}}
+	case "es":
+		return Rule{instruction{opcode: opES}}
+	case "c":
+		return f.compileCount(l, false)
+	case "cs":
+		return f.compileCount(l, true)
 	case "max":
 		return append(f.minMaxCombine(l), instruction{opcode: opMAX})
 	case "min":
@@ -97,6 +106,56 @@ func (f function) countsCheck() astType {
 	}
 	astFatalf("invalid arguments: %s", f)
 	panic("unreacheable")
+}
+
+func (f function) compileCount(g func(string) int, star bool) Rule {
+	switch f.args[0].check() {
+	case astStr:
+		return Rule{
+			instruction{opcode: opPushID, arg: mustFindID(f.args[0], g)},
+			instruction{opcode: countOpcode(true, star)},
+		}
+	case astSet:
+		var rule Rule
+		for _, id := range mustFindIDs(f.args[0], g) {
+			rule = append(rule, instruction{opcode: opPushID, arg: id})
+		}
+		rule = append(rule, instruction{opcode: opPushID, arg: float64(len(rule))})
+		rule = append(rule, instruction{opcode: countOpcode(false, star)})
+		return rule
+	}
+	astFatalf("invalid arguments: %s", f)
+	panic("unreacheable")
+}
+
+func countOpcode(str, star bool) opcode {
+	if str && star {
+		return opSCS
+	}
+	if str {
+		return opSC
+	}
+	if !str && !star {
+		return opC
+	}
+	return opCS
+}
+
+func mustFindIDs(ast ast, f func(string) int) []float64 {
+	var ids []float64
+	for str := range ast.(set) {
+		ids = append(ids, mustFindID(str, f))
+	}
+	sort.Float64s(ids)
+	return ids
+}
+
+func mustFindID(ast ast, f func(string) int) float64 {
+	id := f(string(ast.(str)))
+	if id <= 0 {
+		astFatalf("cannot find concept: %s", ast)
+	}
+	return float64(id)
 }
 
 func (f function) lenCheck() astType {

@@ -3,16 +3,18 @@ package rule
 import (
 	"errors"
 	"strings"
+
+	"bitbucket.org/fflo/semix/pkg/memory"
 )
 
 // Rule represents a compiled rule.
 type Rule []instruction
 
 // Execute executes a rule and returns its result.
-func (r Rule) Execute() float64 {
+func (r Rule) Execute(memory *memory.Memory) float64 {
 	stack := new(stack)
 	for _, o := range r {
-		o.call(stack)
+		o.call(memory, stack)
 	}
 	return stack.pop1()
 }

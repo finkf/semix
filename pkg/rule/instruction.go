@@ -3,6 +3,10 @@ package rule
 import (
 	"fmt"
 	"math"
+	"sort"
+
+	"bitbucket.org/fflo/semix/pkg/memory"
+	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
 type opcode int
@@ -33,6 +37,12 @@ const (
 	opPOW
 	opMIN
 	opMAX
+	opC
+	opCS
+	opSC
+	opSCS
+	opE
+	opES
 )
 
 type instruction struct {
@@ -47,7 +57,7 @@ func booleanInstruction(b bool) instruction {
 	return instruction{opcode: opPushFALSE}
 }
 
-func (i instruction) call(stack *stack) {
+func (i instruction) call(mem *memory.Memory, stack *stack) {
 	switch i.opcode {
 	case opPushNUM:
 		stack.push(i.arg)
@@ -118,6 +128,22 @@ func (i instruction) call(stack *stack) {
 	case opMAX:
 		a := stack.popArray1()
 		stack.push(arrayMAX(a))
+	case opSC:
+		a := stack.pop1()
+		stack.push(float64(countSC(mem, int(a))))
+	case opSCS:
+		a := stack.pop1()
+		stack.push(float64(countSCS(mem, int(a))))
+	case opC:
+		a := stack.popArray1()
+		stack.pushArray(countCS(mem, a))
+	case opCS:
+		a := stack.popArray1()
+		stack.pushArray(countCS(mem, a))
+	case opE:
+		stack.pushArray(elems(mem))
+	case opES:
+		stack.pushArray(elemsS(mem))
 	default:
 		panic("invalid opcode")
 	}
@@ -185,9 +211,20 @@ func (i instruction) String() string {
 		return "MIN"
 	case opMAX:
 		return "MAX"
-	default:
-		panic("invalid opcode")
+	case opC:
+		return "C"
+	case opCS:
+		return "CS"
+	case opSC:
+		return "SC"
+	case opSCS:
+		return "SCS"
+	case opE:
+		return "E"
+	case opES:
+		return "ES"
 	}
+	panic("invalid opcode")
 }
 
 func arrayU(a, b []float64) []float64 {
@@ -272,4 +309,85 @@ func arrayMAX(a []float64) float64 {
 		max = math.Max(max, a[i])
 	}
 	return max
+}
+
+func elemsS(mem *memory.Memory) []float64 {
+	ids := make(map[int]bool, mem.N())
+	eachS(mem, func(c *semix.Concept) {
+		ids[absID(c.ID())] = true
+	})
+	return toset(ids)
+}
+
+func elems(mem *memory.Memory) []float64 {
+	ids := make(map[int]bool, mem.N())
+	mem.Each(func(c *semix.Concept) {
+		ids[absID(c.ID())] = true
+	})
+	return toset(ids)
+}
+
+func countC(mem *memory.Memory, ids []float64) []float64 {
+	counts := make(map[int]bool, mem.N())
+	for _, id := range ids {
+		mem.Each(func(c *semix.Concept) {
+			counts[countSC(mem, int(id))] = true
+		})
+	}
+	return toset(counts)
+}
+
+func countCS(mem *memory.Memory, ids []float64) []float64 {
+	counts := make(map[int]bool, mem.N())
+	for _, id := range ids {
+		eachS(mem, func(c *semix.Concept) {
+			counts[countSC(mem, int(id))] = true
+		})
+	}
+	return toset(counts)
+}
+
+func countSC(mem *memory.Memory, id int) int {
+	var count int
+	mem.Each(func(c *semix.Concept) {
+		if absID(c.ID()) == id {
+			count++
+		}
+	})
+	return count
+}
+
+func countSCS(mem *memory.Memory, id int) int {
+	var count int
+	eachS(mem, func(c *semix.Concept) {
+		if absID(c.ID()) == id {
+			count++
+		}
+	})
+	return count
+}
+
+func eachS(mem *memory.Memory, f func(*semix.Concept)) {
+	mem.Each(func(c *semix.Concept) {
+		f(c)
+		c.EachEdge(func(e semix.Edge) {
+			f(e.O)
+		})
+	})
+}
+
+func toset(ids map[int]bool) []float64 {
+	set := make([]float64, 0, len(ids))
+	for id := range ids {
+		set = append(set, float64(id))
+	}
+	sort.Float64s(set)
+	return set
+}
+
+func absID(id int32) int {
+	if id < 0 {
+		return -int(id)
+	}
+	return int(id)
 }
