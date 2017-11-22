@@ -136,7 +136,7 @@ func (i instruction) call(mem *memory.Memory, stack *stack) {
 		stack.push(float64(countSCS(mem, int(a))))
 	case opC:
 		a := stack.popArray1()
-		stack.pushArray(countCS(mem, a))
+		stack.pushArray(countC(mem, a))
 	case opCS:
 		a := stack.popArray1()
 		stack.pushArray(countCS(mem, a))

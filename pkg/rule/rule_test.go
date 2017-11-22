@@ -223,9 +223,20 @@ func TestExecuteRule(t *testing.T) {
 		{`min(-1,2,-3*5)`, -15, false},
 		{`min(-1,2,-3*5)`, -15, false},
 		{`min({"a","b","c"})`, 1, false}, // a little bit silly: this checks for the *minimal ID*.
+		{`es()={"a","b"}`, 1, false},
+		{`len(e())=2`, 1, false},
+		{`c("a")=2`, 1, false},
+		{`c("c")=0`, 1, false},
+		{`cs("a")=2`, 1, false},
+		{`cs("c")=0`, 1, false},
+		{`max(c({"a","b"}))=2`, 1, false},
+		{`min(cs({"b","c"}))=0`, 1, false},
+		// errors
 		{"-{}", 0, true},
 		{"-es()", 0, true},
 		{`{"a","not","b"}`, 0, true},
+		{`cs("x")`, 0, true},
+		{`c({"x"})`, 0, true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
