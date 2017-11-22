@@ -92,6 +92,8 @@ func TestCompileRule(t *testing.T) {
 		{"min(1)", "PUSH 1.00;PUSH 1;MIN;"},
 		{"max(1,2)", "PUSH 1.00;PUSH 2.00;PUSH 2;MAX;"},
 		{"max({})", "PUSH 0;MAX;"},
+		{"min(1+2,3-4)", "PUSH 1.00;PUSH 2.00;ADD;PUSH 3.00;PUSH 4.00;SUB;PUSH 2;MIN;"},
+		{"pow(1,2)", "PUSH 1.00;PUSH 2.00;POW;"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
@@ -100,7 +102,7 @@ func TestCompileRule(t *testing.T) {
 				t.Fatalf("got error: %s", err)
 			}
 			if got := rule.String(); got != tc.want {
-				t.Fatalf("expected %s; got %s", tc.want, got)
+				t.Fatalf("expected %q; got %q.", tc.want, got)
 			}
 		})
 	}

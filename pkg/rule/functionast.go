@@ -141,13 +141,15 @@ func (f function) minMaxCombine(g func(string) int) Rule {
 		return Rule{instruction{opcode: opPushID, arg: 0}}
 	}
 	var rule Rule
+	var n int
 	for _, arg := range f.args {
 		if arg.check() == astSet {
 			return arg.compile(g)
 		}
+		n++
 		rule = append(rule, arg.compile(g)...)
 	}
-	rule = append(rule, instruction{opcode: opPushID, arg: float64(len(rule))})
+	rule = append(rule, instruction{opcode: opPushID, arg: float64(n)})
 	return rule
 }
 
