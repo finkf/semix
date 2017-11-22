@@ -2,7 +2,7 @@
 file = "testdata/ww1.ttl"
 type = "turtle"
 
-[urls]
+[predicates]
 ignore = []
 transitive = [
 	"http://ww1.cis.lmu.de/Type",
@@ -17,5 +17,6 @@ name = [
 distinct = [
 	"http://ww1.cis.lmu.de/AltName",
 ]
+rules = []
 ambiguous = []
 inverted = []

@@ -1,12 +1,22 @@
 package traits
 
-import "bitbucket.org/fflo/semix/pkg/semix"
+// Interface defines the interface for the different traits of predicates.
+type Interface interface {
+	Ignore(string) bool
+	IsSymmetric(string) bool
+	IsTransitive(string) bool
+	IsName(string) bool
+	IsDistinct(string) bool
+	IsAmbiguous(string) bool
+	IsInverted(string) bool
+	IsRule(string) bool
+}
 
 // Option speciefies an Option to set up a traits instance.
 type Option func(traits)
 
-// WithIgnoreURLs specifies a list of symmetric predicate URLs.
-func WithIgnoreURLs(strs ...string) Option {
+// WithIgnorePredicates specifies a list of symmetric predicate URLs.
+func WithIgnorePredicates(strs ...string) Option {
 	return func(t traits) {
 		for _, str := range strs {
 			t.i[str] = true
@@ -14,8 +24,8 @@ func WithIgnoreURLs(strs ...string) Option {
 	}
 }
 
-// WithTransitiveURLs specifies a list of transitive predicate URLs.
-func WithTransitiveURLs(urls ...string) Option {
+// WithTransitivePredicates specifies a list of transitive predicate URLs.
+func WithTransitivePredicates(urls ...string) Option {
 	return func(t traits) {
 		for _, url := range urls {
 			t.t[url] = true
@@ -23,8 +33,8 @@ func WithTransitiveURLs(urls ...string) Option {
 	}
 }
 
-// WithSymmetricURLs specifies a list of symmetric predicate URLs.
-func WithSymmetricURLs(urls ...string) Option {
+// WithSymmetricPredicates specifies a list of symmetric predicate URLs.
+func WithSymmetricPredicates(urls ...string) Option {
 	return func(t traits) {
 		for _, url := range urls {
 			t.s[url] = true
@@ -32,8 +42,8 @@ func WithSymmetricURLs(urls ...string) Option {
 	}
 }
 
-// WithInvertedURLs specifies a list of symmetric predicate URLs.
-func WithInvertedURLs(urls ...string) Option {
+// WithInvertedPredicates specifies a list of symmetric predicate URLs.
+func WithInvertedPredicates(urls ...string) Option {
 	return func(t traits) {
 		for _, url := range urls {
 			t.v[url] = true
@@ -41,8 +51,8 @@ func WithInvertedURLs(urls ...string) Option {
 	}
 }
 
-// WithNameURLs specifies a list of name predicate URLs.
-func WithNameURLs(urls ...string) Option {
+// WithNamePredicates specifies a list of name predicate URLs.
+func WithNamePredicates(urls ...string) Option {
 	return func(t traits) {
 		for _, url := range urls {
 			t.n[url] = true
@@ -50,8 +60,8 @@ func WithNameURLs(urls ...string) Option {
 	}
 }
 
-// WithDistinctURLs specifies a list of distinct predicate URLs.
-func WithDistinctURLs(urls ...string) Option {
+// WithDistinctPredicates specifies a list of distinct predicate URLs.
+func WithDistinctPredicates(urls ...string) Option {
 	return func(t traits) {
 		for _, url := range urls {
 			t.d[url] = true
@@ -59,8 +69,8 @@ func WithDistinctURLs(urls ...string) Option {
 	}
 }
 
-// WithAmbiguousURLs specifies a list of ambiguous predicate URLs.
-func WithAmbiguousURLs(urls ...string) Option {
+// WithAmbiguousPredicates specifies a list of ambiguous predicate URLs.
+func WithAmbiguousPredicates(urls ...string) Option {
 	return func(t traits) {
 		for _, url := range urls {
 			t.a[url] = true
@@ -68,9 +78,18 @@ func WithAmbiguousURLs(urls ...string) Option {
 	}
 }
 
+// WithRulesPredicates specifies a list of ambiguous predicate URLs.
+func WithRulePredicates(urls ...string) Option {
+	return func(t traits) {
+		for _, url := range urls {
+			t.r[url] = true
+		}
+	}
+}
+
 // New returns a new traits instance.
 // You can set the various urls manually.
-func New(opts ...Option) semix.Traits {
+func New(opts ...Option) Interface {
 	t := traits{
 		i: make(traitSet),
 		t: make(traitSet),
@@ -79,43 +98,48 @@ func New(opts ...Option) semix.Traits {
 		d: make(traitSet),
 		a: make(traitSet),
 		v: make(traitSet),
+		r: make(traitSet),
 	}
 	for _, opt := range opts {
 		opt(t)
 	}
-	return t
+	return &t
 }
 
 type traitSet map[string]bool
 
 type traits struct {
-	i, t, s, n, d, a, v traitSet
+	i, t, s, n, d, a, v, r traitSet
 }
 
-func (t traits) Ignore(url string) bool {
+func (t *traits) Ignore(url string) bool {
 	return t.i[url]
 }
 
-func (t traits) IsSymmetric(url string) bool {
+func (t *traits) IsSymmetric(url string) bool {
 	return t.s[url]
 }
 
-func (t traits) IsInverted(url string) bool {
+func (t *traits) IsInverted(url string) bool {
 	return t.v[url]
 }
 
-func (t traits) IsTransitive(url string) bool {
+func (t *traits) IsTransitive(url string) bool {
 	return t.t[url]
 }
 
-func (t traits) IsName(url string) bool {
+func (t *traits) IsName(url string) bool {
 	return t.n[url]
 }
 
-func (t traits) IsDistinct(url string) bool {
+func (t *traits) IsDistinct(url string) bool {
 	return t.d[url]
 }
 
-func (t traits) IsAmbiguous(url string) bool {
+func (t *traits) IsAmbiguous(url string) bool {
 	return t.a[url]
+}
+
+func (t *traits) IsRule(url string) bool {
+	return t.r[url]
 }

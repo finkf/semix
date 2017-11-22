@@ -124,3 +124,4 @@ func (testTraits) IsAmbiguous(p string) bool  { return p == "a" }
 func (testTraits) IsSymmetric(p string) bool  { return p == "s" }
 func (testTraits) IsTransitive(p string) bool { return p == "t" }
 func (testTraits) IsInverted(p string) bool   { return p == "v" }
+func (testTraits) IsRule(p string) bool       { return p == "r" }

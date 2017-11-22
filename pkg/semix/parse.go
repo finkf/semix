@@ -3,22 +3,13 @@ package semix
 import (
 	"fmt"
 	"sort"
+
+	"bitbucket.org/fflo/semix/pkg/traits"
 )
 
 // Parser defines a parser that parses (Subject, Predicate, Object) triples.
 type Parser interface {
 	Parse(func(string, string, string) error) error
-}
-
-// Traits define the different traits of predicates.
-type Traits interface {
-	Ignore(string) bool
-	IsSymmetric(string) bool
-	IsTransitive(string) bool
-	IsName(string) bool
-	IsDistinct(string) bool
-	IsAmbiguous(string) bool
-	IsInverted(string) bool
 }
 
 // Dictionary is a dictionary that maps the labels of the concepts
@@ -27,7 +18,7 @@ type Traits interface {
 type Dictionary map[string]int32
 
 // Parse creates a graph and a dictionary from a parser.
-func Parse(p Parser, t Traits) (*Graph, Dictionary, error) {
+func Parse(p Parser, t traits.Interface) (*Graph, Dictionary, error) {
 	parser := newParser(t)
 	if err := p.Parse(parser.add); err != nil {
 		return nil, nil, err
@@ -45,10 +36,10 @@ type parser struct {
 	names      map[string]string
 	labels     map[string]label
 	splits     map[string][]string
-	traits     Traits
+	traits     traits.Interface
 }
 
-func newParser(traits Traits) *parser {
+func newParser(traits traits.Interface) *parser {
 	return &parser{
 		predicates: make(map[string]map[spo]bool),
 		names:      make(map[string]string),
