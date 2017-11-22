@@ -2,7 +2,7 @@
 file = "../ww1/ww1.ttl"
 type = "turtle"
 
-[urls]
+[predicates]
 ignore = []
 transitive = [
 	"http://bitbucket.org/fflo/ww1/predicates/date",
