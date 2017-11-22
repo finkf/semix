@@ -106,6 +106,7 @@ func TestCompileRule(t *testing.T) {
 		{"max({})", "PUSH 0;MAX;"},
 		{"min(1+2,3-4)", "PUSH 1.00;PUSH 2.00;ADD;PUSH 3.00;PUSH 4.00;SUB;PUSH 2;MIN;"},
 		{"pow(1,2)", "PUSH 1.00;PUSH 2.00;POW;"},
+		{`min({"a","b","c"})`, "PUSH 1;PUSH 2;PUSH 3;PUSH 3;MIN;"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
