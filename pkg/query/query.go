@@ -32,14 +32,14 @@ type Query struct {
 	constraint constraint
 	set        set
 	l          int
+	a          bool
 }
 
 // New create a new query object from a query.
-func New(query string) (Query, error) {
-	p := NewParser(query)
-	q, err := p.Parse()
+func New(query string) (*Query, error) {
+	q, err := NewParser(query).Parse()
 	if err != nil {
-		return Query{}, err
+		return nil, err
 	}
 	return q, nil
 }
@@ -117,6 +117,9 @@ func (q Query) ExecuteFunc(idx index.Interface, f func(index.Entry)) error {
 func (q Query) String() string {
 	c := q.constraint.String()
 	pre := "?"
+	if q.a {
+		pre += "*"
+	}
 	if q.l != 0 {
 		pre += fmt.Sprintf("%d", q.l)
 	}
