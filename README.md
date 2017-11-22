@@ -11,6 +11,7 @@ directory storage entries (DSE):
  * isize4: the string, the position and the relation of indirect entries are not stored in the entries
  * isize5: the relation of indirect entries are not stored in the entries
 
+
 You can choose to compile this project using *one* of
 the four available build tags: `go build -tags isize1`.
 
