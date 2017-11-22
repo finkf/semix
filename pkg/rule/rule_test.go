@@ -34,9 +34,9 @@ func testLookupID(str string) int {
 
 func testMemory() *memory.Memory {
 	m := memory.New(5)
-	m.Push(semix.NewConceptWithID("a", 1))
-	m.Push(semix.NewConceptWithID("b", 2))
-	m.Push(semix.NewConceptWithID("a", 1))
+	m.Push(semix.NewConcept("a", semix.WithID(1)))
+	m.Push(semix.NewConcept("b", semix.WithID(2)))
+	m.Push(semix.NewConcept("a", semix.WithID(1)))
 	return m
 }
 
