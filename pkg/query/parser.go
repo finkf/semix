@@ -4,137 +4,158 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
+	"text/scanner"
 )
 
-type parserError string
+type parserError struct {
+	msg string
+}
 
 // Parser represents a query parser.
 type Parser struct {
-	lexemes []Lexeme
+	scanner *scanner.Scanner
 	query   string
-	pos     int
+	p       rune
 }
 
 // NewParser create a new parser.
 func NewParser(query string) *Parser {
-	return &Parser{query: query}
+	var s scanner.Scanner
+	s.Init(strings.NewReader(query))
+	s.Filename = "query"
+	s.Error = parserFatal
+	return &Parser{
+		query:   query,
+		scanner: &s,
+	}
 }
 
 // Parse parses a query.
-func (p *Parser) Parse() (q Query, err error) {
+func (p *Parser) Parse() (q *Query, err error) {
 	defer func() {
 		if r, ok := recover().(parserError); ok {
-			q = Query{}
-			err = errors.New(string(r))
+			q = nil
+			err = errors.New(r.msg)
 		}
 	}()
-	lexer := NewLexer(p.query)
-	ls, err := lexer.Lex()
-	if err != nil {
-		return Query{}, fmt.Errorf("invalid query %q: %v", p.query, err)
-	}
-	p.lexemes = ls
 	return p.parseQueryExp(), nil
 }
 
-func (p *Parser) parseQueryExp() Query {
-	p.eat(LexemeQuest)
+func (p *Parser) parseQueryExp() *Query {
+	p.eat('?')
 	var k int
-	if p.peek().Typ == LexemeNumber { // parse optional number after `?`
-		l := p.eat(LexemeNumber)
-		tmp, err := strconv.ParseInt(l.Str, 10, 32)
-		if err != nil {
-			panic("not a number: " + l.Str)
+	var a bool
+loop:
+	for {
+		switch tok := p.peek(); tok {
+		case '*':
+			p.eat('*')
+			a = true
+		case scanner.Int:
+			_, str := p.eat(scanner.Int)
+			// ignore errors from strconv!
+			k, _ = strconv.Atoi(str)
+		default:
+			break loop
 		}
-		k = int(tmp)
 	}
-	p.eat(LexemeOBrace)
+	p.eat('(')
 	c, s := p.parseConstraint()
-	p.eat(LexemeCBrace)
-	return Query{set: s, constraint: c, l: k}
+	p.eat(')')
+	return &Query{set: s, constraint: c, l: k, a: a}
 }
 
 func (p *Parser) parseConstraint() (constraint, set) {
 	var c constraint
 	l := p.peek()
 	// {<-...}
-	if l.Typ == LexemeOBracet {
+	if l == '{' {
 		return c, p.parseSet()
 	}
 	// !<-...
-	if l.Typ == LexemeBang {
-		p.eat(LexemeBang)
+	if l == '!' {
+		p.eat('!')
 		c.not = true
 		l = p.peek()
 	}
 	// *<-(...)
-	if l.Typ == LexemeStar {
-		p.eat(LexemeStar)
+	if l == '*' {
+		p.eat('*')
 		c.all = true
-		p.eat(LexemeOBrace)
+		p.eat('(')
 		s := p.parseSet()
-		p.eat(LexemeCBrace)
+		p.eat(')')
 		return c, s
+	}
+	if l != scanner.Ident && l != scanner.String {
+		p.fatalf("exepected %s (%d) or %s (%d); got %s (%d)",
+			scanner.TokenString(scanner.Ident), int(scanner.Ident),
+			scanner.TokenString(scanner.String), int(scanner.String),
+			scanner.TokenString(l), int(l))
 	}
 	// A<-,...
-	if l.Typ == LexemeIdent {
-		c.set = p.parseList()
-		p.eat(LexemeOBrace)
-		s := p.parseSet()
-		p.eat(LexemeCBrace)
-		return c, s
-	}
-	p.die(l.Typ, LexemeIdent, LexemeStar, LexemeBang, LexemeOBracet)
-	panic("not reached")
+	c.set = p.parseList()
+	p.eat('(')
+	s := p.parseSet()
+	p.eat(')')
+	return c, s
 }
 
 func (p *Parser) parseSet() set {
-	p.eat(LexemeOBracet)
+	p.eat('{')
 	set := p.parseList()
-	p.eat(LexemeCBracet)
+	p.eat('}')
 	return set
 }
 
 func (p *Parser) parseList() set {
 	set := make(map[string]bool)
 	// check for empty
-	if p.peek().Typ != LexemeIdent {
+	l := p.peek()
+	if l != scanner.Ident && l != scanner.String {
 		return set
 	}
-	set[p.eat(LexemeIdent).Str] = true
-	for l := p.peek(); l.Typ == LexemeComma; l = p.peek() {
-		p.eat(LexemeComma)
-		set[p.eat(LexemeIdent).Str] = true
+	_, str := p.eat(l)
+	set[str] = true
+	for l := p.peek(); l == ','; l = p.peek() {
+		p.eat(',')
+		_, str := p.eat(scanner.Ident, scanner.String)
+		set[str] = true
 	}
 	return set
 }
 
-func (p *Parser) peek() Lexeme {
-	if p.pos >= len(p.lexemes) {
-		return Lexeme{}
+func (p *Parser) peek() rune {
+	if p.p == 0 {
+		p.p = p.scanner.Scan()
 	}
-	return p.lexemes[p.pos]
+	return p.p
 }
 
-func (p *Parser) eat(typ int) Lexeme {
-	if p.pos >= len(p.lexemes) {
-		panic(parserError("premature EOF"))
+func (p *Parser) eat(toks ...rune) (rune, string) {
+	peek := p.peek()
+	for _, tok := range toks {
+		if tok == peek {
+			str := p.scanner.TokenText()
+			p.p = p.scanner.Scan()
+			return tok, str
+		}
 	}
-	l := p.lexemes[p.pos]
-	p.pos++
-	if l.Typ != typ {
-		p.die(l.Typ, typ)
+	var strs []string
+	for _, tok := range toks {
+		strs = append(strs, fmt.Sprintf("%s", scanner.TokenString(tok)))
 	}
-	return l
+	p.fatalf("expected %s; got %s",
+		strings.Join(strs, " or "),
+		scanner.TokenString(peek))
+	panic("unreacheable")
 }
 
-func (p *Parser) die(not int, exp ...int) {
-	str := fmt.Sprintf("at pos %d: expected", p.pos)
-	c := ' '
-	for _, i := range exp {
-		str += fmt.Sprintf("%c%q", c, rune(i))
-		c = ','
-	}
-	str += fmt.Sprintf("; got %q", rune(not))
-	panic(parserError(str))
+func parserFatal(s *scanner.Scanner, msg string) {
+	panic(parserError{fmt.Sprintf("%s: %s", s.Position, msg)})
+}
+
+func (p *Parser) fatalf(f string, args ...interface{}) {
+	parserFatal(p.scanner, fmt.Sprintf(f, args...))
 }

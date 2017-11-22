@@ -4,84 +4,60 @@ import (
 	"fmt"
 	"sort"
 
-	index "bitbucket.org/fflo/semix/pkg/index"
+	"bitbucket.org/fflo/semix/pkg/index"
 )
 
-// Execute executes a query on the given index and returns a slice
-// with all the matched IndexEntries.
-func Execute(query string, idx index.Interface) ([]index.Entry, error) {
-	q, err := New(query)
-	if err != nil {
-		return nil, err
-	}
-	return q.Execute(idx)
-}
-
-// ExecuteFunc executes a query on the given index.
-// The callback is called for every matched IndexEntry.
-func ExecuteFunc(query string, idx index.Interface, f func(index.Entry)) error {
-	q, err := New(query)
-	if err != nil {
-		return err
-	}
-	return q.ExecuteFunc(idx, f)
-}
+// LookupFunc looks up a query string. It should return the corresponding
+// URLs for the given string. It is not considered an error if the function
+// returns an empty slice.
+// The function should return an error if the query should fail.
+type LookupFunc func(string) ([]string, error)
 
 // Query represents a query.
 type Query struct {
 	constraint constraint
 	set        set
 	l          int
+	a          bool
 }
 
 // New create a new query object from a query.
-func New(query string) (Query, error) {
-	p := NewParser(query)
-	q, err := p.Parse()
+func New(query string, lookup LookupFunc) (*Query, error) {
+	q, err := NewParser(query).Parse()
 	if err != nil {
-		return Query{}, err
+		return nil, err
+	}
+	if err := q.fix(lookup); err != nil {
+		return nil, err
 	}
 	return q, nil
 }
 
-// FixFunc is used to lookup predicate and concept URLs.
-// It should return the full URL of the referenced concept.
-type FixFunc func(string) ([]string, error)
-
-// NewFix returns a new query and updates all urls in the query
-// with the given fix function.
-func NewFix(query string, fix FixFunc) (Query, error) {
-	q, err := New(query)
-	if err != nil {
-		return Query{}, err
-	}
-	q1 := Query{
-		constraint: constraint{
-			set: make(map[string]bool),
-			not: q.constraint.not,
-			all: q.constraint.all,
-		},
-		set: make(map[string]bool),
-	}
+// fix the URLs in the constraint and query sets.
+func (q *Query) fix(lookup LookupFunc) error {
+	newc := make(set, len(q.constraint.set))
 	for url := range q.constraint.set {
-		urls, err := fix(url)
+		urls, err := lookup(url)
 		if err != nil {
-			return Query{}, err
+			return err
 		}
 		for _, url := range urls {
-			q1.constraint.set[url] = true
+			newc[url] = true
 		}
 	}
+	news := make(set, len(q.set))
 	for url := range q.set {
-		urls, err := fix(url)
+		urls, err := lookup(url)
 		if err != nil {
-			return Query{}, err
+			return err
 		}
 		for _, url := range urls {
-			q1.set[url] = true
+			news[url] = true
 		}
 	}
-	return q1, nil
+	q.constraint.set = newc
+	q.set = news
+	return nil
 }
 
 // Execute executes the query on the given index and returns
@@ -102,7 +78,7 @@ func (q Query) Execute(idx index.Interface) ([]index.Entry, error) {
 func (q Query) ExecuteFunc(idx index.Interface, f func(index.Entry)) error {
 	for url := range q.set {
 		err := idx.Get(url, func(e index.Entry) {
-			if e.L <= q.l && q.constraint.match(e) {
+			if q.match(e) {
 				f(e)
 			}
 		})
@@ -113,10 +89,17 @@ func (q Query) ExecuteFunc(idx index.Interface, f func(index.Entry)) error {
 	return nil
 }
 
+func (q Query) match(e index.Entry) bool {
+	return q.a == e.Ambiguous && e.L <= q.l && q.constraint.match(e)
+}
+
 // String returns a string representing the query.
 func (q Query) String() string {
 	c := q.constraint.String()
 	pre := "?"
+	if q.a {
+		pre += "*"
+	}
 	if q.l != 0 {
 		pre += fmt.Sprintf("%d", q.l)
 	}
@@ -149,9 +132,6 @@ func (s set) String() string {
 }
 
 func (s set) in(url string) bool {
-	if url == "" {
-		return len(s) == 0
-	}
 	_, ok := s[url]
 	return ok
 }
@@ -177,8 +157,9 @@ func (c constraint) String() string {
 // !not & in  -> true
 // not & !in  -> true
 func (c constraint) match(i index.Entry) bool {
-	if c.not && i.RelationURL == "" {
-		return false
+	// direct hits (with no relation URL) are always returned!
+	if i.RelationURL == "" {
+		return true
 	}
 	return c.not != c.in(i.RelationURL)
 }
