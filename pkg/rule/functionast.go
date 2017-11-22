@@ -45,15 +45,19 @@ func (f function) check() astType {
 		return f.numCheck(1)
 	case "pow":
 		return f.numCheck(2)
-	default:
-		astFatalf("invalid function name: %s", f)
+	case "n":
+		return f.numCheck(0)
 	}
+	astFatalf("invalid function name: %s", f)
 	panic("unreacheable")
 }
 
 func (f function) compile(l func(string) int) Rule {
 	switch f.name {
 	case "len":
+		if len(f.args) == 0 {
+			return Rule{instruction{opcode: opMemLEN}}
+		}
 		switch f.args[0].check() {
 		case astStr:
 			return Rule{
@@ -70,6 +74,8 @@ func (f function) compile(l func(string) int) Rule {
 		return f.compileCount(l, false)
 	case "cs":
 		return f.compileCount(l, true)
+	case "n":
+		return Rule{instruction{opcode: opMemN}}
 	case "max":
 		return append(f.minMaxCombine(l), instruction{opcode: opMAX})
 	case "min":
@@ -159,6 +165,9 @@ func mustFindID(ast ast, f func(string) int) float64 {
 }
 
 func (f function) lenCheck() astType {
+	if len(f.args) == 0 {
+		return astNum
+	}
 	if len(f.args) != 1 {
 		astFatalf("invalid arguments: %s", f)
 	}

@@ -135,6 +135,7 @@ func TestCompileRule(t *testing.T) {
 		{"max(1,2)", "PUSH 1.00;PUSH 2.00;PUSH 2;MAX;"},
 		{"max({})", "PUSH 0;MAX;"},
 		{"min(1+2,3-4)", "PUSH 1.00;PUSH 2.00;ADD;PUSH 3.00;PUSH 4.00;SUB;PUSH 2;MIN;"},
+		{"n()<len()", "MN;MLEN;LT;"},
 		{`{"a"}={"b"}`, "PUSH 1;PUSH 1;PUSH 2;PUSH 1;SEQ;"},
 		{`log(len({"c"}))`, "PUSH 3;PUSH 1;LEN;LOG;"},
 		{`exp(1)`, "PUSH 1.00;EXP;"},
@@ -225,6 +226,8 @@ func TestExecuteRule(t *testing.T) {
 		{`min({"a","b","c"})`, 1, false}, // a little bit silly: this checks for the *minimal ID*.
 		{`es()={"a","b"}`, 1, false},
 		{`len(e())=2`, 1, false},
+		{`len()=3`, 1, false},
+		{`n()=5`, 1, false},
 		{`c("a")=2`, 1, false},
 		{`c("c")=0`, 1, false},
 		{`cs("a")=2`, 1, false},

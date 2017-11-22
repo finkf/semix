@@ -43,6 +43,8 @@ const (
 	opSCS
 	opE
 	opES
+	opMemN
+	opMemLEN
 )
 
 type instruction struct {
@@ -144,6 +146,10 @@ func (i instruction) call(mem *memory.Memory, stack *stack) {
 		stack.pushArray(elems(mem))
 	case opES:
 		stack.pushArray(elemsS(mem))
+	case opMemN:
+		stack.push(float64(mem.N()))
+	case opMemLEN:
+		stack.push(float64(mem.Len()))
 	default:
 		panic("invalid opcode")
 	}
@@ -223,6 +229,10 @@ func (i instruction) String() string {
 		return "E"
 	case opES:
 		return "ES"
+	case opMemN:
+		return "MN"
+	case opMemLEN:
+		return "MLEN"
 	}
 	panic("invalid opcode")
 }
