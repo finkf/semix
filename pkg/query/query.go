@@ -7,25 +7,11 @@ import (
 	"bitbucket.org/fflo/semix/pkg/index"
 )
 
-// Execute executes a query on the given index and returns a slice
-// with all the matched IndexEntries.
-func Execute(query string, idx index.Interface) ([]index.Entry, error) {
-	q, err := New(query)
-	if err != nil {
-		return nil, err
-	}
-	return q.Execute(idx)
-}
-
-// ExecuteFunc executes a query on the given index.
-// The callback is called for every matched IndexEntry.
-func ExecuteFunc(query string, idx index.Interface, f func(index.Entry)) error {
-	q, err := New(query)
-	if err != nil {
-		return err
-	}
-	return q.ExecuteFunc(idx, f)
-}
+// LookupFunc looks up a query string. It should return the corresponding
+// URLs for the given string. It is not considered an error if the function
+// returns an empty slice.
+// The function should return an error if the query should fail.
+type LookupFunc func(string) ([]string, error)
 
 // Query represents a query.
 type Query struct {
@@ -36,52 +22,42 @@ type Query struct {
 }
 
 // New create a new query object from a query.
-func New(query string) (*Query, error) {
+func New(query string, lookup LookupFunc) (*Query, error) {
 	q, err := NewParser(query).Parse()
 	if err != nil {
+		return nil, err
+	}
+	if err := q.fix(lookup); err != nil {
 		return nil, err
 	}
 	return q, nil
 }
 
-// FixFunc is used to lookup predicate and concept URLs.
-// It should return the full URL of the referenced concept.
-type FixFunc func(string) ([]string, error)
-
-// NewFix returns a new query and updates all urls in the query
-// with the given fix function.
-func NewFix(query string, fix FixFunc) (Query, error) {
-	q, err := New(query)
-	if err != nil {
-		return Query{}, err
-	}
-	q1 := Query{
-		constraint: constraint{
-			set: make(map[string]bool),
-			not: q.constraint.not,
-			all: q.constraint.all,
-		},
-		set: make(map[string]bool),
-	}
+// fix the URLs in the constraint and query sets.
+func (q *Query) fix(lookup LookupFunc) error {
+	newc := make(set, len(q.constraint.set))
 	for url := range q.constraint.set {
-		urls, err := fix(url)
+		urls, err := lookup(url)
 		if err != nil {
-			return Query{}, err
+			return err
 		}
 		for _, url := range urls {
-			q1.constraint.set[url] = true
+			newc[url] = true
 		}
 	}
+	news := make(set, len(q.set))
 	for url := range q.set {
-		urls, err := fix(url)
+		urls, err := lookup(url)
 		if err != nil {
-			return Query{}, err
+			return err
 		}
 		for _, url := range urls {
-			q1.set[url] = true
+			news[url] = true
 		}
 	}
-	return q1, nil
+	q.constraint.set = newc
+	q.set = news
+	return nil
 }
 
 // Execute executes the query on the given index and returns

@@ -6,14 +6,14 @@ import (
 	"sort"
 	"testing"
 
-	index "bitbucket.org/fflo/semix/pkg/index"
+	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
 func TestQueryExecute(t *testing.T) {
 	tests := []struct {
 		query, want string
-		err         bool
+		iserr       bool
 		k           int
 	}{
 		{"?(*({A}))", "[{A R} {A S}]", false, 0},
@@ -32,14 +32,28 @@ func TestQueryExecute(t *testing.T) {
 		{"?({A,B})", "[{A } {B }]", false, 0},
 		{"?(}({A,B}))", "[]", true, 0},
 		{"?({A,B}({C,D}))", "[]", true, 0},
+		{"?(S({E,B}))", "", true, 0},
+		{"?(E({A,B}))", "", true, 0},
 	}
 	for _, tc := range tests {
 		t.Run(tc.query, func(t *testing.T) {
-			es, err := Execute(tc.query, queryTestIndex{k: tc.k})
-			if tc.err && err == nil {
-				t.Fatalf("expected error")
+			q, err := New(tc.query, func(str string) ([]string, error) {
+				if str == "E" {
+					return nil, errors.New("ERROR")
+				}
+				return []string{str}, nil
+			})
+			if tc.iserr && err != nil {
+				return
 			}
-			if !tc.err && err != nil {
+			es, err := q.Execute(queryTestIndex{k: tc.k})
+			if tc.iserr {
+				if err == nil {
+					t.Fatalf("expected an error")
+				}
+				return
+			}
+			if err != nil {
 				t.Fatalf("got error: %v", err)
 			}
 			sort.Slice(es, func(i, j int) bool {
@@ -48,43 +62,11 @@ func TestQueryExecute(t *testing.T) {
 			if str := tostring(es); str != tc.want {
 				t.Fatalf("expected %q; got %q", tc.want, str)
 			}
-			_, err = Execute(tc.query, queryTestIndex{err: errors.New("test")})
-			if !tc.err {
+			_, err = q.Execute(queryTestIndex{err: errors.New("test")})
+			if !tc.iserr {
 				if err.Error() != "test" {
 					t.Fatalf("expceted error")
 				}
-			}
-		})
-	}
-}
-
-func TestNewQueryFix(t *testing.T) {
-	tests := []struct {
-		query, want string
-		iserr       bool
-	}{
-		{"?({A,B})", "?({AX,BX})", false},
-		{"?(A,B({C,D}))", "?(AX,BX({CX,DX}))", false},
-		{"?A,B({C,D}))", "?({})", true},
-		{"?(A,B-not({C,D}))", "?({})", true},
-		{"?(A,B({C,D-not}))", "?({})", true},
-	}
-	for _, tc := range tests {
-		t.Run(tc.query, func(t *testing.T) {
-			q, err := NewFix(tc.query, func(url string) ([]string, error) {
-				if len(url) != 1 {
-					return nil, errors.New("invalid url: " + url)
-				}
-				return []string{url + "X"}, nil
-			})
-			if tc.iserr && err == nil {
-				t.Fatalf("expected error")
-			}
-			if !tc.iserr && err != nil {
-				t.Fatalf("got error %v", err)
-			}
-			if str := q.String(); str != tc.want {
-				t.Fatalf("expected %q; got %q", tc.want, str)
 			}
 		})
 	}
