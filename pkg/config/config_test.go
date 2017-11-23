@@ -7,10 +7,10 @@ func TestConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("got error: %s", err)
 	}
-	if got := c.Parser.File; got != "testdata/test.toml" {
+	if got := c.File.Path; got != "testdata/test.toml" {
 		t.Fatalf("invalid config file path: %s", got)
 	}
-	if got := c.Parser.Type; got != "TESTTYPE" {
+	if got := c.File.Type; got != "TESTTYPE" {
 		t.Fatalf("invalid config parser type: %s", got)
 	}
 	traits := c.Traits()

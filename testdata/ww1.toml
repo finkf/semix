@@ -1,5 +1,5 @@
-[parser]
-file = "testdata/ww1.ttl"
+[file]
+path = "testdata/ww1.ttl"
 type = "turtle"
 
 [predicates]

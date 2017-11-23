@@ -19,8 +19,8 @@ const (
 	Turtle = "turtle"
 )
 
-type parser struct {
-	File, Type string
+type file struct {
+	Path, Type string
 }
 
 type predicates struct {
@@ -36,7 +36,7 @@ type predicates struct {
 
 // Config represents the configuration for a knowledge base.
 type Config struct {
-	Parser     parser
+	File       file
 	Predicates predicates
 }
 
@@ -62,7 +62,7 @@ func Read(file string) (*Config, error) {
 
 // Parse parses the configuration and returns the graph and the dictionary.
 func (c Config) Parse() (*semix.Graph, semix.Dictionary, error) {
-	is, err := os.Open(c.Parser.File)
+	is, err := os.Open(c.File.Path)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -90,12 +90,12 @@ func (c Config) Traits() traits.Interface {
 }
 
 func (c Config) newParser(r io.Reader) (semix.Parser, error) {
-	switch strings.ToLower(c.Parser.Type) {
+	switch strings.ToLower(c.File.Type) {
 	case RDFXML:
 		return rdfxml.NewParser(r), nil
 	case Turtle:
 		return turtle.NewParser(r), nil
 	default:
-		return nil, fmt.Errorf("invalid parser type: %s", c.Parser.Type)
+		return nil, fmt.Errorf("invalid parser type: %s", c.File.Type)
 	}
 }
