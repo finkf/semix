@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"bitbucket.org/fflo/semix/pkg/index"
-	"bitbucket.org/fflo/semix/pkg/resources"
+	"bitbucket.org/fflo/semix/pkg/resource"
 	"bitbucket.org/fflo/semix/pkg/restd"
 )
 
@@ -25,7 +25,7 @@ func init() {
 	flag.StringVar(&dir, "dir",
 		filepath.Join(os.Getenv("HOME"), "semix"), "set semix index directory")
 	flag.StringVar(&host, "host", "localhost:6060", "set listen host")
-	flag.StringVar(&confg, "resources", "testdata/topiczoom.toml", "set resources file")
+	flag.StringVar(&confg, "resource", "testdata/topiczoom.toml", "set resource file")
 	flag.BoolVar(&help, "help", false, "prints this help")
 }
 
@@ -66,7 +66,7 @@ func server() (*restd.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	r, err := resources.Parse(confg)
+	r, err := resource.Parse(confg)
 	if err != nil {
 		return nil, err
 	}
