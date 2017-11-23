@@ -16,7 +16,7 @@ pipelines:
           - cd "${PACKAGE_PATH}"
           - REPO=bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}
           - go get -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle,config,rule}
-          - go get -v ${REPO}/cmd/semix-{httpd,restd,crawl}
+          - go get -v ${REPO}/cmd/semix-{httpd,restd,crawl,client}
           - go build -tags isize1 ${REPO}/pkg/index
           - go test -cover -race -tags isize1 ${REPO}/pkg/index
           - go build -tags isize2 ${REPO}/pkg/index
@@ -28,5 +28,5 @@ pipelines:
           - go build -tags isize5 ${REPO}/pkg/index
           - go test -cover -race -tags isize5 ${REPO}/pkg/index
           - go build -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle,config,memory,rule}
-          - go build -v ${REPO}/cmd/semix-{httpd,restd,crawl}
+          - go build -v ${REPO}/cmd/semix-{httpd,restd,crawl,client}
           - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml,turtle,config,memory,rule}
