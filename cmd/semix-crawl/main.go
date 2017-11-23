@@ -64,7 +64,7 @@ func main() {
 }
 
 func run(args []string) {
-	g, d, err := resources.Parse(conf)
+	r, err := resources.Parse(conf)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,7 +76,7 @@ func run(args []string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream := index.Put(ctx, idx, semix.Filter(ctx,
-		semix.Match(ctx, semix.DFAMatcher{DFA: semix.NewDFA(d, g)},
+		semix.Match(ctx, semix.DFAMatcher{DFA: semix.NewDFA(r.Dictionary, r.Graph)},
 			semix.Normalize(ctx, crawl(ctx)))))
 	for _, arg := range args {
 		url, err := url.Parse(arg)

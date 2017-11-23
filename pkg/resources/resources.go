@@ -42,10 +42,10 @@ type Config struct {
 
 // Parse is a convinence fuction that parses a knowledge base
 // using a toml configuration file.
-func Parse(file string) (*semix.Graph, semix.Dictionary, error) {
+func Parse(file string) (*semix.Resource, error) {
 	c, err := Read(file)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	return c.Parse()
 }
@@ -61,15 +61,15 @@ func Read(file string) (*Config, error) {
 }
 
 // Parse parses the configuration and returns the graph and the dictionary.
-func (c Config) Parse() (*semix.Graph, semix.Dictionary, error) {
+func (c Config) Parse() (*semix.Resource, error) {
 	is, err := os.Open(c.File.Path)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer is.Close()
 	parser, err := c.newParser(is)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	return semix.Parse(parser, c.Traits())
 }

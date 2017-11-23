@@ -66,9 +66,9 @@ func server() (*restd.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	g, d, err := resources.Parse(confg)
+	r, err := resources.Parse(confg)
 	if err != nil {
 		return nil, err
 	}
-	return restd.New(host, dir, g, d, index), nil
+	return restd.New(host, dir, r, index), nil
 }

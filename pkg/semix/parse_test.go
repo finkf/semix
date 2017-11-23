@@ -23,14 +23,14 @@ func TestParse(t *testing.T) {
 		"http://example.org/B", "d", "second-split-name", // split
 		"http://example.org/C", "d", "second-split-name", // split
 	)
-	g, d, err := Parse(parser, testTraits{})
+	r, err := Parse(parser, testTraits{})
 	if err != nil {
 		t.Fatalf("got error: %v", err)
 	}
 	// dictionray names are normalized
 	for _, name := range []string{"name", "distinct", "ambiguous", "abd", "acd",
 		"split name", "second split name"} {
-		if _, ok := d[name]; !ok {
+		if _, ok := r.Dictionary[name]; !ok {
 			t.Fatalf("could not find %q in dictionary", name)
 		}
 	}
@@ -38,7 +38,7 @@ func TestParse(t *testing.T) {
 	for _, url := range []string{"A", "B", "C", "AS", "BS", "AT", "BT", "CT",
 		"http://example.org/A", "http://example.org/B", "http://example.org/C",
 	} {
-		c, ok := g.FindByURL(url)
+		c, ok := r.Graph.FindByURL(url)
 		if !ok {
 			t.Fatalf("could not find concept %s", url)
 		}
@@ -51,7 +51,7 @@ func TestParse(t *testing.T) {
 	}
 	// test `ambiguous` concepts
 	for _, url := range []string{"A-B", "http://example.org/A-B-C"} {
-		c, ok := g.FindByURL(url)
+		c, ok := r.Graph.FindByURL(url)
 		if !ok {
 			t.Fatalf("could not find concept %s", url)
 		}
@@ -63,22 +63,22 @@ func TestParse(t *testing.T) {
 		}
 	}
 	for _, url := range []string{"X", "Y", "Z"} {
-		if _, ok := g.FindByURL(url); ok {
+		if _, ok := r.Graph.FindByURL(url); ok {
 			t.Fatalf("found something for url=%s", url)
 		}
 	}
-	if c, _ := g.FindByURL("A"); c.Name != "name" {
+	if c, _ := r.Graph.FindByURL("A"); c.Name != "name" {
 		t.Fatalf("expected name=%s; got %s", "name", c.Name)
 	}
-	a, _ := g.FindByURL("A")
+	a, _ := r.Graph.FindByURL("A")
 	edgesExist(t, a, "p", "B")
-	as, _ := g.FindByURL("AS")
+	as, _ := r.Graph.FindByURL("AS")
 	edgesExist(t, as, "s", "BS")
-	bs, _ := g.FindByURL("BS")
+	bs, _ := r.Graph.FindByURL("BS")
 	edgesExist(t, bs, "s", "AS")
-	at, _ := g.FindByURL("AT")
+	at, _ := r.Graph.FindByURL("AT")
 	edgesExist(t, at, "t", "BT", "t", "CT")
-	bv, _ := g.FindByURL("BV")
+	bv, _ := r.Graph.FindByURL("BV")
 	edgesExist(t, bv, "v", "AV")
 }
 
