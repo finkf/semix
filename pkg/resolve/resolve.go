@@ -1,6 +1,8 @@
 package resolve
 
 import (
+	"context"
+
 	"bitbucket.org/fflo/semix/pkg/memory"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -10,30 +12,39 @@ type Interface interface {
 	// Resolve returns the disambiguated concept or nil if the
 	// concept could not be disambiguated. It is an error
 	// to call Resolve with a non-ambigiuous concept.
-	Resolve(*semix.Concept) *semix.Concept
+	Resolve(*semix.Concept, *memory.Memory) *semix.Concept
 }
 
-// Disambiguator disambiguates ambigous Concepts and handles a local memory.
-type Disambiguator struct {
-	Decider Interface
-	Memory  *memory.Memory
+// Resolve resolves ambiguities using the given Interface.
+func Resolve(ctx context.Context, n int, r Interface, s semix.Stream) semix.Stream {
+	rstream := make(chan semix.StreamToken)
+	go func() {
+		defer close(rstream)
+		mem := make(map[string]*memory.Memory)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case t, ok := <-s:
+				if !ok {
+					return
+				}
+				if t.Err == nil && t.Token.Concept != nil && t.Token.Concept.Ambiguous() {
+					if mem[t.Token.Path] == nil {
+						mem[t.Token.Path] = memory.New(n)
+					}
+					t.Token = doResolve(t.Token, r, mem[t.Token.Path])
+				}
+				rstream <- t
+			}
+		}
+	}()
+	return rstream
 }
 
-// Disambiguate tries to disambiguate an ambigous concept.
-// if the given concept is not ambigous, the same concept is returned.
-// Otherwise the disambiguated concept or nil is returned.
-func (d Disambiguator) Disambiguate(c *semix.Concept) *semix.Concept {
-	if c == nil {
-		return nil
+func doResolve(t semix.Token, r Interface, mem *memory.Memory) semix.Token {
+	if c := r.Resolve(t.Concept, mem); c != nil {
+		t.Concept = c
 	}
-	if !c.Ambiguous() {
-		d.Memory.Push(c)
-		return c
-	}
-	decided := d.Decider.Resolve(c)
-	if decided == nil {
-		return nil
-	}
-	d.Memory.Push(decided)
-	return decided
+	return t
 }
