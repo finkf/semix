@@ -1,4 +1,4 @@
-package disamb
+package resolve
 
 import (
 	"math"
@@ -7,12 +7,12 @@ import (
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
-// SimpleDecider chooses the most occuring concept in the memory.
-type SimpleDecider struct{}
+// Simple chooses the most occuring concept in the memory.
+type Simple struct{}
 
-// Decide chooses the most occuring concept in the memory.
-func (SimpleDecider) Decide(mem *memory.Memory, c *semix.Concept) *semix.Concept {
-	return decide(c, func(c *semix.Concept) float64 {
+// Resolve chooses the most occuring concept in the memory.
+func (Simple) Resolve(mem *memory.Memory, c *semix.Concept) *semix.Concept {
+	return resolve(c, func(c *semix.Concept) float64 {
 		return float64(mem.CountIfS(func(cc *semix.Concept) bool { return cc.URL() == c.URL() }))
 	})
 }
@@ -51,7 +51,7 @@ func referencedConcepts(c *semix.Concept) []*semix.Concept {
 	return cs
 }
 
-func decide(c *semix.Concept, f func(*semix.Concept) float64) *semix.Concept {
+func resolve(c *semix.Concept, f func(*semix.Concept) float64) *semix.Concept {
 	cs := referencedConcepts(c)
 	scores := make([]float64, len(cs))
 	for i := range cs {

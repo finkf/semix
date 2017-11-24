@@ -1,4 +1,4 @@
-package disamb
+package resolve
 
 import (
 	"bitbucket.org/fflo/semix/pkg/memory"
@@ -7,10 +7,10 @@ import (
 
 // Interface defines the interface for the disambiguation.
 type Interface interface {
-	// Decide returns the disambiguated concept or nil if the
+	// Resolve returns the disambiguated concept or nil if the
 	// concept could not be disambiguated. It is an error
-	// to call Decide with a non-ambigiuous concept.
-	Decide(*semix.Concept) *semix.Concept
+	// to call Resolve with a non-ambigiuous concept.
+	Resolve(*semix.Concept) *semix.Concept
 }
 
 // Disambiguator disambiguates ambigous Concepts and handles a local memory.
@@ -30,7 +30,7 @@ func (d Disambiguator) Disambiguate(c *semix.Concept) *semix.Concept {
 		d.Memory.Push(c)
 		return c
 	}
-	decided := d.Decider.Decide(c)
+	decided := d.Decider.Resolve(c)
 	if decided == nil {
 		return nil
 	}
