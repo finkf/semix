@@ -18,8 +18,7 @@ func maxConcept(cs []*semix.Concept, scores []float64) *semix.Concept {
 			maxcount = 1
 			idx = i
 			max = scores[i]
-		}
-		if scores[i] == max {
+		} else if scores[i] == max {
 			maxcount++
 		}
 	}
