@@ -1,7 +1,7 @@
 package resolve
 
 import (
-	"log"
+	"context"
 	"testing"
 
 	"bitbucket.org/fflo/semix/pkg/memory"
@@ -58,7 +58,6 @@ func TestRuled(t *testing.T) {
 	b := semix.NewConcept("B", semix.WithID(2))
 	ambig := semix.NewConcept("A-B", semix.WithEdges(split, a, split, b))
 	ruled, err := NewRuled(map[string]string{"A": `cs("A")>0`, "B": `cs("B")>0`}, func(str string) int {
-		log.Printf("looking up %s", str)
 		switch str {
 		case "A":
 			return 1
@@ -81,6 +80,37 @@ func TestRuled(t *testing.T) {
 	checkResolve(t, ruled.Resolve(ambig, mem), nil)
 	mem.Push(b)
 	checkResolve(t, ruled.Resolve(ambig, mem), b)
+}
+
+func TestStream(t *testing.T) {
+	split := semix.NewConcept(semix.SplitURL)
+	a := semix.NewConcept("A")
+	b := semix.NewConcept("B")
+	ambig := semix.NewConcept("A-B", semix.WithEdges(split, a, split, b))
+	var simple Simple
+	tokens := make(chan semix.StreamToken)
+	go func() {
+		tokens <- semix.StreamToken{Token: semix.Token{Concept: a, Path: "test"}}
+		tokens <- semix.StreamToken{Token: semix.Token{Concept: ambig, Path: "test"}}
+		tokens <- semix.StreamToken{Token: semix.Token{Concept: b, Path: "test"}}
+		close(tokens)
+	}()
+	counts := make(map[string]int)
+	for tok := range Resolve(context.TODO(), 3, simple, tokens) {
+		if tok.Err != nil {
+			t.Fatalf("go error: %s", tok.Err)
+		}
+		counts[tok.Token.Concept.URL()]++
+	}
+	if got := counts["A"]; got != 2 {
+		t.Fatalf("expected %d; got %d", 2, got)
+	}
+	if got := counts["B"]; got != 1 {
+		t.Fatalf("expected %d; got %d", 1, got)
+	}
+	if got := len(counts); got != 2 {
+		t.Fatalf("expected %d; got %d", 2, got)
+	}
 }
 
 func checkResolve(t *testing.T, got, want *semix.Concept) {
