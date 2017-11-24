@@ -3,6 +3,7 @@ package disamb
 import (
 	"math"
 
+	"bitbucket.org/fflo/semix/pkg/memory"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -10,9 +11,9 @@ import (
 type SimpleDecider struct{}
 
 // Decide chooses the most occuring concept in the memory.
-func (SimpleDecider) Decide(mem *Memory, c *semix.Concept) *semix.Concept {
+func (SimpleDecider) Decide(mem *memory.Memory, c *semix.Concept) *semix.Concept {
 	return decide(c, func(c *semix.Concept) float64 {
-		return float64(mem.Count(c.URL()))
+		return float64(mem.CountIfS(func(cc *semix.Concept) bool { return cc.URL() == c.URL() }))
 	})
 }
 

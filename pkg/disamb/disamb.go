@@ -1,9 +1,12 @@
 package disamb
 
-import "bitbucket.org/fflo/semix/pkg/semix"
+import (
+	"bitbucket.org/fflo/semix/pkg/memory"
+	"bitbucket.org/fflo/semix/pkg/semix"
+)
 
-// Decider defines the interface for the disambiguation.
-type Decider interface {
+// Interface defines the interface for the disambiguation.
+type Interface interface {
 	// Decide returns the disambiguated concept or nil if the
 	// concept could not be disambiguated. It is an error
 	// to call Decide with a non-ambigiuous concept.
@@ -12,8 +15,8 @@ type Decider interface {
 
 // Disambiguator disambiguates ambigous Concepts and handles a local memory.
 type Disambiguator struct {
-	Decider Decider
-	Memory  *Memory
+	Decider Interface
+	Memory  *memory.Memory
 }
 
 // Disambiguate tries to disambiguate an ambigous concept.
