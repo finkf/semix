@@ -35,6 +35,9 @@ func Resolve(ctx context.Context, n int, r Interface, s semix.Stream) semix.Stre
 					}
 					t.Token = doResolve(t.Token, r, mem[t.Token.Path])
 				}
+				if t.Err == nil && t.Token.Concept != nil && !t.Token.Concept.Ambiguous() {
+					mem[t.Token.Path].Push(t.Token.Concept)
+				}
 				rstream <- t
 			}
 		}
