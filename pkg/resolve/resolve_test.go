@@ -1,6 +1,7 @@
 package resolve
 
 import (
+	"log"
 	"testing"
 
 	"bitbucket.org/fflo/semix/pkg/memory"
@@ -49,6 +50,37 @@ func TestAutomatic(t *testing.T) {
 	checkResolve(t, automatic.Resolve(ambig, mem), nil)
 	mem.Push(q)
 	checkResolve(t, automatic.Resolve(ambig, mem), b)
+}
+
+func TestRuled(t *testing.T) {
+	split := semix.NewConcept(semix.SplitURL)
+	a := semix.NewConcept("A", semix.WithID(1))
+	b := semix.NewConcept("B", semix.WithID(2))
+	ambig := semix.NewConcept("A-B", semix.WithEdges(split, a, split, b))
+	ruled, err := NewRuled(map[string]string{"A": `cs("A")>0`, "B": `cs("B")>0`}, func(str string) int {
+		log.Printf("looking up %s", str)
+		switch str {
+		case "A":
+			return 1
+		case "B":
+			return 2
+		default:
+			return -1
+		}
+	})
+	if err != nil {
+		t.Fatalf("got error: %s", err)
+	}
+	mem := memory.New(3)
+	checkResolve(t, ruled.Resolve(ambig, mem), nil)
+	mem.Push(a)
+	checkResolve(t, ruled.Resolve(ambig, mem), a)
+	mem.Push(b)
+	checkResolve(t, ruled.Resolve(ambig, mem), nil)
+	mem.Push(b)
+	checkResolve(t, ruled.Resolve(ambig, mem), nil)
+	mem.Push(b)
+	checkResolve(t, ruled.Resolve(ambig, mem), b)
 }
 
 func checkResolve(t *testing.T, got, want *semix.Concept) {
