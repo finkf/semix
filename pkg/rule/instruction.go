@@ -321,7 +321,7 @@ func arrayMAX(a []float64) float64 {
 	return max
 }
 
-func elems(es []*semix.Concept) []float64 {
+func elems(es map[string]*semix.Concept) []float64 {
 	res := make([]float64, 0, len(es))
 	for _, e := range es {
 		res = append(res, float64(absID(e.ID())))
