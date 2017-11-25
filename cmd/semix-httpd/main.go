@@ -186,6 +186,30 @@ func ctx(r *http.Request) (*template.Template, interface{}, status) {
 	return ctxtmpl, ctx, ok()
 }
 
+func put(r *http.Request) (*template.Template, interface{}, status) {
+	switch r.Method {
+	case http.MethodPost:
+		ct := "text/plain"
+		ts, err := rest.NewClient(daemon).PutContent(r.Body, ct)
+		if err != nil {
+			return nil, nil, internalError(err)
+		}
+		return puttmpl, ts, ok()
+	case http.MethodGet:
+		q := r.URL.Query().Get("url")
+		ts, err := rest.NewClient(daemon).PutURL(q)
+		if err != nil {
+			return nil, nil, internalError(err)
+		}
+		return puttmpl, ts, ok()
+	default:
+		return nil, nil, status{
+			fmt.Errorf("invalid request method: %s", r.Method),
+			http.StatusBadRequest,
+		}
+	}
+}
+
 func internalError(err error) status {
 	return status{err, http.StatusInternalServerError}
 }
