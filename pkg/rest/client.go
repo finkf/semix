@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -28,17 +29,47 @@ func NewClient(host string) Client {
 func (c Client) Search(q string) ([]semix.Concept, error) {
 	url := c.host + fmt.Sprintf("/search?q=%s", url.QueryEscape(q))
 	var cs []semix.Concept
-	if err := c.get(url, &cs); err != nil {
-		return nil, err
-	}
-	return cs, nil
+	err := c.get(url, &cs)
+	return cs, err
 }
 
-func (c Client) get(url string, res interface{}) error {
-	r, err := c.client.Get(url)
+// Get searches the index for the given query.
+func (c Client) Get(q string) (Tokens, error) {
+	url := c.host + fmt.Sprintf("/get?q=%s", url.QueryEscape(q))
+	var ts Tokens
+	err := c.get(url, &ts)
+	return ts, err
+}
+
+// PutURL puts the given url into the index.
+func (c Client) PutURL(u string) (Tokens, error) {
+	url := c.host + fmt.Sprintf("/put?url=%s", url.QueryEscape(u))
+	var ts Tokens
+	err := c.get(url, &ts)
+	return ts, err
+}
+
+// PutContent puts the given content into the index.
+func (c Client) PutContent(r io.Reader, ct string) (Tokens, error) {
+	var ts Tokens
+	err := c.post(c.host+"/put", r, ct, ts)
+	return ts, err
+}
+
+func (c Client) get(url string, out interface{}) error {
+	res, err := c.client.Get(url)
 	if err != nil {
 		return err
 	}
-	defer r.Body.Close()
-	return json.NewDecoder(r.Body).Decode(res)
+	defer res.Body.Close()
+	return json.NewDecoder(res.Body).Decode(out)
+}
+
+func (c Client) post(url string, r io.Reader, ct string, out interface{}) error {
+	res, err := c.client.Post(url, ct, r)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	return json.NewDecoder(res.Body).Decode(out)
 }
