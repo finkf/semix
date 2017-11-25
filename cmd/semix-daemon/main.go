@@ -24,7 +24,7 @@ var (
 func init() {
 	flag.StringVar(&dir, "dir",
 		filepath.Join(os.Getenv("HOME"), "semix"), "set semix index directory")
-	flag.StringVar(&host, "host", "localhost:6060", "set listen host")
+	flag.StringVar(&host, "host", "localhost:6660", "set listen host")
 	flag.StringVar(&confg, "config", "testdata/topiczoom.toml", "set configuration file")
 	flag.BoolVar(&help, "help", false, "prints this help")
 }

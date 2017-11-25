@@ -41,7 +41,7 @@ var (
 func init() {
 	flag.StringVar(&dir, "dir", "cmd/semix-httpd/html", "set template directory")
 	flag.StringVar(&host, "host", "localhost:8181", "set listen host")
-	flag.StringVar(&restHost, "daemon", "localhost:6060", "set host of rest service")
+	flag.StringVar(&restHost, "daemon", "localhost:6660", "set host of rest service")
 	flag.BoolVar(&help, "help", false, "print this help")
 }
 
@@ -224,7 +224,7 @@ func putPost(r *http.Request) (*template.Template, interface{}, status) {
 }
 
 func semixdPost(path string, ctype string, r io.Reader, data interface{}) error {
-	url := "http://localhost:6060" + path
+	url := "http://localhost:6660" + path
 	log.Printf("sending: [POST] %s", url)
 	res, err := http.Post(url, ctype, r)
 	if err != nil {
@@ -243,7 +243,7 @@ func semixdPost(path string, ctype string, r io.Reader, data interface{}) error 
 }
 
 func semixdGet(path string, data interface{}) error {
-	url := "http://localhost:6060" + path
+	url := "http://localhost:6660" + path
 	log.Printf("sending: [GET] %s", url)
 	res, err := http.Get(url)
 	if err != nil {

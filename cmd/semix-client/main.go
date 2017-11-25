@@ -16,7 +16,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&host, "host", "http://localhost:6060", "set host")
+	flag.StringVar(&host, "daemon", "http://localhost:6660", "set daemon host")
 	flag.StringVar(&format, "f", "", "set formating template")
 	flag.StringVar(&search, "search", "", "set search string")
 }
