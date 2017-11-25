@@ -6,7 +6,7 @@ import (
 	"os"
 	"text/template"
 
-	"bitbucket.org/fflo/semix/pkg/restd"
+	"bitbucket.org/fflo/semix/pkg/rest"
 )
 
 var (
@@ -23,7 +23,7 @@ func init() {
 
 func main() {
 	flag.Parse()
-	c := restd.NewClient(host)
+	c := rest.NewClient(host)
 	cs, err := c.Search(search)
 	if err != nil {
 		log.Fatal(err)
