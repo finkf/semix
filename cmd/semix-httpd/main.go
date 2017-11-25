@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/restd"
+	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -41,7 +41,7 @@ var (
 func init() {
 	flag.StringVar(&dir, "dir", "cmd/semix-httpd/html", "set template directory")
 	flag.StringVar(&host, "host", "localhost:8181", "set listen host")
-	flag.StringVar(&restHost, "restd", "localhost:6060", "set host of rest service")
+	flag.StringVar(&restHost, "daemon", "localhost:6060", "set host of rest service")
 	flag.BoolVar(&help, "help", false, "print this help")
 }
 
@@ -151,7 +151,7 @@ func parents(r *http.Request) (*template.Template, interface{}, status) {
 
 func info(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("url")
-	var info restd.ConceptInfo
+	var info rest.ConceptInfo
 	if err := semixdGet(fmt.Sprintf("/info?url=%s", url.QueryEscape(q)), &info); err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -164,18 +164,18 @@ func home(r *http.Request) (*template.Template, interface{}, status) {
 
 func get(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("q")
-	var ts restd.Tokens
+	var ts rest.Tokens
 	if err := semixdGet(fmt.Sprintf("/get?q=%s", url.QueryEscape(q)), &ts); err != nil {
 		return nil, nil, internalError(err)
 	}
 	return gettmpl, struct {
 		Query  string
-		Tokens restd.Tokens
+		Tokens rest.Tokens
 	}{q, ts}, ok()
 }
 
 func ctx(r *http.Request) (*template.Template, interface{}, status) {
-	var ctx restd.Context
+	var ctx rest.Context
 	url := fmt.Sprintf("/ctx?url=%s&b=%s&e=%s&n=%s",
 		url.QueryEscape(r.URL.Query().Get("url")),
 		url.QueryEscape(r.URL.Query().Get("b")),
@@ -204,7 +204,7 @@ func put(r *http.Request) (*template.Template, interface{}, status) {
 
 func putGet(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("url")
-	var info restd.Tokens
+	var info rest.Tokens
 	if err := semixdGet(fmt.Sprintf("/put?url=%s", url.QueryEscape(q)), &info); err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -212,7 +212,7 @@ func putGet(r *http.Request) (*template.Template, interface{}, status) {
 }
 
 func putPost(r *http.Request) (*template.Template, interface{}, status) {
-	var info restd.Tokens
+	var info rest.Tokens
 	ctype := "text/plain"
 	if len(r.Header["Content-Type"]) > 0 {
 		ctype = strings.Join(r.Header["Content-Type"], ",")

@@ -1,4 +1,4 @@
-package restd
+package rest
 
 import (
 	"encoding/json"
@@ -9,13 +9,13 @@ import (
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
-// Client represents a connection to the restd service.
+// Client represents a connection to the rest service.
 type Client struct {
 	client *http.Client
 	host   string
 }
 
-// NewClient create a new client that connects to the restd at
+// NewClient create a new client that connects to the rest at
 // a given host address.
 func NewClient(host string) Client {
 	return Client{

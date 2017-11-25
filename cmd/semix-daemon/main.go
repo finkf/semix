@@ -11,7 +11,7 @@ import (
 
 	"bitbucket.org/fflo/semix/pkg/config"
 	"bitbucket.org/fflo/semix/pkg/index"
-	"bitbucket.org/fflo/semix/pkg/restd"
+	"bitbucket.org/fflo/semix/pkg/rest"
 )
 
 var (
@@ -42,7 +42,7 @@ func main() {
 	run(s)
 }
 
-func run(s *restd.Server) {
+func run(s *rest.Server) {
 	sigch := make(chan os.Signal)
 	signal.Notify(sigch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
@@ -61,7 +61,7 @@ func run(s *restd.Server) {
 	}
 }
 
-func server() (*restd.Server, error) {
+func server() (*rest.Server, error) {
 	index, err := index.New(dir, index.DefaultBufferSize)
 	if err != nil {
 		return nil, err
@@ -70,5 +70,5 @@ func server() (*restd.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	return restd.New(host, dir, g, d, index), nil
+	return rest.New(host, dir, g, d, index), nil
 }

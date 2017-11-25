@@ -1,4 +1,4 @@
-package restd
+package rest
 
 import (
 	"errors"
