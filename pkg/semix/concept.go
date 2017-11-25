@@ -21,7 +21,7 @@ type Edge struct {
 }
 
 func (e Edge) String() string {
-	return fmt.Sprintf("{%q %q %d}", conceptName(e.P), conceptName(e.O), e.L)
+	return fmt.Sprintf("{%s %s %d}", conceptName(e.P), conceptName(e.O), e.L)
 }
 
 // Concept represents a concept in the concept graph.
@@ -148,7 +148,7 @@ func (c *Concept) ShortURL() string {
 }
 
 func (c *Concept) String() string {
-	return fmt.Sprintf("{%q %d %v}", conceptName(c), c.id, c.edges)
+	return fmt.Sprintf("{%s %d %v}", conceptName(c), c.id, c.edges)
 }
 
 func conceptName(c *Concept) string {
