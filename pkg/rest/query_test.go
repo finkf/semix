@@ -36,7 +36,7 @@ func TestQuery(t *testing.T) {
 				t.Fatalf("got error: %s", err)
 			}
 			var got data
-			err = decodeQuery(url.Query(), &got)
+			err = DecodeQuery(url.Query(), &got)
 			if tc.iserr {
 				if err == nil {
 					t.Fatalf("expected error")

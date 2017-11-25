@@ -88,6 +88,15 @@ func (c Client) PutContent(r io.Reader, ct string) (Tokens, error) {
 	return ts, err
 }
 
+// Ctx returns the context of a given citation.
+func (c Client) Ctx(u string, b, e, n int) (Context, error) {
+	url := fmt.Sprintf("/ctx?s=%s&b=%d&e=%d&n=%d",
+		url.QueryEscape(u), b, e, n)
+	var ctx Context
+	err := c.get(url, &ctx)
+	return ctx, err
+}
+
 func (c Client) get(url string, out interface{}) error {
 	res, err := c.client.Get(url)
 	if err != nil {

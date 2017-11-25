@@ -8,7 +8,10 @@ import (
 	"strings"
 )
 
-func decodeQuery(vals url.Values, out interface{}) error {
+// DecodeQuery decodes a query into the given struct.
+// It can only be used to decode bool, int, float32, float64 and string values.
+// All other typed fileds are ignored.
+func DecodeQuery(vals url.Values, out interface{}) error {
 	t := reflect.TypeOf(out)
 	if t.Kind() != reflect.Ptr {
 		return errors.New("cannot decode: not a pointer")
@@ -48,8 +51,6 @@ func decodeQuery(vals url.Values, out interface{}) error {
 			reflect.ValueOf(out).Elem().Field(i).SetInt(int64(x))
 		case reflect.String:
 			reflect.ValueOf(out).Elem().Field(i).SetString(v)
-		default:
-			return errors.New("cannot decode: invalid type in struct")
 		}
 	}
 	return nil

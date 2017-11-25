@@ -74,7 +74,7 @@ func withGet(f http.HandlerFunc) http.HandlerFunc {
 
 func (h handle) parents(r *http.Request) (interface{}, int, error) {
 	var data lookupData
-	if err := decodeQuery(r.URL.Query(), &data); err != nil {
+	if err := DecodeQuery(r.URL.Query(), &data); err != nil {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query: %s", err)
 	}
@@ -102,7 +102,7 @@ func (h handle) info(r *http.Request) (interface{}, int, error) {
 			fmt.Errorf("invalid request method: %s", r.Method)
 	}
 	var data lookupData
-	if err := decodeQuery(r.URL.Query(), &data); err != nil {
+	if err := DecodeQuery(r.URL.Query(), &data); err != nil {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query: %s", err)
 	}
@@ -197,7 +197,7 @@ func (h handle) ctx(r *http.Request) (interface{}, int, error) {
 		URL     string
 		B, E, N int
 	}
-	if err := decodeQuery(r.URL.Query(), data); err != nil {
+	if err := DecodeQuery(r.URL.Query(), data); err != nil {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query parameters: %s", err)
 	}

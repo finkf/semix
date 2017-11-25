@@ -2,16 +2,12 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
-	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"path/filepath"
-	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/semix"
@@ -34,14 +30,14 @@ var (
 	searchtmpl *template.Template
 	dir        string
 	host       string
-	restHost   string
+	daemon     string
 	help       bool
 )
 
 func init() {
 	flag.StringVar(&dir, "dir", "cmd/semix-httpd/html", "set template directory")
 	flag.StringVar(&host, "host", "localhost:8181", "set listen host")
-	flag.StringVar(&restHost, "daemon", "localhost:6660", "set host of rest service")
+	flag.StringVar(&daemon, "daemon", "localhost:6660", "set host of rest service")
 	flag.BoolVar(&help, "help", false, "print this help")
 }
 
@@ -126,9 +122,9 @@ func withGet(f http.HandlerFunc) http.HandlerFunc {
 }
 
 func search(r *http.Request) (*template.Template, interface{}, status) {
-	var cs []semix.Concept
 	q := r.URL.Query().Get("q")
-	if err := semixdGet(fmt.Sprintf("/search?q=%s", url.QueryEscape(q)), &cs); err != nil {
+	cs, err := rest.NewClient(daemon).Search(q)
+	if err != nil {
 		return nil, nil, internalError(err)
 	}
 	return searchtmpl, struct {
@@ -138,9 +134,9 @@ func search(r *http.Request) (*template.Template, interface{}, status) {
 }
 
 func parents(r *http.Request) (*template.Template, interface{}, status) {
-	var cs []semix.Concept
 	q := r.URL.Query().Get("url")
-	if err := semixdGet(fmt.Sprintf("/parents?url=%s", url.QueryEscape(q)), &cs); err != nil {
+	cs, err := rest.NewClient(daemon).ParentsURL(q)
+	if err != nil {
 		return nil, nil, internalError(err)
 	}
 	return searchtmpl, struct {
@@ -151,8 +147,8 @@ func parents(r *http.Request) (*template.Template, interface{}, status) {
 
 func info(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("url")
-	var info rest.ConceptInfo
-	if err := semixdGet(fmt.Sprintf("/info?url=%s", url.QueryEscape(q)), &info); err != nil {
+	info, err := rest.NewClient(daemon).InfoURL(q)
+	if err != nil {
 		return nil, nil, internalError(err)
 	}
 	return infotmpl, info, ok()
@@ -164,8 +160,8 @@ func home(r *http.Request) (*template.Template, interface{}, status) {
 
 func get(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("q")
-	var ts rest.Tokens
-	if err := semixdGet(fmt.Sprintf("/get?q=%s", url.QueryEscape(q)), &ts); err != nil {
+	ts, err := rest.NewClient(daemon).Get(q)
+	if err != nil {
 		return nil, nil, internalError(err)
 	}
 	return gettmpl, struct {
@@ -176,89 +172,18 @@ func get(r *http.Request) (*template.Template, interface{}, status) {
 
 func ctx(r *http.Request) (*template.Template, interface{}, status) {
 	var ctx rest.Context
-	url := fmt.Sprintf("/ctx?url=%s&b=%s&e=%s&n=%s",
-		url.QueryEscape(r.URL.Query().Get("url")),
-		url.QueryEscape(r.URL.Query().Get("b")),
-		url.QueryEscape(r.URL.Query().Get("e")),
-		url.QueryEscape(r.URL.Query().Get("n")),
-	)
-	if err := semixdGet(url, &ctx); err != nil {
+	var data struct {
+		URL     string
+		B, E, N int
+	}
+	if err := rest.DecodeQuery(r.URL.Query(), &data); err != nil {
+		return nil, nil, internalError(err)
+	}
+	ctx, err := rest.NewClient(daemon).Ctx(data.URL, data.B, data.E, data.N)
+	if err != nil {
 		return nil, nil, internalError(err)
 	}
 	return ctxtmpl, ctx, ok()
-}
-
-func put(r *http.Request) (*template.Template, interface{}, status) {
-	switch r.Method {
-	case "POST":
-		return putPost(r)
-	case "GET":
-		return putGet(r)
-	default:
-		return nil, nil, status{
-			fmt.Errorf("invalid request method: %s", r.Method),
-			http.StatusBadRequest,
-		}
-	}
-}
-
-func putGet(r *http.Request) (*template.Template, interface{}, status) {
-	q := r.URL.Query().Get("url")
-	var info rest.Tokens
-	if err := semixdGet(fmt.Sprintf("/put?url=%s", url.QueryEscape(q)), &info); err != nil {
-		return nil, nil, internalError(err)
-	}
-	return puttmpl, info, ok()
-}
-
-func putPost(r *http.Request) (*template.Template, interface{}, status) {
-	var info rest.Tokens
-	ctype := "text/plain"
-	if len(r.Header["Content-Type"]) > 0 {
-		ctype = strings.Join(r.Header["Content-Type"], ",")
-	}
-	if err := semixdPost("/put", ctype, r.Body, &info); err != nil {
-		return nil, nil, internalError(err)
-	}
-	return puttmpl, info, ok()
-}
-
-func semixdPost(path string, ctype string, r io.Reader, data interface{}) error {
-	url := "http://localhost:6660" + path
-	log.Printf("sending: [POST] %s", url)
-	res, err := http.Post(url, ctype, r)
-	if err != nil {
-		return fmt.Errorf("could not [POST] %s: %v", url, err)
-	}
-	defer res.Body.Close()
-	log.Printf("response: [POST] %s: %s", url, res.Status)
-	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return fmt.Errorf("invalid response code [POST] %s: %s", url, res.Status)
-	}
-	err = json.NewDecoder(res.Body).Decode(data)
-	if err != nil {
-		return fmt.Errorf("could not decode response: %v", err)
-	}
-	return nil
-}
-
-func semixdGet(path string, data interface{}) error {
-	url := "http://localhost:6660" + path
-	log.Printf("sending: [GET] %s", url)
-	res, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("could not [GET] %s: %v", url, err)
-	}
-	defer res.Body.Close()
-	log.Printf("response: [GET] %s: %s", url, res.Status)
-	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return fmt.Errorf("invalid response code [GET] %s: %s", url, res.Status)
-	}
-	err = json.NewDecoder(res.Body).Decode(data)
-	if err != nil {
-		return fmt.Errorf("could not decode response: %v", err)
-	}
-	return nil
 }
 
 func internalError(err error) status {
