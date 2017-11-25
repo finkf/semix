@@ -15,6 +15,11 @@ import (
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
+type lookupData struct {
+	URL string
+	ID  int
+}
+
 type handle struct {
 	searcher  searcher.Searcher
 	index     index.Interface
@@ -68,12 +73,16 @@ func withGet(f http.HandlerFunc) http.HandlerFunc {
 }
 
 func (h handle) parents(r *http.Request) (interface{}, int, error) {
-	q := r.URL.Query().Get("url")
-	if len(q) == 0 {
+	var data lookupData
+	if err := decodeQuery(r.URL.Query(), &data); err != nil {
 		return nil, http.StatusBadRequest,
-			fmt.Errorf("invalid query: %v", q)
+			fmt.Errorf("invalid query: %s", err)
 	}
-	cs := h.searcher.SearchParents(q, -1)
+	c, ok := h.lookup(data)
+	if !ok {
+		return []*semix.Concept{}, http.StatusOK, nil
+	}
+	cs := h.searcher.SearchParents(c, -1)
 	return cs, http.StatusOK, nil
 }
 
@@ -92,12 +101,16 @@ func (h handle) info(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusForbidden,
 			fmt.Errorf("invalid request method: %s", r.Method)
 	}
-	url := r.URL.Query().Get("url")
-	c, found := h.searcher.FindByURL(url)
-	if !found {
-		return nil, http.StatusNotFound, fmt.Errorf("invalid url: %s", url)
+	var data lookupData
+	if err := decodeQuery(r.URL.Query(), &data); err != nil {
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query: %s", err)
 	}
-	entries := h.searcher.SearchDictionaryEntries(url)
+	c, ok := h.lookup(data)
+	if !ok {
+		return ConceptInfo{}, http.StatusOK, nil
+	}
+	entries := h.searcher.SearchDictionaryEntries(c)
 	info := ConceptInfo{Concept: c, Entries: entries}
 	return info, http.StatusOK, nil
 }
@@ -266,4 +279,18 @@ func (h handle) makeDocument(r *http.Request) (semix.Document, error) {
 		}
 		return doc, nil
 	}
+}
+
+func (h handle) lookup(data lookupData) (*semix.Concept, bool) {
+	if data.ID != 0 {
+		if c, ok := h.searcher.FindByID(data.ID); ok {
+			return c, true
+		}
+	}
+	if data.URL != "" {
+		if c, ok := h.searcher.FindByURL(data.URL); ok {
+			return c, true
+		}
+	}
+	return nil, false
 }

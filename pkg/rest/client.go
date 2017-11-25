@@ -33,6 +33,38 @@ func (c Client) Search(q string) ([]semix.Concept, error) {
 	return cs, err
 }
 
+// ParentsURL get the parent concepts searching by url.
+func (c Client) ParentsURL(u string) ([]semix.Concept, error) {
+	url := c.host + fmt.Sprintf("/info?url=%s", url.QueryEscape(u))
+	var cs []semix.Concept
+	err := c.get(url, &cs)
+	return cs, err
+}
+
+// ParentsID get the parent concepts searching by id.
+func (c Client) ParentsID(id int) ([]semix.Concept, error) {
+	url := c.host + fmt.Sprintf("/info?id=%d", id)
+	var cs []semix.Concept
+	err := c.get(url, &cs)
+	return cs, err
+}
+
+// InfoURL get the concept info searching by url.
+func (c Client) InfoURL(u string) (ConceptInfo, error) {
+	url := c.host + fmt.Sprintf("/info?url=%s", url.QueryEscape(u))
+	var info ConceptInfo
+	err := c.get(url, &info)
+	return info, err
+}
+
+// InfoID get the concept info searching by id.
+func (c Client) InfoID(id int) (ConceptInfo, error) {
+	url := c.host + fmt.Sprintf("/info?id=%d", id)
+	var info ConceptInfo
+	err := c.get(url, &info)
+	return info, err
+}
+
 // Get searches the index for the given query.
 func (c Client) Get(q string) (Tokens, error) {
 	url := c.host + fmt.Sprintf("/get?q=%s", url.QueryEscape(q))
