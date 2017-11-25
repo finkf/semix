@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
-	"strconv"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/index"
@@ -182,54 +180,40 @@ func (h handle) ctx(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusForbidden,
 			fmt.Errorf("invalid method: %v", r.Method)
 	}
-	url, b, e, n, err := getCtxVars(r.URL.Query())
-	if err != nil {
+	var data struct {
+		URL     string
+		B, E, N int
+	}
+	if err := decodeQuery(r.URL.Query(), data); err != nil {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query parameters: %s", err)
 	}
-	t, err := h.readToken(url)
+	t, err := h.readToken(data.URL)
 	if err != nil {
 		return nil, http.StatusNotFound,
-			fmt.Errorf("invalid document %s: %v", url, err)
+			fmt.Errorf("invalid document %s: %v", data.URL, err)
 	}
-	if b >= len(t.Token) || e >= len(t.Token) {
+	if data.B >= len(t.Token) || data.E >= len(t.Token) {
 		return nil, http.StatusBadRequest,
-			fmt.Errorf("invalid query paramters = %d %d", b, e)
+			fmt.Errorf("invalid query paramters = %d %d", data.B, data.E)
 	}
-	cs := b - n
+	cs := data.B - data.N
 	if cs < 0 {
 		cs = 0
 	}
-	ce := e + n
+	ce := data.E + data.N
 	if int(ce) > len(t.Token) {
 		ce = len(t.Token)
 	}
 	return Context{
-		URL:    url,
-		Before: t.Token[cs:b],
-		Match:  t.Token[b:e],
-		After:  t.Token[e:ce],
-		Begin:  int(b),
-		End:    int(e),
-		Len:    int(n),
+		URL:    data.URL,
+		Before: t.Token[cs:data.B],
+		Match:  t.Token[data.B:data.E],
+		After:  t.Token[data.E:ce],
+		Begin:  int(data.B),
+		End:    int(data.E),
+		Len:    int(data.N),
 	}, http.StatusOK, nil
-}
-
-func getCtxVars(vals url.Values) (string, int, int, int, error) {
-	url := vals.Get("url")
-	b, err := strconv.ParseInt(vals.Get("b"), 10, 32)
-	if err != nil {
-		return "", 0, 0, 0, fmt.Errorf("could not parse b=%s: %s", vals.Get("b"), err)
-	}
-	e, err := strconv.ParseInt(vals.Get("e"), 10, 32)
-	if err != nil {
-		return "", 0, 0, 0, fmt.Errorf("could not parse e=%s: %s", vals.Get("e"), err)
-	}
-	n, err := strconv.ParseInt(vals.Get("n"), 10, 32)
-	if err != nil {
-		return "", 0, 0, 0, fmt.Errorf("could not parse n=%s: %s", vals.Get("n"), err)
-	}
-	return url, int(b), int(e), int(n), nil
 }
 
 func (h handle) readToken(url string) (semix.Token, error) {
