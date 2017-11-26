@@ -21,6 +21,7 @@ var (
 	id      int
 	info    bool
 	parents bool
+	help    bool
 	client  rest.Client
 )
 
@@ -33,10 +34,15 @@ func init() {
 	flag.StringVar(&url, "url", "", "set search URL")
 	flag.BoolVar(&info, "info", false, "get info (needs -id or -url)")
 	flag.BoolVar(&parents, "parents", false, "get parents of concept (needs -id or -url)")
+	flag.BoolVar(&help, "help", false, "print this help")
 }
 
 func main() {
 	flag.Parse()
+	if help {
+		flag.PrintDefaults()
+		return
+	}
 	client = rest.NewClient(daemon)
 	if search != "" {
 		doSearch()
