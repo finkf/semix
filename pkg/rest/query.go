@@ -51,6 +51,47 @@ func DecodeQuery(vals url.Values, out interface{}) error {
 			reflect.ValueOf(out).Elem().Field(i).SetInt(int64(x))
 		case reflect.String:
 			reflect.ValueOf(out).Elem().Field(i).SetString(v)
+		case reflect.Slice:
+			for _, v := range vals[strings.ToLower(t.Elem().Field(i).Name)] {
+				switch t.Elem().Field(i).Type.Elem().Kind() {
+				case reflect.Bool:
+					x, err := decodeBool(v)
+					if err != nil {
+						return err
+					}
+					reflect.ValueOf(out).Elem().Field(i).Set(
+						reflect.Append(reflect.ValueOf(out).Elem().Field(i), reflect.ValueOf(x)),
+					)
+				case reflect.Float64:
+					x, err := decodeFloat64(v)
+					if err != nil {
+						return err
+					}
+					reflect.ValueOf(out).Elem().Field(i).Set(
+						reflect.Append(reflect.ValueOf(out).Elem().Field(i), reflect.ValueOf(x)),
+					)
+				case reflect.Float32:
+					x, err := decodeFloat32(v)
+					if err != nil {
+						return err
+					}
+					reflect.ValueOf(out).Elem().Field(i).Set(
+						reflect.Append(reflect.ValueOf(out).Elem().Field(i), reflect.ValueOf(x)),
+					)
+				case reflect.Int:
+					x, err := decodeInt(v)
+					if err != nil {
+						return err
+					}
+					reflect.ValueOf(out).Elem().Field(i).Set(
+						reflect.Append(reflect.ValueOf(out).Elem().Field(i), reflect.ValueOf(x)),
+					)
+				case reflect.String:
+					reflect.ValueOf(out).Elem().Field(i).Set(
+						reflect.Append(reflect.ValueOf(out).Elem().Field(i), reflect.ValueOf(v)),
+					)
+				}
+			}
 		}
 	}
 	return nil
