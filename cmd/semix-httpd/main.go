@@ -196,8 +196,15 @@ func put(r *http.Request) (*template.Template, interface{}, status) {
 		}
 		return puttmpl, ts, ok()
 	case http.MethodGet:
-		q := r.URL.Query().Get("url")
-		ts, err := rest.NewClient(daemon).PutURL(q, nil, nil)
+		var ps struct {
+			URL string
+			Ls  []int
+			Rs  []string
+		}
+		if err := rest.DecodeQuery(r.URL.Query(), &ps); err != nil {
+			return nil, nil, internalError(err)
+		}
+		ts, err := rest.NewClient(daemon).PutURL(ps.URL, ps.Ls, ps.Rs)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
