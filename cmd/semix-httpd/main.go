@@ -129,7 +129,7 @@ func search(r *http.Request) (*template.Template, interface{}, status) {
 	}
 	return searchtmpl, struct {
 		Title    string
-		Concepts []semix.Concept
+		Concepts []*semix.Concept
 	}{fmt.Sprintf("%q", q), cs}, ok()
 }
 
@@ -141,7 +141,7 @@ func parents(r *http.Request) (*template.Template, interface{}, status) {
 	}
 	return searchtmpl, struct {
 		Title    string
-		Concepts []semix.Concept
+		Concepts []*semix.Concept
 	}{fmt.Sprintf("parents of %q", q), cs}, ok()
 }
 
