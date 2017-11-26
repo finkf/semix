@@ -9,8 +9,9 @@ import (
 )
 
 // DecodeQuery decodes a query into the given struct.
-// It can only be used to decode bool, int, float32, float64 and string values.
-// All other typed fileds are ignored.
+// It can only be used to decode bool, int, float32, float64 and string values or
+// slices of one of these types.
+// All other typed fields of the given struct are ignored.
 func DecodeQuery(vals url.Values, out interface{}) error {
 	t := reflect.TypeOf(out)
 	if t.Kind() != reflect.Ptr {
