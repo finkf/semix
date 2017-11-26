@@ -151,14 +151,14 @@ func putFile(path string) {
 	var ts rest.Tokens
 	var err error
 	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
-		ts, err = client.PutURL(path)
+		ts, err = client.PutURL(path, nil, nil)
 	} else {
 		is, err := os.Open(path)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer is.Close()
-		ts, err = client.PutContent(is, "text/plain")
+		ts, err = client.PutContent(is, "text/plain", nil, nil)
 	}
 	if err != nil {
 		log.Fatal(err)

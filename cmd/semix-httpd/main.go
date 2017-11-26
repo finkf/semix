@@ -190,14 +190,14 @@ func put(r *http.Request) (*template.Template, interface{}, status) {
 	switch r.Method {
 	case http.MethodPost:
 		ct := "text/plain"
-		ts, err := rest.NewClient(daemon).PutContent(r.Body, ct)
+		ts, err := rest.NewClient(daemon).PutContent(r.Body, ct, nil, nil)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
 		return puttmpl, ts, ok()
 	case http.MethodGet:
 		q := r.URL.Query().Get("url")
-		ts, err := rest.NewClient(daemon).PutURL(q)
+		ts, err := rest.NewClient(daemon).PutURL(q, nil, nil)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
