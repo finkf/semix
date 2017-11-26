@@ -26,25 +26,25 @@ func NewClient(host string) Client {
 }
 
 // Search searches for concepts that match the given query string.
-func (c Client) Search(q string) ([]semix.Concept, error) {
+func (c Client) Search(q string) ([]*semix.Concept, error) {
 	url := c.host + fmt.Sprintf("/search?q=%s", url.QueryEscape(q))
-	var cs []semix.Concept
+	var cs []*semix.Concept
 	err := c.get(url, &cs)
 	return cs, err
 }
 
 // ParentsURL get the parent concepts searching by url.
-func (c Client) ParentsURL(u string) ([]semix.Concept, error) {
+func (c Client) ParentsURL(u string) ([]*semix.Concept, error) {
 	url := c.host + fmt.Sprintf("/info?url=%s", url.QueryEscape(u))
-	var cs []semix.Concept
+	var cs []*semix.Concept
 	err := c.get(url, &cs)
 	return cs, err
 }
 
 // ParentsID get the parent concepts searching by id.
-func (c Client) ParentsID(id int) ([]semix.Concept, error) {
+func (c Client) ParentsID(id int) ([]*semix.Concept, error) {
 	url := c.host + fmt.Sprintf("/info?id=%d", id)
-	var cs []semix.Concept
+	var cs []*semix.Concept
 	err := c.get(url, &cs)
 	return cs, err
 }
