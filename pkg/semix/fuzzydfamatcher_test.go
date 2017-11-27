@@ -72,20 +72,8 @@ func fuzzyConceptToString(t *testing.T, m MatchPos, a bool) string {
 	if aa := m.Concept.Ambiguous(); aa != a {
 		t.Errorf("expected concept.Ambiguous()=%t; got %t", a, aa)
 	}
-	return fmt.Sprintf("{%s %v %v %v}",
-		m.Concept, fuzzyEdgeToString(m.Concept.edges), m.Begin, m.End)
-}
-
-func fuzzyEdgeToString(es []Edge) string {
-	sort.Slice(es, func(i, j int) bool {
-		return es[i].O.URL() < es[j].O.URL()
+	sort.Slice(m.Concept.edges, func(i, j int) bool {
+		return m.Concept.edges[i].O.url < m.Concept.edges[j].O.url
 	})
-	str := "["
-	for i, e := range es {
-		if i > 0 {
-			str += " "
-		}
-		str += fmt.Sprintf("{%s %s %d}", e.P, e.O, e.L)
-	}
-	return str + "]"
+	return fmt.Sprintf("{%s %v %d %d}", m.Concept.ShortURL(), m.Concept.edges, m.Begin, m.End)
 }

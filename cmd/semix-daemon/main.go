@@ -11,7 +11,7 @@ import (
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/resource"
-	"bitbucket.org/fflo/semix/pkg/restd"
+	"bitbucket.org/fflo/semix/pkg/rest"
 )
 
 var (
@@ -24,7 +24,7 @@ var (
 func init() {
 	flag.StringVar(&dir, "dir",
 		filepath.Join(os.Getenv("HOME"), "semix"), "set semix index directory")
-	flag.StringVar(&host, "host", "localhost:6060", "set listen host")
+	flag.StringVar(&host, "host", "localhost:6660", "set listen host")
 	flag.StringVar(&confg, "resource", "testdata/topiczoom.toml", "set resource file")
 	flag.BoolVar(&help, "help", false, "prints this help")
 }
@@ -42,7 +42,7 @@ func main() {
 	run(s)
 }
 
-func run(s *restd.Server) {
+func run(s *rest.Server) {
 	sigch := make(chan os.Signal)
 	signal.Notify(sigch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
@@ -61,7 +61,7 @@ func run(s *restd.Server) {
 	}
 }
 
-func server() (*restd.Server, error) {
+func server() (*rest.Server, error) {
 	index, err := index.New(dir, index.DefaultBufferSize)
 	if err != nil {
 		return nil, err
@@ -70,5 +70,5 @@ func server() (*restd.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	return restd.New(host, dir, r, index), nil
+	return rest.New(host, dir, r, index), nil
 }

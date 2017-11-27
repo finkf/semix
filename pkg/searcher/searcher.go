@@ -48,12 +48,8 @@ func (s Searcher) SearchConcepts(q string, n int) []*semix.Concept {
 
 // SearchParents searches maximal n parent concepts of a given URL.
 // If n < 0, all matching concepts are returned.
-func (s Searcher) SearchParents(url string, n int) []*semix.Concept {
+func (s Searcher) SearchParents(c *semix.Concept, n int) []*semix.Concept {
 	if n == 0 {
-		return nil
-	}
-	c, ok := s.graph.FindByURL(url)
-	if !ok {
 		return nil
 	}
 	var res []*semix.Concept
@@ -77,11 +73,7 @@ func (s Searcher) SearchParents(url string, n int) []*semix.Concept {
 
 // SearchDictionaryEntries iterates over a dictionary and returns
 // all entries in the dictionary that reference the concept with the given URL.
-func (s Searcher) SearchDictionaryEntries(url string) []string {
-	c, ok := s.graph.FindByURL(url)
-	if !ok {
-		return nil
-	}
+func (s Searcher) SearchDictionaryEntries(c *semix.Concept) []string {
 	var res []string
 	for entry, id := range s.dict {
 		if abs(id) == abs(c.ID()) {

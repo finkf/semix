@@ -17,7 +17,7 @@
 		<div id='search'>
 			<form id='search-info-form' method='get' action='/search'>
 				<input id='search-info-input-text' type='text' placeholder='search concepts'
-				name='q' required>
+								 name='q' required>
 				<input id='search-info-input-button' type='submit' value='search'>
 			</form>
 		</div>
@@ -25,14 +25,62 @@
 		<div id='put-url'>
 			<form id='put-url-form' method='get' action='/put'>
 				<input id='put-url-input-text' type='text' placeholder='put url'
-				name='url' required>
+								 name='url' required>
 				<input id='put-url-input-button' type='submit' value='put url'>
+				<label>
+					<input type='checkbox' name='l' value='1'>
+					Lev 1
+				</label>
+				<label>
+					<input type='checkbox' name='l' value='2'>
+					Lev 2
+				</label>
+				<label>
+					<input type='checkbox' name='l' value='3'>
+					Lev 3
+				</label>
+				<label>
+					<input type='checkbox' name='r' value='simple'>
+					Simple resovler
+				</label>
+				<label>
+					<input type='checkbox' name='r' value='automatic'>
+					Automatic resovler
+				</label>
+				<label>
+					<input type='checkbox' name='r' value='ruled'>
+					Ruled resovler
+				</label>
 			</form>
 		</div>
 		<h2>Input plain text</h2>
 		<form name="put" method="post" action="/put">
 			<textarea name="text" rows="10" cols="160"></textarea><br/>
 			<input type="submit" value="put plain text">
+			<label>
+				<input type='checkbox' name='l' value='1'>
+				Lev 1
+			</label>
+			<label>
+				<input type='checkbox' name='l' value='2'>
+				Lev 2
+			</label>
+			<label>
+				<input type='checkbox' name='l' value='3'>
+				Lev 3
+			</label>
+			<label>
+				<input type='checkbox' name='r' value='simple'>
+				Simple resovler
+			</label>
+			<label>
+				<input type='checkbox' name='r' value='automatic'>
+				Automatic resovler
+			</label>
+			<label>
+				<input type='checkbox' name='r' value='ruled'>
+				Ruled resovler
+			</label>
 		</form>
 	</body>
 </html>
