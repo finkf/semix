@@ -1,5 +1,5 @@
-[parser]
-file = "testdata/topiczoom.skos.rdf.xml"
+[file]
+path = "testdata/topiczoom.skos.rdf.xml"
 type = "RDFXML"
 
 [predicates]

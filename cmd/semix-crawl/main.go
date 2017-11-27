@@ -17,8 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"bitbucket.org/fflo/semix/pkg/config"
 	"bitbucket.org/fflo/semix/pkg/index"
+	"bitbucket.org/fflo/semix/pkg/resource"
 	"bitbucket.org/fflo/semix/pkg/semix"
 	"golang.org/x/net/html"
 )
@@ -42,7 +42,7 @@ func init() {
 	flag.StringVar(&a, "allow", "^https?://de.wikipedia.org/wiki", "allowed url regexp")
 	flag.StringVar(&f, "deny", "Datei:", "forbidden url regexp")
 	flag.StringVar(&dir, "dir", filepath.Join(os.Getenv("HOME"), "semix"), "semix index directory")
-	flag.StringVar(&conf, "config", "semix.toml", "configuration file")
+	flag.StringVar(&conf, "resource", "semix.toml", "resource file")
 	flag.BoolVar(&help, "help", false, "print help")
 	flag.IntVar(&max, "max", 10, "max number of documents to process")
 	flag.IntVar(&maxjobs, "jobs", 100, "number of jobs")
@@ -64,7 +64,7 @@ func main() {
 }
 
 func run(args []string) {
-	g, d, err := config.Parse(conf)
+	r, err := resource.Parse(conf)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,7 +76,7 @@ func run(args []string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream := index.Put(ctx, idx, semix.Filter(ctx,
-		semix.Match(ctx, semix.DFAMatcher{DFA: semix.NewDFA(d, g)},
+		semix.Match(ctx, semix.DFAMatcher{DFA: semix.NewDFA(r.Dictionary, r.Graph)},
 			semix.Normalize(ctx, crawl(ctx)))))
 	for _, arg := range args {
 		url, err := url.Parse(arg)

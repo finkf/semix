@@ -16,9 +16,15 @@ type Server struct {
 }
 
 // New returns a new server instance.
-func New(self, dir string, g *semix.Graph, d semix.Dictionary, i index.Interface) *Server {
-	dfa := semix.NewDFA(d, g)
-	h := handle{dir: dir, dfa: dfa, searcher: searcher.New(g, d), index: i}
+func New(self, dir string, r *semix.Resource, i index.Interface) *Server {
+	dfa := semix.NewDFA(r.Dictionary, r.Graph)
+	h := handle{
+		dir:      dir,
+		dfa:      dfa,
+		r:        r,
+		searcher: searcher.New(r.Graph, r.Dictionary),
+		index:    i,
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/search", withLogging(withGet(requestFunc(h.search))))
 	mux.HandleFunc("/parents", withLogging(withGet(requestFunc(h.parents))))

@@ -1,4 +1,4 @@
-package disamb
+package resolve
 
 import (
 	"math"
@@ -6,16 +6,9 @@ import (
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
-// SimpleDecider chooses the most occuring concept in the memory.
-type SimpleDecider struct{}
-
-// Decide chooses the most occuring concept in the memory.
-func (SimpleDecider) Decide(mem *Memory, c *semix.Concept) *semix.Concept {
-	return decide(c, func(c *semix.Concept) float64 {
-		return float64(mem.Count(c.URL()))
-	})
-}
-
+// maxConcept chooses the concept with the biggest score.
+// if more than one concept with the biggest score can be found,
+// nil is returned.  Both slices must have the same length.
 func maxConcept(cs []*semix.Concept, scores []float64) *semix.Concept {
 	var idx int
 	var maxcount int
@@ -25,8 +18,7 @@ func maxConcept(cs []*semix.Concept, scores []float64) *semix.Concept {
 			maxcount = 1
 			idx = i
 			max = scores[i]
-		}
-		if scores[i] == max {
+		} else if scores[i] == max {
 			maxcount++
 		}
 	}
@@ -36,6 +28,9 @@ func maxConcept(cs []*semix.Concept, scores []float64) *semix.Concept {
 	return cs[idx]
 }
 
+// refernecedConcepts returns an array that contains
+// all concepts referenced by the given ambigiuous concept.
+// The given concept must be ambigiuous.
 func referencedConcepts(c *semix.Concept) []*semix.Concept {
 	var cs []*semix.Concept
 	c.EachEdge(func(e semix.Edge) {
@@ -50,7 +45,9 @@ func referencedConcepts(c *semix.Concept) []*semix.Concept {
 	return cs
 }
 
-func decide(c *semix.Concept, f func(*semix.Concept) float64) *semix.Concept {
+// resolve calculates a score for each referenced concept and returns the
+// concept with the maximal score.  The given concept must be ambigiuous.
+func resolve(c *semix.Concept, f func(*semix.Concept) float64) *semix.Concept {
 	cs := referencedConcepts(c)
 	scores := make([]float64, len(cs))
 	for i := range cs {

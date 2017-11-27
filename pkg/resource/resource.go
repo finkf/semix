@@ -1,4 +1,4 @@
-package config
+package resource
 
 import (
 	"fmt"
@@ -19,8 +19,8 @@ const (
 	Turtle = "turtle"
 )
 
-type parser struct {
-	File, Type string
+type file struct {
+	Path, Type string
 }
 
 type predicates struct {
@@ -36,16 +36,16 @@ type predicates struct {
 
 // Config represents the configuration for a knowledge base.
 type Config struct {
-	Parser     parser
+	File       file
 	Predicates predicates
 }
 
 // Parse is a convinence fuction that parses a knowledge base
 // using a toml configuration file.
-func Parse(file string) (*semix.Graph, semix.Dictionary, error) {
+func Parse(file string) (*semix.Resource, error) {
 	c, err := Read(file)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	return c.Parse()
 }
@@ -61,15 +61,15 @@ func Read(file string) (*Config, error) {
 }
 
 // Parse parses the configuration and returns the graph and the dictionary.
-func (c Config) Parse() (*semix.Graph, semix.Dictionary, error) {
-	is, err := os.Open(c.Parser.File)
+func (c Config) Parse() (*semix.Resource, error) {
+	is, err := os.Open(c.File.Path)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer is.Close()
 	parser, err := c.newParser(is)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	return semix.Parse(parser, c.Traits())
 }
@@ -90,12 +90,12 @@ func (c Config) Traits() traits.Interface {
 }
 
 func (c Config) newParser(r io.Reader) (semix.Parser, error) {
-	switch strings.ToLower(c.Parser.Type) {
+	switch strings.ToLower(c.File.Type) {
 	case RDFXML:
 		return rdfxml.NewParser(r), nil
 	case Turtle:
 		return turtle.NewParser(r), nil
 	default:
-		return nil, fmt.Errorf("invalid parser type: %s", c.Parser.Type)
+		return nil, fmt.Errorf("invalid parser type: %s", c.File.Type)
 	}
 }

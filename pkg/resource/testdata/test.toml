@@ -1,5 +1,5 @@
-[parser]
-file = "testdata/test.toml"
+[file]
+path = "testdata/test.toml"
 type = "TESTTYPE"
 
 [predicates]

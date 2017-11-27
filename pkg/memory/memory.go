@@ -46,22 +46,22 @@ func (m Memory) EachS(f func(*semix.Concept)) {
 }
 
 // Elements returns the set of unique concepts in the memory.
-func (m Memory) Elements() []*semix.Concept {
+func (m Memory) Elements() map[string]*semix.Concept {
 	set := make(map[string]*semix.Concept)
 	m.Each(func(c *semix.Concept) {
 		set[c.URL()] = c
 	})
-	return sliceFromSet(set)
+	return set
 }
 
 // ElementsS returns the set of unique concepts in the memory,
 // including all referenced concepts.
-func (m Memory) ElementsS() []*semix.Concept {
+func (m Memory) ElementsS() map[string]*semix.Concept {
 	set := make(map[string]*semix.Concept)
 	m.EachS(func(c *semix.Concept) {
 		set[c.URL()] = c
 	})
-	return sliceFromSet(set)
+	return set
 }
 
 // CountIf returns the number of concepts for wich the given predicate returns true.

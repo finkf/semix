@@ -22,6 +22,7 @@ type handle struct {
 	index     index.Interface
 	dfa       semix.DFA
 	dir, host string
+	r         *semix.Resource
 }
 
 func requestFunc(h func(*http.Request) (interface{}, int, error)) http.HandlerFunc {

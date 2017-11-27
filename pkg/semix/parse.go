@@ -17,11 +17,22 @@ type Parser interface {
 // The map to the according positve ID.
 type Dictionary map[string]int32
 
-// Parse creates a graph and a dictionary from a parser.
-func Parse(p Parser, t traits.Interface) (*Graph, Dictionary, error) {
+// RulesDictionary is a dictionary that maps concept URLs to their
+// respective rules.
+type RulesDictionary map[string]string
+
+// Resource is a struct that holds all parsed knwoledge base resources.
+type Resource struct {
+	Graph      *Graph
+	Dictionary Dictionary
+	Rules      RulesDictionary
+}
+
+// Parse creates a resource from a parser.
+func Parse(p Parser, t traits.Interface) (*Resource, error) {
 	parser := newParser(t)
 	if err := p.Parse(parser.add); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	return parser.parse()
 }
@@ -36,6 +47,7 @@ type parser struct {
 	names      map[string]string
 	labels     map[string]label
 	splits     map[string][]string
+	rules      RulesDictionary
 	traits     traits.Interface
 }
 
@@ -49,10 +61,10 @@ func newParser(traits traits.Interface) *parser {
 	}
 }
 
-func (parser *parser) parse() (*Graph, Dictionary, error) {
+func (parser *parser) parse() (*Resource, error) {
 	g := parser.buildGraph()
 	d := parser.buildDictionary(g)
-	return g, d, nil
+	return &Resource{Graph: g, Dictionary: d, Rules: parser.rules}, nil
 }
 
 func (parser *parser) buildGraph() *Graph {
@@ -131,6 +143,10 @@ func sortUnique(urls []string) []string {
 
 func (parser *parser) add(s, p, o string) error {
 	if parser.traits.Ignore(p) {
+		return nil
+	}
+	if parser.traits.IsRule(p) {
+		parser.rules[s] = o
 		return nil
 	}
 	if parser.traits.IsName(p) {
