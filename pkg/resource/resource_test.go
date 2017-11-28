@@ -13,6 +13,9 @@ func TestConfig(t *testing.T) {
 	if got := c.File.Type; got != "TESTTYPE" {
 		t.Fatalf("invalid config parser type: %s", got)
 	}
+	if got := c.File.Cache; got != "/tmp/test.cache" {
+		t.Fatalf("invalid config parser cache: %s", got)
+	}
 	traits := c.Traits()
 	if !traits.IsTransitive("http://example.org/transitive") {
 		t.Fatalf("missing transitive predicate")

@@ -20,7 +20,7 @@ const (
 )
 
 type file struct {
-	Path, Type string
+	Path, Type, Cache string
 }
 
 type predicates struct {

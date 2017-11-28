@@ -1,6 +1,7 @@
 [file]
 path = "testdata/test.toml"
 type = "TESTTYPE"
+cache = "/tmp/test.cache"
 
 [predicates]
 ignore = [
