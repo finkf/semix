@@ -11,7 +11,7 @@ func WithLogging(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("handling request for [%s] %s", r.Method, r.RequestURI)
 		f(w, r)
-		log.Printf("handled request for [%s] %s", r.Method, r.RequestURI)
+		log.Printf("handled  request for [%s] %s", r.Method, r.RequestURI)
 	}
 }
 
