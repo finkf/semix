@@ -120,8 +120,9 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("bad document: %v", err)
 	}
-	stream, cancel, err := h.indexer(data, doc)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	stream, err := h.indexer(ctx, data, doc)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}
@@ -236,14 +237,13 @@ func (h handle) readToken(url string) (semix.Token, error) {
 	return t.Token, nil
 }
 
-func (h handle) indexer(data putData, doc semix.Document) (semix.Stream, context.CancelFunc, error) {
-	ctx, cancel := context.WithCancel(context.Background())
+func (h handle) indexer(ctx context.Context, data putData, doc semix.Document) (semix.Stream, error) {
 	s := h.matcher(ctx, data, semix.Normalize(ctx, semix.Read(ctx, doc)))
 	s, err := h.resolver(ctx, data, s)
 	if err != nil {
-		return nil, cancel, err
+		return nil, err
 	}
-	return index.Put(ctx, h.index, semix.Filter(ctx, s)), cancel, nil
+	return index.Put(ctx, h.index, semix.Filter(ctx, s)), nil
 }
 
 func (h handle) resolver(ctx context.Context, d putData, s semix.Stream) (semix.Stream, error) {
