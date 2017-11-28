@@ -54,25 +54,6 @@ func writeError(w http.ResponseWriter, status int, err error) {
 	http.Error(w, err.Error(), status)
 }
 
-func withLogging(f http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("serving request for [%s] %s", r.Method, r.RequestURI)
-		f(w, r)
-		log.Printf("served request for [%s] %s", r.Method, r.RequestURI)
-	}
-}
-
-func withGet(f http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			writeError(w, http.StatusBadRequest,
-				fmt.Errorf("invalid request method: %s", r.Method))
-			return
-		}
-		f(w, r)
-	}
-}
-
 func (h handle) parents(r *http.Request) (interface{}, int, error) {
 	var data lookupData
 	if err := DecodeQuery(r.URL.Query(), &data); err != nil {
@@ -98,10 +79,6 @@ func (h handle) search(r *http.Request) (interface{}, int, error) {
 }
 
 func (h handle) info(r *http.Request) (interface{}, int, error) {
-	if r.Method != http.MethodGet {
-		return nil, http.StatusForbidden,
-			fmt.Errorf("invalid request method: %s", r.Method)
-	}
 	var data lookupData
 	if err := DecodeQuery(r.URL.Query(), &data); err != nil {
 		return nil, http.StatusBadRequest,
@@ -117,10 +94,6 @@ func (h handle) info(r *http.Request) (interface{}, int, error) {
 }
 
 func (h handle) put(r *http.Request) (interface{}, int, error) {
-	if r.Method != http.MethodPost && r.Method != http.MethodGet {
-		return nil, http.StatusForbidden,
-			fmt.Errorf("invalid request method: %s", r.Method)
-	}
 	doc, err := h.makeDocument(r)
 	if err != nil {
 		return nil, http.StatusBadRequest,
@@ -140,10 +113,6 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 }
 
 func (h handle) get(r *http.Request) (interface{}, int, error) {
-	if r.Method != http.MethodGet {
-		return nil, http.StatusForbidden,
-			fmt.Errorf("invalid method: %s", r.Method)
-	}
 	q := r.URL.Query().Get("q")
 	log.Printf("query: %s", q)
 	qu, err := query.New(q, h.getFixFunc())
@@ -190,10 +159,6 @@ func (h handle) getFixFunc() query.LookupFunc {
 }
 
 func (h handle) ctx(r *http.Request) (interface{}, int, error) {
-	if r.Method != http.MethodGet {
-		return nil, http.StatusForbidden,
-			fmt.Errorf("invalid method: %v", r.Method)
-	}
 	var data struct {
 		URL     string
 		B, E, N int
