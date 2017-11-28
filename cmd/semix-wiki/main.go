@@ -7,6 +7,19 @@ import (
 	"strings"
 )
 
+var (
+	ms matches
+)
+
+func init() {
+	flag.Var(&ms, "m", "list of regexes to match articles")
+}
+
+func main() {
+	flag.Parse()
+	fmt.Printf("matches: %s\n", ms)
+}
+
 type matches []*regexp.Regexp
 
 func (m matches) String() string {
@@ -36,17 +49,4 @@ func (m matches) Match(article string) bool {
 		}
 	}
 	return false
-}
-
-var (
-	ms matches
-)
-
-func init() {
-	flag.Var(&ms, "m", "list of regexes to match articles")
-}
-
-func main() {
-	flag.Parse()
-	fmt.Printf("matches: %s\n", ms)
 }
