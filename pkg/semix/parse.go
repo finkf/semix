@@ -41,6 +41,7 @@ func newParser(traits traits.Interface) *parser {
 		names:      make(map[string]string),
 		labels:     make(map[string]label),
 		splits:     make(map[string][]string),
+		rules:      make(RulesDictionary),
 		traits:     traits,
 	}
 }

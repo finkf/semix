@@ -52,7 +52,8 @@ func (r *Resource) GobDecode(bs []byte) error {
 	if err := decoder.Decode(&r.Graph.cArr); err != nil {
 		return err
 	}
-	register := make(map[int32][]gobEdge)
+	var register map[int32][]gobEdge
+	// register := make(map[int32][]gobEdge)
 	if err := decoder.Decode(&register); err != nil {
 		return err
 	}
