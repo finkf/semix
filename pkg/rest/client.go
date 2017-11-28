@@ -26,6 +26,14 @@ func NewClient(host string) Client {
 	}
 }
 
+// Predicates searches for concepts that are connected via the given predicate.
+func (c Client) Predicates(q string) ([]*semix.Concept, error) {
+	url := c.host + fmt.Sprintf("/predicates?q=%s", url.QueryEscape(q))
+	var cs []*semix.Concept
+	err := c.get(url, &cs)
+	return cs, err
+}
+
 // Search searches for concepts that match the given query string.
 func (c Client) Search(q string) ([]*semix.Concept, error) {
 	url := c.host + fmt.Sprintf("/search?q=%s", url.QueryEscape(q))

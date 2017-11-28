@@ -14,23 +14,25 @@ import (
 )
 
 var (
-	daemon  string
-	search  string
-	put     string
-	get     string
-	url     string
-	id      int
-	info    bool
-	parents bool
-	help    bool
-	client  rest.Client
-	ls      levs
-	rs      resolvers
+	daemon     string
+	search     string
+	predicates string
+	put        string
+	get        string
+	url        string
+	id         int
+	info       bool
+	parents    bool
+	help       bool
+	client     rest.Client
+	ls         levs
+	rs         resolvers
 )
 
 func init() {
 	flag.StringVar(&daemon, "daemon", "http://localhost:6660", "set daemon host")
-	flag.StringVar(&search, "search", "", "set search string")
+	flag.StringVar(&search, "search", "", "search for concepts")
+	flag.StringVar(&predicates, "predicates", "", "search for predicates")
 	flag.StringVar(&put, "put", "", "put files or directories into the index")
 	flag.StringVar(&get, "get", "", "execute a query on the index")
 	flag.IntVar(&id, "id", 0, "set search ID")
@@ -51,6 +53,9 @@ func main() {
 	client = rest.NewClient(daemon)
 	if search != "" {
 		doSearch()
+	}
+	if predicates != "" {
+		doPredicates()
 	}
 	if info {
 		doInfo()
@@ -100,6 +105,14 @@ func doInfo() {
 
 func doSearch() {
 	cs, err := client.Search(search)
+	if err != nil {
+		log.Fatal(err)
+	}
+	printConcepts(cs)
+}
+
+func doPredicates() {
+	cs, err := client.Predicates(predicates)
 	if err != nil {
 		log.Fatal(err)
 	}

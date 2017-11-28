@@ -68,6 +68,15 @@ func (h handle) parents(r *http.Request) (interface{}, int, error) {
 	return cs, http.StatusOK, nil
 }
 
+func (h handle) predicates(r *http.Request) (interface{}, int, error) {
+	q := r.URL.Query().Get("q")
+	if len(q) == 0 {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %s", q)
+	}
+	cs := h.searcher.SearchPredicates(q, -1)
+	return cs, http.StatusOK, nil
+}
+
 func (h handle) search(r *http.Request) (interface{}, int, error) {
 	q := r.URL.Query().Get("q")
 	if len(q) == 0 {

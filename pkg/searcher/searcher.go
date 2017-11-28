@@ -28,6 +28,24 @@ func (s Searcher) FindByURL(url string) (*semix.Concept, bool) {
 	return s.graph.FindByURL(url)
 }
 
+// SearchPredicates searches for maixmal n concepts, that are connected
+// with the given predicate to any other concept.
+func (s Searcher) SearchPredicates(q string, n int) []*semix.Concept {
+	// set := make(map[string]bool)
+	var cs []*semix.Concept
+	for i := 0; i < s.graph.ConceptsLen(); i++ {
+		c := s.graph.ConceptAt(i)
+		for i := 0; i < c.EdgesLen(); i++ {
+			e := c.EdgeAt(i)
+			if (n < 0 || len(cs) < n) && strings.Contains(e.P.URL(), q) {
+				cs = append(cs, c)
+				break
+			}
+		}
+	}
+	return cs
+}
+
 // SearchConcepts searches for maximal n concepts whose
 // dictionary entries or URLs match a given query string.
 // If n < 0, all matching concepts are returned.
