@@ -8,6 +8,20 @@ import (
 	"strings"
 )
 
+// func EncodeQuery(w io.Writer, vals interface{}) error {
+// 	t := reflect.TypeOf(vals)
+// 	if t.Kind() == reflect.Ptr {
+// 		t = t.Elem()
+// 	}
+// 	if t.Kind() != reflect.Struct {
+// 		return errors.New("cannot encode: not a struct")
+// 	}
+// 	for i := 0; i < t.NumField(); i++ {
+// 		str := fmt.
+// 		if err := w.Write(
+// 	}
+// }
+
 // DecodeQuery decodes a query into the given struct.
 // It can only be used to decode bool, int, float32, float64 and string values or
 // slices of one of these types.
