@@ -29,6 +29,7 @@ var (
 	allowed   *regexp.Regexp
 	forbidden *regexp.Regexp
 	help      bool
+	noCache   bool
 	max       int
 	maxjobs   int
 	links     chan *url.URL
@@ -44,6 +45,7 @@ func init() {
 	flag.StringVar(&dir, "dir", filepath.Join(os.Getenv("HOME"), "semix"), "semix index directory")
 	flag.StringVar(&conf, "resource", "semix.toml", "resource file")
 	flag.BoolVar(&help, "help", false, "print help")
+	flag.BoolVar(&noCache, "no-chache", false, "never use cached resource")
 	flag.IntVar(&max, "max", 10, "max number of documents to process")
 	flag.IntVar(&maxjobs, "jobs", 100, "number of jobs")
 	forbidden = regexp.MustCompile(f)
@@ -64,7 +66,7 @@ func main() {
 }
 
 func run(args []string) {
-	r, err := resource.Parse(conf)
+	r, err := resource.Parse(conf, !noCache)
 	if err != nil {
 		log.Fatal(err)
 	}
