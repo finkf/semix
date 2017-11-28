@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -114,6 +115,7 @@ func (c Client) Ctx(u string, b, e, n int) (Context, error) {
 }
 
 func (c Client) get(url string, out interface{}) error {
+	log.Printf("sending request [%s] %s", http.MethodGet, url)
 	res, err := c.client.Get(url)
 	if err != nil {
 		return err
@@ -123,6 +125,7 @@ func (c Client) get(url string, out interface{}) error {
 }
 
 func (c Client) post(url string, r io.Reader, ct string, out interface{}) error {
+	log.Printf("sending request [%s] %s", http.MethodPost, url)
 	res, err := c.client.Post(url, ct, r)
 	if err != nil {
 		return err
