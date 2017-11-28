@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/rest"
@@ -23,6 +24,8 @@ var (
 	parents bool
 	help    bool
 	client  rest.Client
+	ls      levs
+	rs      resolvers
 )
 
 func init() {
@@ -35,6 +38,8 @@ func init() {
 	flag.BoolVar(&info, "info", false, "get info (needs -id or -url)")
 	flag.BoolVar(&parents, "parents", false, "get parents of concept (needs -id or -url)")
 	flag.BoolVar(&help, "help", false, "print this help")
+	flag.Var(&rs, "r", "add named resolver (can be set multiple times)")
+	flag.Var(&ls, "l", "add levenshtein distance for approximate search (can be set multiple times)")
 }
 
 func main() {
@@ -151,14 +156,14 @@ func putFile(path string) {
 	var ts rest.Tokens
 	var err error
 	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
-		ts, err = client.PutURL(path, nil, nil)
+		ts, err = client.PutURL(path, ls, rs)
 	} else {
 		is, err := os.Open(path)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer is.Close()
-		ts, err = client.PutContent(is, "text/plain", nil, nil)
+		ts, err = client.PutContent(is, "text/plain", ls, rs)
 	}
 	if err != nil {
 		log.Fatal(err)
@@ -182,4 +187,34 @@ func assertSearchOK() {
 	if id == 0 && url == "" {
 		log.Fatal("missing concept id or url")
 	}
+}
+
+type levs []int
+
+func (ls levs) String() string {
+	var strs []string
+	for _, l := range ls {
+		strs = append(strs, fmt.Sprintf("%d", l))
+	}
+	return strings.Join(strs, ",")
+}
+
+func (ls *levs) Set(val string) error {
+	l, err := strconv.Atoi(val)
+	if err != nil {
+		return err
+	}
+	*ls = append(*ls, l)
+	return nil
+}
+
+type resolvers []string
+
+func (rs resolvers) String() string {
+	return strings.Join(rs, ",")
+}
+
+func (rs *resolvers) Set(val string) error {
+	*rs = append(*rs, val)
+	return nil
 }
