@@ -12,22 +12,6 @@ type Parser interface {
 	Parse(func(string, string, string) error) error
 }
 
-// Dictionary is a dictionary that maps the labels of the concepts
-// to their apporpriate IDs. Negative IDs mark ambigous dictionary entries.
-// The map to the according positve ID.
-type Dictionary map[string]int32
-
-// RulesDictionary is a dictionary that maps concept URLs to their
-// respective rules.
-type RulesDictionary map[string]string
-
-// Resource is a struct that holds all parsed knwoledge base resources.
-type Resource struct {
-	Graph      *Graph
-	Dictionary Dictionary
-	Rules      RulesDictionary
-}
-
 // Parse creates a resource from a parser.
 func Parse(p Parser, t traits.Interface) (*Resource, error) {
 	parser := newParser(t)
@@ -64,7 +48,7 @@ func newParser(traits traits.Interface) *parser {
 func (parser *parser) parse() (*Resource, error) {
 	g := parser.buildGraph()
 	d := parser.buildDictionary(g)
-	return &Resource{Graph: g, Dictionary: d, Rules: parser.rules}, nil
+	return NewResource(g, d, parser.rules), nil
 }
 
 func (parser *parser) buildGraph() *Graph {

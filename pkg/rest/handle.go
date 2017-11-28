@@ -23,7 +23,6 @@ type lookupData struct {
 type handle struct {
 	searcher  searcher.Searcher
 	index     index.Interface
-	dfa       semix.DFA
 	dir, host string
 	r         *semix.Resource
 }
@@ -226,7 +225,7 @@ func (h handle) makeIndexStream(d semix.Document) (semix.Stream, context.CancelF
 	s := index.Put(ctx, h.index,
 		semix.Filter(ctx,
 			// semix.Match(ctx, semix.FuzzyDFAMatcher{DFA: semix.NewFuzzyDFA(3, h.dfa)},
-			semix.Match(ctx, semix.DFAMatcher{DFA: h.dfa},
+			semix.Match(ctx, semix.DFAMatcher{DFA: h.r.DFA},
 				semix.Normalize(ctx,
 					semix.Read(ctx, d))))) // )
 	return s, cancel

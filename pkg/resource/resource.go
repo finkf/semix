@@ -1,8 +1,10 @@
 package resource
 
 import (
+	"encoding/gob"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 
@@ -42,12 +44,12 @@ type Config struct {
 
 // Parse is a convinence fuction that parses a knowledge base
 // using a toml configuration file.
-func Parse(file string) (*semix.Resource, error) {
+func Parse(file string, useCache bool) (*semix.Resource, error) {
 	c, err := Read(file)
 	if err != nil {
 		return nil, err
 	}
-	return c.Parse()
+	return c.Parse(useCache)
 }
 
 // Read reads a configuration from a file.
@@ -61,7 +63,12 @@ func Read(file string) (*Config, error) {
 }
 
 // Parse parses the configuration and returns the graph and the dictionary.
-func (c Config) Parse() (*semix.Resource, error) {
+func (c Config) Parse(useCache bool) (*semix.Resource, error) {
+	if useCache && c.File.Cache != "" {
+		if r, err := c.readCache(); err == nil {
+			return r, nil
+		}
+	}
 	is, err := os.Open(c.File.Path)
 	if err != nil {
 		return nil, err
@@ -71,7 +78,17 @@ func (c Config) Parse() (*semix.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	return semix.Parse(parser, c.Traits())
+	r, err := semix.Parse(parser, c.Traits())
+	if err != nil {
+		return nil, err
+	}
+	if c.File.Cache != "" {
+		err := c.writeCache(r)
+		if err != nil {
+			log.Printf("error: %s", err)
+		}
+	}
+	return r, nil
 }
 
 // Traits returns a new Traits interface using the configuration
@@ -98,4 +115,31 @@ func (c Config) newParser(r io.Reader) (semix.Parser, error) {
 	default:
 		return nil, fmt.Errorf("invalid parser type: %s", c.File.Type)
 	}
+}
+
+func (c Config) readCache() (*semix.Resource, error) {
+	log.Printf("readCache(): %s", c.File.Cache)
+	file, err := os.Open(c.File.Cache)
+	if err != nil {
+		log.Printf("error: %s", err)
+		return nil, err
+	}
+	defer file.Close()
+	r := new(semix.Resource)
+	if err := gob.NewDecoder(file).Decode(r); err != nil {
+		log.Printf("error: %s", err)
+		return nil, err
+	}
+	return r, nil
+}
+
+func (c Config) writeCache(r *semix.Resource) error {
+	log.Printf("writeCache(): %s", c.File.Cache)
+	file, err := os.Create(c.File.Cache)
+	if err != nil {
+		log.Printf("error: %s", err)
+		return err
+	}
+	defer file.Close()
+	return gob.NewEncoder(file).Encode(r)
 }

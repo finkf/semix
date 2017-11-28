@@ -1,6 +1,7 @@
 [file]
 path = "testdata/ww1.ttl"
 type = "turtle"
+cache = "/tmp/ww1.gob"
 
 [predicates]
 ignore = []

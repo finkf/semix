@@ -17,10 +17,8 @@ type Server struct {
 
 // New returns a new server instance.
 func New(self, dir string, r *semix.Resource, i index.Interface) *Server {
-	dfa := semix.NewDFA(r.Dictionary, r.Graph)
 	h := handle{
 		dir:      dir,
-		dfa:      dfa,
 		r:        r,
 		searcher: searcher.New(r.Graph, r.Dictionary),
 		index:    i,
