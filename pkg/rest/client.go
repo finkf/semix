@@ -75,36 +75,33 @@ func (c Client) Get(q string) (Tokens, error) {
 
 // PutURL puts the given url into the index.
 func (c Client) PutURL(u string, ls []int, rs []string) (Tokens, error) {
-	url := makePutURL(fmt.Sprintf("?url=%s", url.QueryEscape(u)), ls, rs)
+	query, err := EncodeQuery(struct {
+		URL string
+		L   []int
+		R   []string
+	}{u, ls, rs})
+	if err != nil {
+		return Tokens{}, err
+	}
 	var ts Tokens
-	err := c.get(url, &ts)
+	url := c.host + "/put" + query
+	err = c.get(url, &ts)
 	return ts, err
 }
 
 // PutContent puts the given content into the index.
 func (c Client) PutContent(r io.Reader, ct string, ls []int, rs []string) (Tokens, error) {
-	url := makePutURL("", ls, rs)
+	query, err := EncodeQuery(struct {
+		L []int
+		R []string
+	}{ls, rs})
+	if err != nil {
+		return Tokens{}, err
+	}
+	url := c.host + "/put" + query
 	var ts Tokens
-	err := c.post(url, r, ct, ts)
+	err = c.post(url, r, ct, ts)
 	return ts, err
-}
-
-func makePutURL(base string, ls []int, rs []string) string {
-	for _, l := range ls {
-		if len(base) == 0 {
-			base += fmt.Sprintf("?l=%d", l)
-		} else {
-			base += fmt.Sprintf("?l=%d", l)
-		}
-	}
-	for _, r := range rs {
-		if len(base) == 0 {
-			base += fmt.Sprintf("?r=%s", url.QueryEscape(r))
-		} else {
-			base += fmt.Sprintf("&r=%s", url.QueryEscape(r))
-		}
-	}
-	return "/put" + base
 }
 
 // Ctx returns the context of a given citation.
