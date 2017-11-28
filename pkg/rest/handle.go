@@ -11,6 +11,7 @@ import (
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/query"
+	"bitbucket.org/fflo/semix/pkg/resolve"
 	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -18,6 +19,14 @@ import (
 type lookupData struct {
 	URL string
 	ID  int
+}
+
+type putData struct {
+	URL string
+	T   float64
+	N   int
+	L   []int
+	R   []string
 }
 
 type handle struct {
@@ -102,13 +111,20 @@ func (h handle) info(r *http.Request) (interface{}, int, error) {
 }
 
 func (h handle) put(r *http.Request) (interface{}, int, error) {
-	doc, err := h.makeDocument(r)
+	var data putData
+	if err := DecodeQuery(r.URL.Query(), &data); err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+	doc, err := h.makeDocument(data, r.Method == http.MethodGet)
 	if err != nil {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("bad document: %v", err)
 	}
-	stream, cancel := h.makeIndexStream(doc)
+	stream, cancel, err := h.indexer(data, doc)
 	defer cancel()
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
 	ts := Tokens{Tokens: []Token{}} // for json
 	for t := range stream {
 		if t.Err != nil {
@@ -220,39 +236,73 @@ func (h handle) readToken(url string) (semix.Token, error) {
 	return t.Token, nil
 }
 
-func (h handle) makeIndexStream(d semix.Document) (semix.Stream, context.CancelFunc) {
+func (h handle) indexer(data putData, doc semix.Document) (semix.Stream, context.CancelFunc, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	s := index.Put(ctx, h.index,
-		semix.Filter(ctx,
-			// semix.Match(ctx, semix.FuzzyDFAMatcher{DFA: semix.NewFuzzyDFA(3, h.dfa)},
-			semix.Match(ctx, semix.DFAMatcher{DFA: h.r.DFA},
-				semix.Normalize(ctx,
-					semix.Read(ctx, d))))) // )
-	return s, cancel
+	s := h.matcher(ctx, data, semix.Normalize(ctx, semix.Read(ctx, doc)))
+	s, err := h.resolver(ctx, data, s)
+	if err != nil {
+		return nil, cancel, err
+	}
+	return index.Put(ctx, h.index, semix.Filter(ctx, s)), cancel, nil
 }
 
-func (h handle) makeDocument(r *http.Request) (semix.Document, error) {
-	switch r.Method {
-	default:
-		panic("invalid method")
-	case http.MethodGet:
-		url := r.URL.Query()["url"]
-		if len(url) != 1 {
-			return nil, fmt.Errorf("invalid query parameter url=%v", url)
-		}
-		return semix.NewHTTPDocument(url[0]), nil
-	case http.MethodPost:
-		err := r.ParseForm()
+func (h handle) resolver(ctx context.Context, d putData, s semix.Stream) (semix.Stream, error) {
+	for i := len(d.R); i > 0; i-- {
+		r, err := h.resolverInterface(d.R[i-1], d)
 		if err != nil {
-			return nil, fmt.Errorf("could not parse post form: %v", err)
+			return nil, err
 		}
-		r := strings.NewReader(strings.Join(r.PostForm["text"], " "))
-		doc, err := newDumpFile(r, h.dir, "text/plain")
-		if err != nil {
-			return nil, fmt.Errorf("could not create file: %v", err)
-		}
-		return doc, nil
+		s = resolve.Resolve(ctx, d.N, r, s)
 	}
+	return s, nil
+}
+
+func (h handle) resolverInterface(name string, d putData) (resolve.Interface, error) {
+	switch name {
+	case "automatic":
+		return resolve.Automatic{Threshold: d.T}, nil
+	case "simple":
+		return resolve.Simple{}, nil
+	case "ruled":
+		return resolve.NewRuled(h.r.Rules, func(str string) int {
+			cs := h.searcher.SearchConcepts(str, 2)
+			if len(cs) != 1 {
+				return -1
+			}
+			return int(cs[0].ID())
+		})
+	}
+	return nil, fmt.Errorf("invalid resolver: %s", name)
+}
+
+func (h handle) matcher(ctx context.Context, d putData, s semix.Stream) semix.Stream {
+	for i := len(d.L); i > 0; i-- {
+		l := d.L[i-1]
+		if l <= 0 {
+			continue
+		}
+		s = semix.Match(ctx, semix.FuzzyDFAMatcher{DFA: semix.NewFuzzyDFA(l, h.r.DFA)}, s)
+	}
+	return semix.Match(ctx, semix.DFAMatcher{DFA: h.r.DFA}, s)
+}
+
+func (h handle) makeDocument(data putData, get bool) (semix.Document, error) {
+	if get {
+		if len(data.URL) <= 0 {
+			return nil, fmt.Errorf("invalid query parameter url=%s", data.URL)
+		}
+		return semix.NewHTTPDocument(data.URL), nil
+	}
+	err := r.ParseForm()
+	if err != nil {
+		return nil, fmt.Errorf("could not parse post form: %v", err)
+	}
+	r := strings.NewReader(strings.Join(r.PostForm["text"], " "))
+	doc, err := newDumpFile(r, h.dir, "text/plain")
+	if err != nil {
+		return nil, fmt.Errorf("could not create file: %v", err)
+	}
+	return doc, nil
 }
 
 func (h handle) lookup(data lookupData) (*semix.Concept, bool) {
