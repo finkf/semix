@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -151,6 +152,10 @@ func doPut() {
 }
 
 func putFileOrDir(path string) {
+	if isURL(path) {
+		putFile(path)
+		return
+	}
 	info, err := os.Lstat(path)
 	if err != nil {
 		log.Fatal(err)
@@ -181,7 +186,7 @@ func putDir(path string) {
 func putFile(path string) {
 	var ts rest.Tokens
 	var err error
-	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
+	if isURL(path) {
 		ts, err = client.PutURL(path, ls, makeResolvers())
 	} else if local {
 		ts, err = client.PutLocalFile(path, ls, makeResolvers())
@@ -218,6 +223,11 @@ func putFileList() {
 	}
 }
 
+func isURL(path string) bool {
+	return strings.HasPrefix(path, "http://") ||
+		strings.HasPrefix(path, "https://")
+}
+
 func makeResolvers() []rest.Resolver {
 	var res []rest.Resolver
 	for _, r := range rs {
@@ -231,10 +241,18 @@ func makeResolvers() []rest.Resolver {
 }
 
 func printTokens(ts rest.Tokens) {
+	sort.Slice(ts.Tokens, func(i, j int) bool {
+		return ts.Tokens[i].Path < ts.Tokens[j].Path
+	})
 	for _, t := range ts.Tokens {
-		fmt.Printf("%v\n", t)
+		fmt.Printf("%q %q %q %q\n",
+			t.Token, t.RelationURL, t.Concept.ShortName(), t.Path)
 	}
 }
+
+// Token, Path, RelationURL string
+// Concept                  *semix.Concept
+// Begin, End, L            int
 
 func printConcepts(cs []*semix.Concept) {
 	for _, c := range cs {
