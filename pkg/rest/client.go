@@ -1,11 +1,15 @@
 package rest
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
+	"path/filepath"
 
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -23,6 +27,14 @@ func NewClient(host string) Client {
 		client: new(http.Client),
 		host:   host,
 	}
+}
+
+// Predicates searches for concepts that are connected via the given predicate.
+func (c Client) Predicates(q string) ([]*semix.Concept, error) {
+	url := c.host + fmt.Sprintf("/predicates?q=%s", url.QueryEscape(q))
+	var cs []*semix.Concept
+	err := c.get(url, &cs)
+	return cs, err
 }
 
 // Search searches for concepts that match the given query string.
@@ -74,37 +86,53 @@ func (c Client) Get(q string) (Tokens, error) {
 }
 
 // PutURL puts the given url into the index.
-func (c Client) PutURL(u string, ls []int, rs []string) (Tokens, error) {
-	url := makePutURL(fmt.Sprintf("?url=%s", url.QueryEscape(u)), ls, rs)
-	var ts Tokens
-	err := c.get(url, &ts)
-	return ts, err
+func (c Client) PutURL(url string, ls []int, rs []Resolver) (Tokens, error) {
+	return c.doPut(PutData{
+		URL:       url,
+		Errors:    ls,
+		Resolvers: rs,
+	})
+}
+
+// PutLocalFile puts a local file into the index.
+// This only works if the server has access to the same file system as the client.
+// PutLocalFile calculates the absolute path for the given file.
+func (c Client) PutLocalFile(path string, ls []int, rs []Resolver) (Tokens, error) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return Tokens{}, err
+	}
+	return c.doPut(PutData{
+		URL:       abs,
+		Local:     true,
+		Errors:    ls,
+		Resolvers: rs,
+	})
 }
 
 // PutContent puts the given content into the index.
-func (c Client) PutContent(r io.Reader, ct string, ls []int, rs []string) (Tokens, error) {
-	url := makePutURL("", ls, rs)
-	var ts Tokens
-	err := c.post(url, r, ct, ts)
-	return ts, err
+func (c Client) PutContent(r io.Reader, ct string, ls []int, rs []Resolver) (Tokens, error) {
+	content, err := ioutil.ReadAll(r)
+	if err != nil {
+		return Tokens{}, err
+	}
+	return c.doPut(PutData{
+		Errors:      ls,
+		Resolvers:   rs,
+		Content:     string(content),
+		ContentType: ct,
+	})
 }
 
-func makePutURL(base string, ls []int, rs []string) string {
-	for _, l := range ls {
-		if len(base) == 0 {
-			base += fmt.Sprintf("?l=%d", l)
-		} else {
-			base += fmt.Sprintf("?l=%d", l)
-		}
+func (c Client) doPut(data PutData) (Tokens, error) {
+	b := new(bytes.Buffer)
+	if err := json.NewEncoder(b).Encode(data); err != nil {
+		return Tokens{}, err
 	}
-	for _, r := range rs {
-		if len(base) == 0 {
-			base += fmt.Sprintf("?r=%s", url.QueryEscape(r))
-		} else {
-			base += fmt.Sprintf("&r=%s", url.QueryEscape(r))
-		}
-	}
-	return "/put" + base
+	var ts Tokens
+	var err error
+	err = c.post(c.host+"/put", b, "application/json", &ts)
+	return ts, err
 }
 
 // Ctx returns the context of a given citation.
@@ -117,6 +145,7 @@ func (c Client) Ctx(u string, b, e, n int) (Context, error) {
 }
 
 func (c Client) get(url string, out interface{}) error {
+	log.Printf("sending request [%s] %s", http.MethodGet, url)
 	res, err := c.client.Get(url)
 	if err != nil {
 		return err
@@ -126,6 +155,7 @@ func (c Client) get(url string, out interface{}) error {
 }
 
 func (c Client) post(url string, r io.Reader, ct string, out interface{}) error {
+	log.Printf("sending request [%s] %s", http.MethodPost, url)
 	res, err := c.client.Post(url, ct, r)
 	if err != nil {
 		return err

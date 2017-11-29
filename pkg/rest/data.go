@@ -1,14 +1,111 @@
 package rest
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/index"
+	"bitbucket.org/fflo/semix/pkg/resolve"
+	"bitbucket.org/fflo/semix/pkg/rule"
 	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
+
+// PutData defines the data that is send to the server's put method
+type PutData struct {
+	URL         string
+	Local       bool
+	Errors      []int
+	Resolvers   []Resolver
+	ContentType string
+	Content     string
+}
+
+func (p PutData) stream(
+	ctx context.Context,
+	dfa semix.DFA,
+	rules rule.Map,
+	idx index.Interface,
+	dir string,
+) (semix.Stream, error) {
+	doc, err := p.document(dir)
+	if err != nil {
+		return nil, err
+	}
+	s := p.matchStream(ctx, dfa, semix.Normalize(ctx, semix.Read(ctx, doc)))
+	s, err = p.resolveStream(ctx, rules, s)
+	if err != nil {
+		return nil, err
+	}
+	return index.Put(ctx, idx, semix.Filter(ctx, s)), nil
+}
+
+func (p PutData) matchStream(
+	ctx context.Context,
+	dfa semix.DFA,
+	s semix.Stream,
+) semix.Stream {
+	for i := len(p.Errors); i > 0; i-- {
+		l := p.Errors[i-1]
+		if l <= 0 {
+			continue
+		}
+		s = semix.Match(
+			ctx, semix.FuzzyDFAMatcher{DFA: semix.NewFuzzyDFA(l, dfa)}, s)
+	}
+	return semix.Match(ctx, semix.DFAMatcher{DFA: dfa}, s)
+}
+
+func (p PutData) resolveStream(
+	ctx context.Context,
+	rules rule.Map,
+	s semix.Stream,
+) (semix.Stream, error) {
+	for i := len(p.Resolvers); i > 0; i-- {
+		resolver, err := p.Resolvers[i-1].resolver(rules)
+		if err != nil {
+			return nil, err
+		}
+		s = resolve.Resolve(ctx, p.Resolvers[i-1].MemorySize, resolver, s)
+	}
+	return s, nil
+}
+
+func (p PutData) document(dir string) (semix.Document, error) {
+	if p.Content == "" {
+		if p.Local {
+			return semix.NewFileDocument(p.URL), nil
+		}
+		return semix.NewHTTPDocument(p.URL), nil
+	}
+	doc, err := newDumpFile(strings.NewReader(p.Content), dir, p.ContentType)
+	if err != nil {
+		return nil, err
+	}
+	return doc, nil
+}
+
+// Resolver defines one of the three resolvers simple, automatic or ruled
+// as defined in bitbucket.org/fflo/semix/pkg/resolve
+type Resolver struct {
+	Name       string
+	Threshold  float64
+	MemorySize int
+}
+
+func (r Resolver) resolver(rules rule.Map) (resolve.Interface, error) {
+	switch strings.ToLower(r.Name) {
+	case "automatic":
+		return resolve.Automatic{Threshold: r.Threshold}, nil
+	case "simple":
+		return resolve.Simple{}, nil
+	case "ruled":
+		return resolve.Ruled{Rules: rules}, nil
+	}
+	return nil, fmt.Errorf("invalid resolver name: %s", r.Name)
+}
 
 // ConceptInfo holds information about a concept.
 type ConceptInfo struct {

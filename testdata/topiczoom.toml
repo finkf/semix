@@ -1,6 +1,7 @@
 [file]
 path = "testdata/topiczoom.skos.rdf.xml"
 type = "RDFXML"
+cache = "/tmp/topiczoom.gob"
 
 [predicates]
 ignore = [

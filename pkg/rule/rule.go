@@ -7,6 +7,22 @@ import (
 	"bitbucket.org/fflo/semix/pkg/memory"
 )
 
+// Map maps concept URLs to compiled rules.
+type Map map[string]Rule
+
+// NewMap compiles a new Map from a map of rules.
+func NewMap(rs map[string]string, lookup func(string) int) (Map, error) {
+	m := make(Map, len(rs))
+	for url, str := range rs {
+		r, err := Compile(str, lookup)
+		if err != nil {
+			return nil, err
+		}
+		m[url] = r
+	}
+	return m, nil
+}
+
 // Rule represents a compiled rule.
 type Rule []instruction
 

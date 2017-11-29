@@ -6,7 +6,37 @@ import (
 	"testing"
 )
 
-func TestQueryInvalid(t *testing.T) {
+func TestEncodeQuery(t *testing.T) {
+	tests := []struct {
+		want string
+		test interface{}
+	}{
+		{"", struct{}{}},
+		{"?b=true", struct{ B bool }{true}},
+		{"?b=true&b=false&b=true", struct{ B []bool }{[]bool{true, false, true}}},
+		{"?i=1&i=3", struct{ I []int }{[]int{1, 3}}},
+		{"?f=1.000000&f=3.000000", struct{ F []float32 }{[]float32{1, 3}}},
+		{"?s=a+string&s=str", struct{ S []string }{[]string{"a string", "str"}}},
+		{"?i=27&s=str&b=true", struct {
+			I int
+			S string
+			B bool
+		}{27, "str", true}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.want, func(t *testing.T) {
+			got, err := EncodeQuery(tc.test)
+			if err != nil {
+				t.Fatalf("got error: %s", err)
+			}
+			if got != tc.want {
+				t.Fatalf("expected %s; got %s", tc.want, got)
+			}
+		})
+	}
+}
+
+func TestDecodeInvalidQuery(t *testing.T) {
 	url, _ := url.Parse("http://example.org?a=b&c=d")
 	var i int
 	if err := DecodeQuery(url.Query(), &i); err == nil {
@@ -18,7 +48,7 @@ func TestQueryInvalid(t *testing.T) {
 	}
 }
 
-func TestQuery(t *testing.T) {
+func TestDecodeQuery(t *testing.T) {
 	type data struct {
 		B   bool
 		I   int
@@ -31,16 +61,16 @@ func TestQuery(t *testing.T) {
 		want  data
 		iserr bool
 	}{
-		{"http://example.org.org", data{}, false},
-		{"http://example.org.org?b=true", data{B: true}, false},
-		{"http://example.org.org?b=not-a-bool", data{}, true},
-		{"http://example.org.org?i=true", data{}, true},
-		{"http://example.org.org?i=27", data{I: 27}, false},
-		{"http://example.org.org?f32=2.7", data{F32: 2.7}, false},
-		{"http://example.org.org?f32=not-a-float", data{}, true},
-		{"http://example.org.org?f64=2.7", data{F64: 2.7}, false},
-		{"http://example.org.org?f64=not-a-float", data{}, true},
-		{"http://example.org.org?s=some%20string", data{S: "some string"}, false},
+		{"http://example.org", data{}, false},
+		{"http://example.org?b=true", data{B: true}, false},
+		{"http://example.org?b=not-a-bool", data{}, true},
+		{"http://example.org?i=true", data{}, true},
+		{"http://example.org?i=27", data{I: 27}, false},
+		{"http://example.org?f32=2.7", data{F32: 2.7}, false},
+		{"http://example.org?f32=not-a-float", data{}, true},
+		{"http://example.org?f64=2.7", data{F64: 2.7}, false},
+		{"http://example.org?f64=not-a-float", data{}, true},
+		{"http://example.org?s=some%20string", data{S: "some string"}, false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.url, func(t *testing.T) {
@@ -66,7 +96,7 @@ func TestQuery(t *testing.T) {
 	}
 }
 
-func TestQueryArray(t *testing.T) {
+func TestDecodeQueryArray(t *testing.T) {
 	type data struct {
 		B   []bool
 		I   []int

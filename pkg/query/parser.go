@@ -116,14 +116,26 @@ func (p *Parser) parseList() set {
 	if l != scanner.Ident && l != scanner.String {
 		return set
 	}
-	_, str := p.eat(l)
+	str := p.parseString()
 	set[str] = true
 	for l := p.peek(); l == ','; l = p.peek() {
 		p.eat(',')
-		_, str := p.eat(scanner.Ident, scanner.String)
+		str := p.parseString()
 		set[str] = true
 	}
 	return set
+}
+
+func (p *Parser) parseString() string {
+	tok, str := p.eat(scanner.Ident, scanner.String)
+	if tok == scanner.String {
+		s, err := strconv.Unquote(str)
+		if err != nil {
+			p.fatalf("could not parse string: %s", err)
+		}
+		str = s
+	}
+	return str
 }
 
 func (p *Parser) peek() rune {

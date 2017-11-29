@@ -53,16 +53,16 @@ func main() {
 	gettmpl = template.Must(template.ParseFiles(filepath.Join(dir, "get.html")))
 	ctxtmpl = template.Must(template.ParseFiles(filepath.Join(dir, "ctx.html")))
 	searchtmpl = template.Must(template.ParseFiles(filepath.Join(dir, "search.html")))
-	http.HandleFunc("/", withLogging(withGet(handle(home))))
-	http.HandleFunc("/index", withLogging(withGet(handle(home))))
-	http.HandleFunc("/info", withLogging(withGet(handle(info))))
-	http.HandleFunc("/get", withLogging(withGet(handle(get))))
-	http.HandleFunc("/search", withLogging(withGet(handle(search))))
-	http.HandleFunc("/ctx", withLogging(withGet(handle(ctx))))
-	http.HandleFunc("/put", withLogging(handle(put)))
-	http.HandleFunc("/parents", withLogging(withGet(handle(parents))))
-	http.HandleFunc("/favicon.ico", withLogging(withGet(favicon)))
-	http.HandleFunc("/js/semix.js", withLogging(withGet(semixJS)))
+	http.HandleFunc("/", rest.WithLogging(rest.WithGet(handle(home))))
+	http.HandleFunc("/index", rest.WithLogging(rest.WithGet(handle(home))))
+	http.HandleFunc("/info", rest.WithLogging(rest.WithGet(handle(info))))
+	http.HandleFunc("/get", rest.WithLogging(rest.WithGet(handle(get))))
+	http.HandleFunc("/search", rest.WithLogging(rest.WithGet(handle(search))))
+	http.HandleFunc("/ctx", rest.WithLogging(rest.WithGet(handle(ctx))))
+	http.HandleFunc("/put", rest.WithLogging(rest.WithGetOrPost(handle(put))))
+	http.HandleFunc("/parents", rest.WithLogging(rest.WithGet(handle(parents))))
+	http.HandleFunc("/favicon.ico", rest.WithLogging(rest.WithGet(favicon)))
+	http.HandleFunc("/js/semix.js", rest.WithLogging(rest.WithGet(semixJS)))
 	log.Printf("starting the server on %s", host)
 	log.Fatal(http.ListenAndServe(host, nil))
 }
@@ -100,25 +100,6 @@ func favicon(w http.ResponseWriter, r *http.Request) {
 
 func semixJS(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(dir, "js", "semix.js"))
-}
-
-func withLogging(f http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("handling request for [%s] %s", r.Method, r.RequestURI)
-		f(w, r)
-		log.Printf("handled request for [%s] %s", r.Method, r.RequestURI)
-	}
-}
-
-func withGet(f http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			log.Printf("invalid request method: %v", r.Method)
-			http.Error(w, fmt.Sprintf("invalid request method: %s", r.Method), http.StatusBadRequest)
-			return
-		}
-		f(w, r)
-	}
 }
 
 func search(r *http.Request) (*template.Template, interface{}, status) {
@@ -204,16 +185,15 @@ func put(r *http.Request) (*template.Template, interface{}, status) {
 		if err := rest.DecodeQuery(r.URL.Query(), &ps); err != nil {
 			return nil, nil, internalError(err)
 		}
-		ts, err := rest.NewClient(daemon).PutURL(ps.URL, ps.Ls, ps.Rs)
+		ts, err := rest.NewClient(daemon).PutURL(ps.URL, ps.Ls, nil)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
 		return puttmpl, ts, ok()
-	default:
-		return nil, nil, status{
-			fmt.Errorf("invalid request method: %s", r.Method),
-			http.StatusBadRequest,
-		}
+	}
+	return nil, nil, status{
+		fmt.Errorf("invalid request method: %s", r.Method),
+		http.StatusBadRequest,
 	}
 }
 

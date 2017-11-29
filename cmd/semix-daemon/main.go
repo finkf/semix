@@ -15,10 +15,11 @@ import (
 )
 
 var (
-	dir   string
-	host  string
-	confg string
-	help  bool
+	dir     string
+	host    string
+	confg   string
+	help    bool
+	noCache bool
 )
 
 func init() {
@@ -26,6 +27,7 @@ func init() {
 		filepath.Join(os.Getenv("HOME"), "semix"), "set semix index directory")
 	flag.StringVar(&host, "host", "localhost:6660", "set listen host")
 	flag.StringVar(&confg, "resource", "testdata/topiczoom.toml", "set resource file")
+	flag.BoolVar(&noCache, "no-cache", false, "do not load resource from cache")
 	flag.BoolVar(&help, "help", false, "prints this help")
 }
 
@@ -66,9 +68,9 @@ func server() (*rest.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	r, err := resource.Parse(confg)
+	r, err := resource.Parse(confg, !noCache)
 	if err != nil {
 		return nil, err
 	}
-	return rest.New(host, dir, r, index), nil
+	return rest.New(host, dir, r, index)
 }

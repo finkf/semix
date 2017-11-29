@@ -5,24 +5,7 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	parser := newTestParser(
-		"A", "p", "B", // normal
-		"B", "p", "C", // normal
-		"X", "i", "X", // ignore
-		"A", "n", "name", // name
-		"A", "d", "distinct", // distinct label
-		"A", "d", "a{b,c}d", // distinct label
-		"A", "a", "ambiguous", // ambiguous label
-		"AS", "s", "BS", // symmetric
-		"AT", "t", "BT", // transitive
-		"BT", "t", "CT", // transitive
-		"AV", "v", "BV", // inverted
-		"A", "d", "split-name", // split
-		"B", "d", "split-name", // split
-		"http://example.org/A", "d", "second-split-name", // split
-		"http://example.org/B", "d", "second-split-name", // split
-		"http://example.org/C", "d", "second-split-name", // split
-	)
+	parser := makeNewTestParser()
 	r, err := Parse(parser, testTraits{})
 	if err != nil {
 		t.Fatalf("got error: %v", err)
@@ -70,6 +53,9 @@ func TestParse(t *testing.T) {
 	if c, _ := r.Graph.FindByURL("A"); c.Name != "name" {
 		t.Fatalf("expected name=%s; got %s", "name", c.Name)
 	}
+	if got, ok := r.Rules["R"]; !ok || got != "rule" {
+		t.Fatalf("expected rule=%s; got %s", "rule", got)
+	}
 	a, _ := r.Graph.FindByURL("A")
 	edgesExist(t, a, "p", "B")
 	as, _ := r.Graph.FindByURL("AS")
@@ -113,6 +99,28 @@ func (p testParser) Parse(f func(string, string, string) error) error {
 		}
 	}
 	return nil
+}
+
+func makeNewTestParser() Parser {
+	return newTestParser(
+		"A", "p", "B", // normal
+		"B", "p", "C", // normal
+		"X", "i", "X", // ignore
+		"A", "n", "name", // name
+		"A", "d", "distinct", // distinct label
+		"A", "d", "a{b,c}d", // distinct label
+		"A", "a", "ambiguous", // ambiguous label
+		"AS", "s", "BS", // symmetric
+		"AT", "t", "BT", // transitive
+		"BT", "t", "CT", // transitive
+		"AV", "v", "BV", // inverted
+		"A", "d", "split-name", // split
+		"B", "d", "split-name", // split
+		"R", "r", "rule", // rule
+		"http://example.org/A", "d", "second-split-name", // split
+		"http://example.org/B", "d", "second-split-name", // split
+		"http://example.org/C", "d", "second-split-name", // split
+	)
 }
 
 type testTraits struct{}
