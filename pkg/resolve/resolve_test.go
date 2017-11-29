@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"bitbucket.org/fflo/semix/pkg/memory"
+	"bitbucket.org/fflo/semix/pkg/rule"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -57,7 +58,7 @@ func TestRuled(t *testing.T) {
 	a := semix.NewConcept("A", semix.WithID(1))
 	b := semix.NewConcept("B", semix.WithID(2))
 	ambig := semix.NewConcept("A-B", semix.WithEdges(split, a, split, b))
-	rules, err := NewRules(map[string]string{"A": `cs("A")>0`, "B": `cs("B")>0`}, func(str string) int {
+	rules, err := rule.NewMap(map[string]string{"A": `cs("A")>0`, "B": `cs("B")>0`}, func(str string) int {
 		switch str {
 		case "A":
 			return 1

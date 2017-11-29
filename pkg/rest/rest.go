@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"bitbucket.org/fflo/semix/pkg/index"
-	"bitbucket.org/fflo/semix/pkg/resolve"
+	"bitbucket.org/fflo/semix/pkg/rule"
 	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -19,7 +19,7 @@ type Server struct {
 // New returns a new server instance.
 func New(self, dir string, r *semix.Resource, i index.Interface) (*Server, error) {
 	searcher := searcher.New(r.Graph, r.Dictionary)
-	rules, err := resolve.NewRules(r.Rules, func(str string) int {
+	rules, err := rule.NewMap(r.Rules, func(str string) int {
 		cs := searcher.SearchConcepts(str, 2)
 		if len(cs) != 1 {
 			return -1

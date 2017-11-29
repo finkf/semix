@@ -8,6 +8,7 @@ import (
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/resolve"
+	"bitbucket.org/fflo/semix/pkg/rule"
 	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -25,7 +26,7 @@ type PutData struct {
 func (p PutData) stream(
 	ctx context.Context,
 	dfa semix.DFA,
-	rules resolve.Rules,
+	rules rule.Map,
 	idx index.Interface,
 	dir string,
 ) (semix.Stream, error) {
@@ -59,7 +60,7 @@ func (p PutData) matchStream(
 
 func (p PutData) resolveStream(
 	ctx context.Context,
-	rules resolve.Rules,
+	rules rule.Map,
 	s semix.Stream,
 ) (semix.Stream, error) {
 	for i := len(p.Resolvers); i > 0; i-- {
@@ -94,7 +95,7 @@ type Resolver struct {
 	MemorySize int
 }
 
-func (r Resolver) resolver(rules resolve.Rules) (resolve.Interface, error) {
+func (r Resolver) resolver(rules rule.Map) (resolve.Interface, error) {
 	switch strings.ToLower(r.Name) {
 	case "automatic":
 		return resolve.Automatic{Threshold: r.Threshold}, nil

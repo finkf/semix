@@ -11,7 +11,7 @@ import (
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/query"
-	"bitbucket.org/fflo/semix/pkg/resolve"
+	"bitbucket.org/fflo/semix/pkg/rule"
 	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -26,7 +26,7 @@ type handle struct {
 	index     index.Interface
 	dir, host string
 	dfa       semix.DFA
-	rules     resolve.Rules
+	rules     rule.Map
 }
 
 func requestFunc(h func(*http.Request) (interface{}, int, error)) http.HandlerFunc {
