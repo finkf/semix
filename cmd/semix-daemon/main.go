@@ -72,5 +72,5 @@ func server() (*rest.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	return rest.New(host, dir, r, index), nil
+	return rest.New(host, dir, r, index)
 }
