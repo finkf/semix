@@ -6,29 +6,34 @@ import (
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
-type ruled struct {
-	rules map[string]rule.Rule
-}
+// Rules is a map that maps concept URLs to compiled disambiguation rules.
+type Rules map[string]rule.Rule
 
-// NewRuled creates an new rule-based resolver.
-func NewRuled(rs semix.RulesDictionary, l func(string) int) (Interface, error) {
-	ruled := &ruled{make(map[string]rule.Rule, len(rs))}
-	for url, r := range rs {
-		compiled, err := rule.Compile(r, l)
+// NewRules compiles all rules in a RulesDictionary.
+func NewRules(rs semix.RulesDictionary, l func(string) int) (Rules, error) {
+	rules := make(Rules, len(rs))
+	for str, rstr := range rs {
+		rule, err := rule.Compile(rstr, l)
 		if err != nil {
 			return nil, err
 		}
-		ruled.rules[url] = compiled
+		rules[str] = rule
 	}
-	return ruled, nil
+	return rules, nil
 }
 
-func (r *ruled) Resolve(c *semix.Concept, mem *memory.Memory) *semix.Concept {
+// Ruled is a resolver that uses the compiled rules to disambiguate concepts.
+type Ruled struct {
+	Rules Rules
+}
+
+// Resolve is used to resolve ambiguities.
+func (r Ruled) Resolve(c *semix.Concept, mem *memory.Memory) *semix.Concept {
 	return resolve(c, func(c *semix.Concept) float64 {
-		if _, ok := r.rules[c.URL()]; !ok {
+		if _, ok := r.Rules[c.URL()]; !ok {
 			return 0
 		}
-		if r.rules[c.URL()].Execute(mem) < 1 {
+		if r.Rules[c.URL()].Execute(mem) < 1 {
 			return 0
 		}
 		return 1

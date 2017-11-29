@@ -1,12 +1,15 @@
 package rest
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"path/filepath"
 
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -83,33 +86,52 @@ func (c Client) Get(q string) (Tokens, error) {
 }
 
 // PutURL puts the given url into the index.
-func (c Client) PutURL(u string, ls []int, rs []string) (Tokens, error) {
-	query, err := EncodeQuery(struct {
-		URL string
-		L   []int
-		R   []string
-	}{u, ls, rs})
+func (c Client) PutURL(url string, ls []int, rs []Resolver) (Tokens, error) {
+	return c.doPut(PutData{
+		URL:       url,
+		Errors:    ls,
+		Resolvers: rs,
+	})
+}
+
+// PutLocalFile puts a local file into the index.
+// This only works if the server has access to the same file system as the client.
+// PutLocalFile calculates the absolute path for the given file.
+func (c Client) PutLocalFile(path string, ls []int, rs []Resolver) (Tokens, error) {
+	abs, err := filepath.Abs(path)
 	if err != nil {
 		return Tokens{}, err
 	}
-	var ts Tokens
-	url := c.host + "/put" + query
-	err = c.get(url, &ts)
-	return ts, err
+	return c.doPut(PutData{
+		URL:       abs,
+		Local:     true,
+		Errors:    ls,
+		Resolvers: rs,
+	})
 }
 
 // PutContent puts the given content into the index.
-func (c Client) PutContent(r io.Reader, ct string, ls []int, rs []string) (Tokens, error) {
-	query, err := EncodeQuery(struct {
-		L []int
-		R []string
-	}{ls, rs})
+func (c Client) PutContent(r io.Reader, ct string, ls []int, rs []Resolver) (Tokens, error) {
+	content, err := ioutil.ReadAll(r)
 	if err != nil {
 		return Tokens{}, err
 	}
-	url := c.host + "/put" + query
+	return c.doPut(PutData{
+		Errors:      ls,
+		Resolvers:   rs,
+		Content:     string(content),
+		ContentType: ct,
+	})
+}
+
+func (c Client) doPut(data PutData) (Tokens, error) {
+	b := new(bytes.Buffer)
+	if err := json.NewEncoder(b).Encode(data); err != nil {
+		return Tokens{}, err
+	}
 	var ts Tokens
-	err = c.post(url, r, ct, ts)
+	var err error
+	err = c.post(c.host+"/put", b, "application/json", &ts)
 	return ts, err
 }
 

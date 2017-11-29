@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"bitbucket.org/fflo/semix/pkg/index"
+	"bitbucket.org/fflo/semix/pkg/resolve"
 	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -16,18 +17,30 @@ type Server struct {
 }
 
 // New returns a new server instance.
-func New(self, dir string, r *semix.Resource, i index.Interface) *Server {
+func New(self, dir string, r *semix.Resource, i index.Interface) (*Server, error) {
+	searcher := searcher.New(r.Graph, r.Dictionary)
+	rules, err := resolve.NewRules(r.Rules, func(str string) int {
+		cs := searcher.SearchConcepts(str, 2)
+		if len(cs) != 1 {
+			return -1
+		}
+		return int(cs[0].ID())
+	})
+	if err != nil {
+		return nil, err
+	}
 	h := handle{
 		dir:      dir,
-		r:        r,
-		searcher: searcher.New(r.Graph, r.Dictionary),
+		dfa:      r.DFA,
+		searcher: searcher,
+		rules:    rules,
 		index:    i,
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/search", WithLogging(WithGet(requestFunc(h.search))))
 	mux.HandleFunc("/parents", WithLogging(WithGet(requestFunc(h.parents))))
 	mux.HandleFunc("/predicates", WithLogging(WithGet(requestFunc(h.predicates))))
-	mux.HandleFunc("/put", WithLogging(WithGetOrPost(requestFunc(h.put))))
+	mux.HandleFunc("/put", WithLogging(WithPost(requestFunc(h.put))))
 	mux.HandleFunc("/get", WithLogging(WithGet(requestFunc(h.get))))
 	mux.HandleFunc("/ctx", WithLogging(WithGet(requestFunc(h.ctx))))
 	mux.HandleFunc("/info", WithLogging(WithGet(requestFunc(h.info))))
@@ -37,7 +50,7 @@ func New(self, dir string, r *semix.Resource, i index.Interface) *Server {
 			Handler: mux,
 		},
 		handle: h,
-	}
+	}, nil
 }
 
 // ListenAndServe starts the server.

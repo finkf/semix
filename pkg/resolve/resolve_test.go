@@ -57,7 +57,7 @@ func TestRuled(t *testing.T) {
 	a := semix.NewConcept("A", semix.WithID(1))
 	b := semix.NewConcept("B", semix.WithID(2))
 	ambig := semix.NewConcept("A-B", semix.WithEdges(split, a, split, b))
-	ruled, err := NewRuled(map[string]string{"A": `cs("A")>0`, "B": `cs("B")>0`}, func(str string) int {
+	rules, err := NewRules(map[string]string{"A": `cs("A")>0`, "B": `cs("B")>0`}, func(str string) int {
 		switch str {
 		case "A":
 			return 1
@@ -70,6 +70,7 @@ func TestRuled(t *testing.T) {
 	if err != nil {
 		t.Fatalf("got error: %s", err)
 	}
+	ruled := Ruled{Rules: rules}
 	mem := memory.New(3)
 	checkResolve(t, ruled.Resolve(ambig, mem), nil)
 	mem.Push(a)

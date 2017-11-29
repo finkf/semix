@@ -185,7 +185,7 @@ func put(r *http.Request) (*template.Template, interface{}, status) {
 		if err := rest.DecodeQuery(r.URL.Query(), &ps); err != nil {
 			return nil, nil, internalError(err)
 		}
-		ts, err := rest.NewClient(daemon).PutURL(ps.URL, ps.Ls, ps.Rs)
+		ts, err := rest.NewClient(daemon).PutURL(ps.URL, ps.Ls, nil)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}

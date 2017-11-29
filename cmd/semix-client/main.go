@@ -20,6 +20,8 @@ var (
 	put        string
 	get        string
 	url        string
+	threshold  float64
+	memsize    int
 	id         int
 	info       bool
 	parents    bool
@@ -30,6 +32,8 @@ var (
 )
 
 func init() {
+	flag.Float64Var(&threshold, "threshold", 0, "set threshold for automatic resolver")
+	flag.IntVar(&memsize, "memsize", 0, "set memory size for resolvers")
 	flag.StringVar(&daemon, "daemon", "http://localhost:6660", "set daemon host")
 	flag.StringVar(&search, "search", "", "search for concepts")
 	flag.StringVar(&predicates, "predicates", "", "search for predicates")
@@ -169,19 +173,31 @@ func putFile(path string) {
 	var ts rest.Tokens
 	var err error
 	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
-		ts, err = client.PutURL(path, ls, rs)
+		ts, err = client.PutURL(path, ls, makeResolvers())
 	} else {
 		is, err := os.Open(path)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer is.Close()
-		ts, err = client.PutContent(is, "text/plain", ls, rs)
+		ts, err = client.PutContent(is, "text/plain", ls, makeResolvers())
 	}
 	if err != nil {
 		log.Fatal(err)
 	}
 	printTokens(ts)
+}
+
+func makeResolvers() []rest.Resolver {
+	var res []rest.Resolver
+	for _, r := range rs {
+		resolver := rest.Resolver{Name: r, MemorySize: memsize}
+		if strings.ToLower(r) == "automatic" {
+			resolver.Threshold = threshold
+		}
+		res = append(res, resolver)
+	}
+	return res
 }
 
 func printTokens(ts rest.Tokens) {
