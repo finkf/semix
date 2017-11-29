@@ -8,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 
+	"bitbucket.org/fflo/semix/pkg/args"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -31,8 +31,8 @@ var (
 	parents    bool
 	help       bool
 	client     rest.Client
-	ls         levs
-	rs         resolvers
+	ls         args.IntList
+	rs         args.StringList
 )
 
 func init() {
@@ -187,16 +187,16 @@ func putFile(path string) {
 	var ts rest.Tokens
 	var err error
 	if isURL(path) {
-		ts, err = client.PutURL(path, ls, makeResolvers())
+		ts, err = client.PutURL(path, ls, resolvers())
 	} else if local {
-		ts, err = client.PutLocalFile(path, ls, makeResolvers())
+		ts, err = client.PutLocalFile(path, ls, resolvers())
 	} else {
 		is, err := os.Open(path)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer is.Close()
-		ts, err = client.PutContent(is, "text/plain", ls, makeResolvers())
+		ts, err = client.PutContent(is, "text/plain", ls, resolvers())
 	}
 	if err != nil {
 		log.Fatal(err)
@@ -228,7 +228,7 @@ func isURL(path string) bool {
 		strings.HasPrefix(path, "https://")
 }
 
-func makeResolvers() []rest.Resolver {
+func resolvers() []rest.Resolver {
 	var res []rest.Resolver
 	for _, r := range rs {
 		resolver := rest.Resolver{Name: r, MemorySize: memsize}
@@ -250,10 +250,6 @@ func printTokens(ts rest.Tokens) {
 	}
 }
 
-// Token, Path, RelationURL string
-// Concept                  *semix.Concept
-// Begin, End, L            int
-
 func printConcepts(cs []*semix.Concept) {
 	for _, c := range cs {
 		fmt.Printf("%s\n", c)
@@ -264,34 +260,4 @@ func assertSearchOK() {
 	if id == 0 && url == "" {
 		log.Fatal("missing concept id or url")
 	}
-}
-
-type levs []int
-
-func (ls levs) String() string {
-	var strs []string
-	for _, l := range ls {
-		strs = append(strs, fmt.Sprintf("%d", l))
-	}
-	return strings.Join(strs, ",")
-}
-
-func (ls *levs) Set(val string) error {
-	l, err := strconv.Atoi(val)
-	if err != nil {
-		return err
-	}
-	*ls = append(*ls, l)
-	return nil
-}
-
-type resolvers []string
-
-func (rs resolvers) String() string {
-	return strings.Join(rs, ",")
-}
-
-func (rs *resolvers) Set(val string) error {
-	*rs = append(*rs, val)
-	return nil
 }
