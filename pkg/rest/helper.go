@@ -19,7 +19,7 @@ func WithLogging(f http.HandlerFunc) http.HandlerFunc {
 // If not, an error is logged and the handler function is not called.
 func WithPost(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
+		if r.Method != http.MethodPost {
 			log.Printf("invalid request method: %v", r.Method)
 			http.Error(w, fmt.Sprintf("invalid request method: %s", r.Method), http.StatusBadRequest)
 			return
