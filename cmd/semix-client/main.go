@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"log"
@@ -23,6 +24,8 @@ var (
 	threshold  float64
 	memsize    int
 	id         int
+	filelist   bool
+	local      bool
 	info       bool
 	parents    bool
 	help       bool
@@ -41,6 +44,8 @@ func init() {
 	flag.StringVar(&get, "get", "", "execute a query on the index")
 	flag.IntVar(&id, "id", 0, "set search ID")
 	flag.StringVar(&url, "url", "", "set search URL")
+	flag.BoolVar(&filelist, "filelist", false, "treat put arguments as path to a file list")
+	flag.BoolVar(&local, "local", false, "use local files")
 	flag.BoolVar(&info, "info", false, "get info (needs -id or -url)")
 	flag.BoolVar(&parents, "parents", false, "get parents of concept (needs -id or -url)")
 	flag.BoolVar(&help, "help", false, "print this help")
@@ -132,6 +137,10 @@ func doGet() {
 }
 
 func doPut() {
+	if filelist {
+		putFileList()
+		return
+	}
 	ms, err := filepath.Glob(put)
 	if err != nil {
 		log.Fatal(err)
@@ -174,6 +183,8 @@ func putFile(path string) {
 	var err error
 	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
 		ts, err = client.PutURL(path, ls, makeResolvers())
+	} else if local {
+		ts, err = client.PutLocalFile(path, ls, makeResolvers())
 	} else {
 		is, err := os.Open(path)
 		if err != nil {
@@ -186,6 +197,25 @@ func putFile(path string) {
 		log.Fatal(err)
 	}
 	printTokens(ts)
+}
+
+func putFileList() {
+	file, err := os.Open(put)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		path := scanner.Text()
+		if strings.HasPrefix(path, "#") {
+			continue
+		}
+		putFileOrDir(path)
+	}
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func makeResolvers() []rest.Resolver {
