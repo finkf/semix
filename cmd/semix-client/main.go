@@ -208,7 +208,7 @@ func putFileList() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		path := scanner.Text()
-		if strings.HasPrefix(path, "#") {
+		if strings.HasPrefix(path, "#") || len(path) == 0 {
 			continue
 		}
 		putFileOrDir(path)
