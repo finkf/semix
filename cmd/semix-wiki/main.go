@@ -60,7 +60,9 @@ func cleanup(content string) string {
 	content = regexp.MustCompile("(?si)<small>(.*?)</small>").ReplaceAllString(content, "$1")
 	content = regexp.MustCompile("(?si)<math>(.*?)</math>").ReplaceAllString(content, "$1")
 	content = regexp.MustCompile("(?si){{.*?}}").ReplaceAllLiteralString(content, " ")
+	content = regexp.MustCompile("(?si){\\|.*?\\|}").ReplaceAllLiteralString(content, " ")
 	content = regexp.MustCompile("(?si)https?://\\S*").ReplaceAllLiteralString(content, " ")
+	content = regexp.MustCompile("(?si)==\\s*Literatur\\s*==.*").ReplaceAllLiteralString(content, " ")
 	return content
 }
 
