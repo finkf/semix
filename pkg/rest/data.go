@@ -107,6 +107,12 @@ func (r Resolver) resolver(rules rule.Map) (resolve.Interface, error) {
 	return nil, fmt.Errorf("invalid resolver name: %s", r.Name)
 }
 
+// DocumentInfo defines the document counts for a query.
+type DocumentInfo struct {
+	Documents map[string]int
+	N         int
+}
+
 // ConceptInfo holds information about a concept.
 type ConceptInfo struct {
 	Concept *semix.Concept

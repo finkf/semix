@@ -152,6 +152,31 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 	return ts, http.StatusOK, nil
 }
 
+// type Entry struct {
+// 	ConceptURL, Path, RelationURL, Token string
+// 	Begin, End, L                        int
+// 	Ambiguous                            bool
+// }
+func (h handle) getDocs(r *http.Request) (interface{}, int, error) {
+	q := r.URL.Query().Get("q")
+	log.Printf("query: %s", q)
+	qu, err := query.New(q, h.getFixFunc())
+	if err != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)
+	}
+	log.Printf("executing query: %s", qu)
+	info := DocumentInfo{Documents: make(map[string]int)}
+	err = qu.ExecuteFunc(h.index, func(e index.Entry) {
+		info.N++
+		info.Documents[e.Path]++
+	})
+	if err != nil {
+		return nil, http.StatusInternalServerError,
+			fmt.Errorf("could not execute query %q: %v", q, err)
+	}
+	return info, http.StatusOK, nil
+}
+
 func (h handle) getFixFunc() query.LookupFunc {
 	return func(arg string) ([]string, error) {
 		cs := h.searcher.SearchConcepts(arg, 1)

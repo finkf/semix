@@ -85,6 +85,15 @@ func (c Client) Get(q string) (Tokens, error) {
 	return ts, err
 }
 
+// GetDocuments searches the index for the given query,
+// only counting different documents.
+func (c Client) GetDocuments(q string) (DocumentInfo, error) {
+	url := c.host + fmt.Sprintf("/get-documents?q=%s", url.QueryEscape(q))
+	var info DocumentInfo
+	err := c.get(url, &info)
+	return info, err
+}
+
 // PutURL puts the given url into the index.
 func (c Client) PutURL(url string, ls []int, rs []Resolver) (Tokens, error) {
 	return c.doPut(PutData{
