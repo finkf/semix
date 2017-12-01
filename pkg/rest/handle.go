@@ -78,6 +78,19 @@ func (h handle) predicates(r *http.Request) (interface{}, int, error) {
 	return cs, http.StatusOK, nil
 }
 
+func (h handle) concept(r *http.Request) (interface{}, int, error) {
+	var data lookupData
+	if err := DecodeQuery(r.URL.Query(), &data); err != nil {
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query: %s", err)
+	}
+	c, ok := h.lookup(data)
+	if !ok {
+		return nil, http.StatusNotFound, nil
+	}
+	return c, http.StatusOK, nil
+}
+
 func (h handle) search(r *http.Request) (interface{}, int, error) {
 	q := r.URL.Query().Get("q")
 	if len(q) == 0 {
@@ -96,7 +109,7 @@ func (h handle) info(r *http.Request) (interface{}, int, error) {
 	}
 	c, ok := h.lookup(data)
 	if !ok {
-		return ConceptInfo{}, http.StatusOK, nil
+		return nil, http.StatusNotFound, nil
 	}
 	entries := h.searcher.SearchDictionaryEntries(c)
 	info := ConceptInfo{Concept: c, Entries: entries}
@@ -116,15 +129,21 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}
-	ts := Tokens{Tokens: []Token{}} // for json
+	var es []index.Entry
 	for t := range stream {
 		if t.Err != nil {
 			return nil, http.StatusInternalServerError,
-				fmt.Errorf("cannot index document: %v", t.Err)
+				fmt.Errorf("cannot index document: %s", t.Err)
 		}
-		ts.Tokens = append(ts.Tokens, NewTokens(t.Token)...)
+		es = append(es, index.Entry{
+			Path:       t.Token.Path,
+			Token:      t.Token.Token,
+			ConceptURL: t.Token.Concept.URL(),
+			Begin:      t.Token.Begin,
+			End:        t.Token.End,
+		})
 	}
-	return ts, http.StatusCreated, nil
+	return es, http.StatusCreated, nil
 }
 
 func (h handle) get(r *http.Request) (interface{}, int, error) {
@@ -140,41 +159,7 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not execute query %q: %v", q, err)
 	}
-	var ts Tokens
-	for _, e := range es {
-		t, err := NewTokenFromEntry(h.searcher, e)
-		if err != nil {
-			return nil, http.StatusInternalServerError,
-				fmt.Errorf("cannot convert %v: %v", e, err)
-		}
-		ts.Tokens = append(ts.Tokens, t)
-	}
-	return ts, http.StatusOK, nil
-}
-
-// type Entry struct {
-// 	ConceptURL, Path, RelationURL, Token string
-// 	Begin, End, L                        int
-// 	Ambiguous                            bool
-// }
-func (h handle) getDocs(r *http.Request) (interface{}, int, error) {
-	q := r.URL.Query().Get("q")
-	log.Printf("query: %s", q)
-	qu, err := query.New(q, h.getFixFunc())
-	if err != nil {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)
-	}
-	log.Printf("executing query: %s", qu)
-	info := DocumentInfo{Documents: make(map[string]int)}
-	err = qu.ExecuteFunc(h.index, func(e index.Entry) {
-		info.N++
-		info.Documents[e.Path]++
-	})
-	if err != nil {
-		return nil, http.StatusInternalServerError,
-			fmt.Errorf("could not execute query %q: %v", q, err)
-	}
-	return info, http.StatusOK, nil
+	return es, http.StatusOK, nil
 }
 
 func (h handle) getFixFunc() query.LookupFunc {

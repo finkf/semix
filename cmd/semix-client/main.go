@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/args"
+	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -134,7 +135,7 @@ func doGet() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	printTokens(ts)
+	printEntries(ts)
 }
 
 func doPut() {
@@ -184,24 +185,24 @@ func putDir(path string) {
 }
 
 func putFile(path string) {
-	var ts rest.Tokens
+	var es []index.Entry
 	var err error
 	if isURL(path) {
-		ts, err = client.PutURL(path, ls, resolvers())
+		es, err = client.PutURL(path, ls, resolvers())
 	} else if local {
-		ts, err = client.PutLocalFile(path, ls, resolvers())
+		es, err = client.PutLocalFile(path, ls, resolvers())
 	} else {
 		is, err := os.Open(path)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer is.Close()
-		ts, err = client.PutContent(is, path, "text/plain", ls, resolvers())
+		es, err = client.PutContent(is, path, "text/plain", ls, resolvers())
 	}
 	if err != nil {
 		log.Fatal(err)
 	}
-	printTokens(ts)
+	printEntries(es)
 }
 
 func putFileList() {
@@ -240,14 +241,13 @@ func resolvers() []rest.Resolver {
 	return res
 }
 
-func printTokens(ts rest.Tokens) {
-	sort.Slice(ts.Tokens, func(i, j int) bool {
-		return ts.Tokens[i].Path < ts.Tokens[j].Path
+func printEntries(es []index.Entry) {
+	sort.Slice(es, func(i, j int) bool {
+		return es[i].Path < es[j].Path
 	})
-	for i, t := range ts.Tokens {
+	for i, e := range es {
 		fmt.Printf("[%d/%d] %q %q %q %q\n",
-			i+1, len(ts.Tokens), t.Token, t.RelationURL,
-			t.Concept.ShortName(), t.Path)
+			i+1, len(es), e.Token, e.RelationURL, e.ConceptURL, e.Path)
 	}
 }
 

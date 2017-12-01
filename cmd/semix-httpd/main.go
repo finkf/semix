@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -141,14 +142,14 @@ func home(r *http.Request) (*template.Template, interface{}, status) {
 
 func get(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("q")
-	ts, err := rest.NewClient(daemon).Get(q)
+	es, err := rest.NewClient(daemon).Get(q)
 	if err != nil {
 		return nil, nil, internalError(err)
 	}
 	return gettmpl, struct {
-		Query  string
-		Tokens rest.Tokens
-	}{q, ts}, ok()
+		Query   string
+		Entries []index.Entry
+	}{q, es}, ok()
 }
 
 func ctx(r *http.Request) (*template.Template, interface{}, status) {

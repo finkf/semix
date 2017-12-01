@@ -49,16 +49,14 @@ func work(i int, wg *sync.WaitGroup, achan <-chan article) {
 	client := rest.NewClient(daemon)
 	defer wg.Done()
 	for article := range achan {
-		log.Printf("[%d] article: %s", i, article.name)
-		if _, err := client.PutContent(strings.NewReader(article.content),
+		if es, err := client.PutContent(strings.NewReader(article.content),
 			article.name, "text/plain", nil, nil); err != nil {
 			log.Printf("[error] %s", err)
+		} else {
+			log.Printf("[%d] put article: %s (%d tokens)", i, article.name, len(es))
 		}
-		// log.Printf("%s", cleanup(article.content))
 	}
 }
-
-// func (c Client) PutContent(r io.Reader, ct string, ls []int, rs []Resolver) (Tokens, error) {
 
 func cleanup(content string) string {
 	content = html.UnescapeString(content)
