@@ -52,11 +52,13 @@ func (i *index) Put(t semix.Token) error {
 
 // Get queries the index for a concept and calls the callback function
 // for each entry in the index.
-func (i *index) Get(url string, f func(Entry)) error {
+func (i *index) Get(url string, f func(Entry) bool) error {
 	i.mutex.RLock()
 	defer i.mutex.RUnlock()
 	for _, e := range i.buffer[url] {
-		f(e)
+		if !f(e) {
+			return nil
+		}
 	}
 	return i.storage.Get(url, f)
 }
@@ -97,9 +99,11 @@ func (i memIndex) Put(t semix.Token) error {
 	})
 }
 
-func (i memIndex) Get(url string, f func(Entry)) error {
+func (i memIndex) Get(url string, f func(Entry) bool) error {
 	for _, e := range i.index[url] {
-		f(e)
+		if !f(e) {
+			return nil
+		}
 	}
 	return nil
 }

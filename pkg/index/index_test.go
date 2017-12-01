@@ -49,8 +49,9 @@ func TestIndex(t *testing.T) {
 
 func count(i Interface, url string) int {
 	var count int
-	i.Get(url, func(e Entry) {
+	i.Get(url, func(e Entry) bool {
 		count++
+		return true
 	})
 	return count
 }

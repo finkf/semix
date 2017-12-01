@@ -63,8 +63,9 @@ func TestStorage(t *testing.T) {
 	}
 	for _, tc := range tests {
 		var es []Entry
-		storage.Get(tc.url, func(e Entry) {
+		storage.Get(tc.url, func(e Entry) bool {
 			es = append(es, e)
+			return true
 		})
 		if len(es) != len(tc.es) {
 			t.Fatalf("expected %d entries; got %d entries", len(tc.es), len(es))

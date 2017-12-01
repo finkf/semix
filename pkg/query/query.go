@@ -77,10 +77,11 @@ func (q Query) Execute(idx index.Interface) ([]index.Entry, error) {
 // is called for every matched IndexEntry.
 func (q Query) ExecuteFunc(idx index.Interface, f func(index.Entry)) error {
 	for url := range q.set {
-		err := idx.Get(url, func(e index.Entry) {
+		err := idx.Get(url, func(e index.Entry) bool {
 			if q.match(e) {
 				f(e)
 			}
+			return true
 		})
 		if err != nil {
 			return err
