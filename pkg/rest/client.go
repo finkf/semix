@@ -111,12 +111,13 @@ func (c Client) PutLocalFile(path string, ls []int, rs []Resolver) (Tokens, erro
 }
 
 // PutContent puts the given content into the index.
-func (c Client) PutContent(r io.Reader, ct string, ls []int, rs []Resolver) (Tokens, error) {
+func (c Client) PutContent(r io.Reader, url, ct string, ls []int, rs []Resolver) (Tokens, error) {
 	content, err := ioutil.ReadAll(r)
 	if err != nil {
 		return Tokens{}, err
 	}
 	return c.doPut(PutData{
+		URL:         url,
 		Errors:      ls,
 		Resolvers:   rs,
 		Content:     string(content),

@@ -196,7 +196,7 @@ func putFile(path string) {
 			log.Fatal(err)
 		}
 		defer is.Close()
-		ts, err = client.PutContent(is, "text/plain", ls, resolvers())
+		ts, err = client.PutContent(is, path, "text/plain", ls, resolvers())
 	}
 	if err != nil {
 		log.Fatal(err)
@@ -244,15 +244,16 @@ func printTokens(ts rest.Tokens) {
 	sort.Slice(ts.Tokens, func(i, j int) bool {
 		return ts.Tokens[i].Path < ts.Tokens[j].Path
 	})
-	for _, t := range ts.Tokens {
-		fmt.Printf("%q %q %q %q\n",
-			t.Token, t.RelationURL, t.Concept.ShortName(), t.Path)
+	for i, t := range ts.Tokens {
+		fmt.Printf("[%d/%d] %q %q %q %q\n",
+			i+1, len(ts.Tokens), t.Token, t.RelationURL,
+			t.Concept.ShortName(), t.Path)
 	}
 }
 
 func printConcepts(cs []*semix.Concept) {
-	for _, c := range cs {
-		fmt.Printf("%s\n", c)
+	for i, c := range cs {
+		fmt.Printf("[%d/%d] %s\n", i+1, len(cs), c)
 	}
 }
 

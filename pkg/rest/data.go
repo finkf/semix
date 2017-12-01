@@ -80,7 +80,7 @@ func (p PutData) document(dir string) (semix.Document, error) {
 		}
 		return semix.NewHTTPDocument(p.URL), nil
 	}
-	doc, err := newDumpFile(strings.NewReader(p.Content), dir, p.ContentType)
+	doc, err := newDumpFile(strings.NewReader(p.Content), dir, p.URL, p.ContentType)
 	if err != nil {
 		return nil, err
 	}

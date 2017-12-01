@@ -1,6 +1,8 @@
 package index
 
 import (
+	"sync"
+
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -19,6 +21,7 @@ func New(dir string, size int) (Interface, error) {
 	return &index{
 		storage: storage,
 		buffer:  make(map[string][]Entry),
+		mutex:   new(sync.RWMutex),
 		n:       size,
 	}, nil
 }
@@ -26,11 +29,14 @@ func New(dir string, size int) (Interface, error) {
 type index struct {
 	storage Storage
 	buffer  map[string][]Entry
+	mutex   *sync.RWMutex
 	n       int
 }
 
 // Put puts a token in the index.
 func (i *index) Put(t semix.Token) error {
+	i.mutex.Lock()
+	defer i.mutex.Unlock()
 	return putAll(t, func(e Entry) error {
 		url := e.ConceptURL
 		i.buffer[url] = append(i.buffer[url], e)
@@ -47,6 +53,8 @@ func (i *index) Put(t semix.Token) error {
 // Get queries the index for a concept and calls the callback function
 // for each entry in the index.
 func (i *index) Get(url string, f func(Entry)) error {
+	i.mutex.RLock()
+	defer i.mutex.RUnlock()
 	for _, e := range i.buffer[url] {
 		f(e)
 	}
@@ -55,6 +63,8 @@ func (i *index) Get(url string, f func(Entry)) error {
 
 // Close closes the index and writes all buffered entries to disc.
 func (i *index) Close() (err error) {
+	i.mutex.Lock()
+	defer i.mutex.Unlock()
 	defer func() {
 		err = i.storage.Close()
 	}()

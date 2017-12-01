@@ -8,9 +8,11 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strings"
 	"sync"
 
 	"bitbucket.org/fflo/semix/pkg/args"
+	"bitbucket.org/fflo/semix/pkg/rest"
 )
 
 type article struct {
@@ -19,6 +21,7 @@ type article struct {
 
 var (
 	articles  args.RegexList
+	daemon    string
 	worker    int
 	narticles int
 )
@@ -27,6 +30,7 @@ func init() {
 	flag.Var(&articles, "a", "list of regexes to match articles")
 	flag.IntVar(&worker, "w", 2, "number of workers")
 	flag.IntVar(&narticles, "n", 0, "maximal number of articles")
+	flag.StringVar(&daemon, "daemon", "http://localhost:6660", "set address of daemon")
 }
 
 func main() {
@@ -42,12 +46,19 @@ func main() {
 }
 
 func work(i int, wg *sync.WaitGroup, achan <-chan article) {
+	client := rest.NewClient(daemon)
 	defer wg.Done()
 	for article := range achan {
 		log.Printf("[%d] article: %s", i, article.name)
-		log.Printf("%s", cleanup(article.content))
+		if _, err := client.PutContent(strings.NewReader(article.content),
+			article.name, "text/plain", nil, nil); err != nil {
+			log.Printf("[error] %s", err)
+		}
+		// log.Printf("%s", cleanup(article.content))
 	}
 }
+
+// func (c Client) PutContent(r io.Reader, ct string, ls []int, rs []Resolver) (Tokens, error) {
 
 func cleanup(content string) string {
 	content = html.UnescapeString(content)
@@ -58,7 +69,7 @@ func cleanup(content string) string {
 	content = regexp.MustCompile("(?si)<u>(.*?)</u>").ReplaceAllString(content, "$1")
 	content = regexp.MustCompile("(?si)<sub>(.*?)</sub>").ReplaceAllString(content, "$1")
 	content = regexp.MustCompile("(?si)<small>(.*?)</small>").ReplaceAllString(content, "$1")
-	content = regexp.MustCompile("(?si)<math>(.*?)</math>").ReplaceAllString(content, "$1")
+	content = regexp.MustCompile("(?si)<math>.*?</math>").ReplaceAllLiteralString(content, " ")
 	content = regexp.MustCompile("(?si){{.*?}}").ReplaceAllLiteralString(content, " ")
 	content = regexp.MustCompile("(?si){\\|.*?\\|}").ReplaceAllLiteralString(content, " ")
 	content = regexp.MustCompile("(?si)https?://\\S*").ReplaceAllLiteralString(content, " ")
