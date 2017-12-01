@@ -171,7 +171,7 @@ func put(r *http.Request) (*template.Template, interface{}, status) {
 	switch r.Method {
 	case http.MethodPost:
 		ct := "text/plain"
-		ts, err := rest.NewClient(daemon).PutContent(r.Body, ct, nil, nil)
+		ts, err := rest.NewClient(daemon).PutContent(r.Body, "", ct, nil, nil)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
