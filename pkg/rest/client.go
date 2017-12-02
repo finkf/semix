@@ -62,7 +62,7 @@ func (c Client) ParentsID(id int) ([]*semix.Concept, error) {
 	return cs, err
 }
 
-// InfoURL get the concept info searching by url.
+// InfoURL gets the concept info searching by URL.
 func (c Client) InfoURL(u string) (ConceptInfo, error) {
 	url := c.host + fmt.Sprintf("/info?url=%s", url.QueryEscape(u))
 	var info ConceptInfo
@@ -70,12 +70,28 @@ func (c Client) InfoURL(u string) (ConceptInfo, error) {
 	return info, err
 }
 
-// InfoID get the concept info searching by id.
+// InfoID gets the concept info searching by ID.
 func (c Client) InfoID(id int) (ConceptInfo, error) {
 	url := c.host + fmt.Sprintf("/info?id=%d", id)
 	var info ConceptInfo
 	err := c.get(url, &info)
 	return info, err
+}
+
+// ConceptURL gets the concept searching by URL.
+func (c Client) ConceptURL(u string) (*semix.Concept, error) {
+	url := c.host + fmt.Sprintf("/concept?url=%s", url.QueryEscape(u))
+	var con semix.Concept
+	err := c.get(url, &con)
+	return &con, err
+}
+
+// ConceptID gets the concept searching by ID.
+func (c Client) ConceptID(id int) (*semix.Concept, error) {
+	url := c.host + fmt.Sprintf("/concept?url=%d", id)
+	var con semix.Concept
+	err := c.get(url, &con)
+	return &con, err
 }
 
 // Get searches the index for the given query.

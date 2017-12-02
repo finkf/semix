@@ -30,7 +30,7 @@ func init() {
 	flag.Var(&articles, "a", "list of regexes to match articles")
 	flag.IntVar(&worker, "w", 2, "number of workers")
 	flag.IntVar(&narticles, "n", 0, "maximal number of articles")
-	flag.StringVar(&daemon, "daemon", "http://localhost:6660", "set address of daemon")
+	flag.StringVar(&daemon, "daemon", "http://localhost:6606", "set address of daemon")
 }
 
 func main() {

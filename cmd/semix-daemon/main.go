@@ -25,7 +25,7 @@ var (
 func init() {
 	flag.StringVar(&dir, "dir",
 		filepath.Join(os.Getenv("HOME"), "semix"), "set semix index directory")
-	flag.StringVar(&host, "host", "localhost:6660", "set listen host")
+	flag.StringVar(&host, "host", "localhost:6606", "set listen host")
 	flag.StringVar(&confg, "resource", "testdata/topiczoom.toml", "set resource file")
 	flag.BoolVar(&noCache, "no-cache", false, "do not load resource from cache")
 	flag.BoolVar(&help, "help", false, "prints this help")

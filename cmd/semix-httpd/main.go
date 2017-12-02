@@ -38,7 +38,7 @@ var (
 func init() {
 	flag.StringVar(&dir, "dir", "cmd/semix-httpd/html", "set template directory")
 	flag.StringVar(&host, "host", "localhost:8181", "set listen host")
-	flag.StringVar(&daemon, "daemon", "localhost:6660", "set host of rest service")
+	flag.StringVar(&daemon, "daemon", "localhost:6606", "set host of rest service")
 	flag.BoolVar(&help, "help", false, "print this help")
 }
 

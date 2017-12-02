@@ -30,6 +30,7 @@ var (
 	local      bool
 	info       bool
 	parents    bool
+	concept    bool
 	help       bool
 	client     rest.Client
 	ls         args.IntList
@@ -39,7 +40,7 @@ var (
 func init() {
 	flag.Float64Var(&threshold, "threshold", 0, "set threshold for automatic resolver")
 	flag.IntVar(&memsize, "memsize", 0, "set memory size for resolvers")
-	flag.StringVar(&daemon, "daemon", "http://localhost:6660", "set daemon host")
+	flag.StringVar(&daemon, "daemon", "http://localhost:6606", "set daemon host")
 	flag.StringVar(&search, "search", "", "search for concepts")
 	flag.StringVar(&predicates, "predicates", "", "search for predicates")
 	flag.StringVar(&put, "put", "", "put files or directories into the index")
@@ -50,6 +51,7 @@ func init() {
 	flag.BoolVar(&local, "local", false, "use local files")
 	flag.BoolVar(&info, "info", false, "get info (needs -id or -url)")
 	flag.BoolVar(&parents, "parents", false, "get parents of concept (needs -id or -url)")
+	flag.BoolVar(&concept, "concept", false, "lookup concept (needs -id or -url)")
 	flag.BoolVar(&help, "help", false, "print this help")
 	flag.Var(&rs, "r", "add named resolver (can be set multiple times)")
 	flag.Var(&ls, "l", "add levenshtein distance for approximate search (can be set multiple times)")
@@ -79,6 +81,9 @@ func main() {
 	}
 	if put != "" {
 		doPut()
+	}
+	if concept {
+		doConcept()
 	}
 }
 
@@ -112,6 +117,22 @@ func doInfo() {
 		log.Fatal(err)
 	}
 	fmt.Printf("%v\n", info)
+}
+
+func doConcept() {
+	assertSearchOK()
+	var err error
+	var c *semix.Concept
+	if url != "" {
+		c, err = client.ConceptURL(url)
+	}
+	if id != 0 {
+		c, err = client.ConceptID(id)
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s", c)
 }
 
 func doSearch() {
