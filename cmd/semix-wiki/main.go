@@ -21,6 +21,7 @@ type article struct {
 
 var (
 	articles  args.RegexList
+	file      string
 	daemon    string
 	worker    int
 	narticles int
@@ -31,6 +32,7 @@ func init() {
 	flag.IntVar(&worker, "w", 2, "number of workers")
 	flag.IntVar(&narticles, "n", 0, "maximal number of articles")
 	flag.StringVar(&daemon, "daemon", "http://localhost:6606", "set address of daemon")
+	flag.StringVar(&file, "f", "", "set input file")
 }
 
 func main() {
@@ -38,7 +40,7 @@ func main() {
 	achan := make(chan article, worker)
 	var wg sync.WaitGroup
 	wg.Add(worker + 1)
-	go readWiki(os.Args[len(os.Args)-flag.NArg()], &wg, achan)
+	go readWiki(file, &wg, achan)
 	for i := 0; i < worker; i++ {
 		go work(i, &wg, achan)
 	}
@@ -49,6 +51,8 @@ func work(i int, wg *sync.WaitGroup, achan <-chan article) {
 	client := rest.NewClient(daemon)
 	defer wg.Done()
 	for article := range achan {
+		log.Printf("%s\n%s", article.name, article.content)
+		continue
 		if es, err := client.PutContent(strings.NewReader(article.content),
 			article.name, "text/plain", nil, nil); err != nil {
 			log.Printf("[error] %s", err)
@@ -56,23 +60,6 @@ func work(i int, wg *sync.WaitGroup, achan <-chan article) {
 			log.Printf("[%d] put article: %s (%d tokens)", i, article.name, len(es))
 		}
 	}
-}
-
-func cleanup(content string) string {
-	content = html.UnescapeString(content)
-	content = regexp.MustCompile("(?si)<ref.*?>.*?</ref>").ReplaceAllLiteralString(content, " ")
-	content = regexp.MustCompile("(?si)<ref.*?/>").ReplaceAllLiteralString(content, " ")
-	content = regexp.MustCompile("(?si)<!--.*?-->").ReplaceAllLiteralString(content, " ")
-	content = regexp.MustCompile("(?si)<br.*?/?>").ReplaceAllLiteralString(content, " ")
-	content = regexp.MustCompile("(?si)<u>(.*?)</u>").ReplaceAllString(content, "$1")
-	content = regexp.MustCompile("(?si)<sub>(.*?)</sub>").ReplaceAllString(content, "$1")
-	content = regexp.MustCompile("(?si)<small>(.*?)</small>").ReplaceAllString(content, "$1")
-	content = regexp.MustCompile("(?si)<math>.*?</math>").ReplaceAllLiteralString(content, " ")
-	content = regexp.MustCompile("(?si){{.*?}}").ReplaceAllLiteralString(content, " ")
-	content = regexp.MustCompile("(?si){\\|.*?\\|}").ReplaceAllLiteralString(content, " ")
-	content = regexp.MustCompile("(?si)https?://\\S*").ReplaceAllLiteralString(content, " ")
-	content = regexp.MustCompile("(?si)==\\s*Literatur\\s*==.*").ReplaceAllLiteralString(content, " ")
-	return content
 }
 
 func readWiki(path string, wg *sync.WaitGroup, achan chan article) {
@@ -116,12 +103,30 @@ func readWiki(path string, wg *sync.WaitGroup, achan chan article) {
 				article.name = string(t)
 			}
 			if intext {
-				article.content = string(t)
+				article.content = cleanup(string(t))
 				achan <- article
 				n++
 			}
 		}
 	}
+}
+
+func cleanup(content string) string {
+	content = html.UnescapeString(content)
+	content = regexp.MustCompile("(?si)<ref.*?>.*?</ref>").ReplaceAllLiteralString(content, " ")
+	content = regexp.MustCompile("(?si)<ref.*?/>").ReplaceAllLiteralString(content, " ")
+	content = regexp.MustCompile("(?si)<!--.*?-->").ReplaceAllLiteralString(content, " ")
+	content = regexp.MustCompile("(?si)<br.*?/?>").ReplaceAllLiteralString(content, " ")
+	content = regexp.MustCompile("(?si)<u>(.*?)</u>").ReplaceAllString(content, "$1")
+	content = regexp.MustCompile("(?si)<sub>(.*?)</sub>").ReplaceAllString(content, "$1")
+	content = regexp.MustCompile("(?si)<small>(.*?)</small>").ReplaceAllString(content, "$1")
+	content = regexp.MustCompile("(?si)<math>.*?</math>").ReplaceAllLiteralString(content, " ")
+	content = regexp.MustCompile("(?si){{.*?}}").ReplaceAllLiteralString(content, " ")
+	content = regexp.MustCompile("(?si){\\|.*?\\|}").ReplaceAllLiteralString(content, " ")
+	content = regexp.MustCompile("(?si)https?://\\S*").ReplaceAllLiteralString(content, " ")
+	content = regexp.MustCompile("(?si)==\\s*Literatur\\s*==.*").ReplaceAllLiteralString(content, " ")
+	content = regexp.MustCompile("(?si)==\\s*Weblinks\\s*==.*").ReplaceAllLiteralString(content, " ")
+	return content
 }
 
 func match(article string) bool {
