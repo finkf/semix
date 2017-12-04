@@ -18,7 +18,11 @@
 		{{else}}
 		<a href='/get?q={{urlquery .Query}}&n={{.N}}&s={{sub .S .N}}'>prev</a>
 		{{end}}
+		{{if or (eq (len .Entries) 0) (lt (len .Entries) 50)}}
+		next
+		{{else}}
 		<a href='/get?q={{urlquery .Query}}&n={{.N}}&s={{add .S .N}}'>next</a>
+		{{end}}
 		</div>
 		<div id='result-table'>
 			<table>
