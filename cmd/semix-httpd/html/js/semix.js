@@ -45,7 +45,7 @@ function SetQueryButtonText() {
 
 function ExecuteQuery() {
 	var q = getQuery();
-	q = '/get?q=' + encodeURIComponent(q);
+	q = '/get?q=' + encodeURIComponent(q) + '&n=50&s=0';
 	document.location = q;
 }
 

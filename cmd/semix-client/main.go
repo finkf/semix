@@ -26,6 +26,8 @@ var (
 	threshold  float64
 	memsize    int
 	id         int
+	nget       int
+	skip       int
 	filelist   bool
 	local      bool
 	info       bool
@@ -46,6 +48,8 @@ func init() {
 	flag.StringVar(&put, "put", "", "put files or directories into the index")
 	flag.StringVar(&get, "get", "", "execute a query on the index")
 	flag.IntVar(&id, "id", 0, "set search ID")
+	flag.IntVar(&skip, "skip", 0, "set number of entries to skip")
+	flag.IntVar(&nget, "nget", 0, "set number of entries")
 	flag.StringVar(&url, "url", "", "set search URL")
 	flag.BoolVar(&filelist, "filelist", false, "treat put arguments as path to a file list")
 	flag.BoolVar(&local, "local", false, "use local files")
@@ -152,7 +156,7 @@ func doPredicates() {
 }
 
 func doGet() {
-	ts, err := client.Get(get)
+	ts, err := client.Get(get, nget, skip)
 	if err != nil {
 		log.Fatal(err)
 	}

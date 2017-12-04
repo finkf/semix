@@ -48,7 +48,7 @@ func (c Client) Search(q string) ([]*semix.Concept, error) {
 
 // ParentsURL get the parent concepts searching by url.
 func (c Client) ParentsURL(u string) ([]*semix.Concept, error) {
-	url := c.host + fmt.Sprintf("/info?url=%s", url.QueryEscape(u))
+	url := c.host + fmt.Sprintf("/parents?url=%s", url.QueryEscape(u))
 	var cs []*semix.Concept
 	err := c.get(url, &cs)
 	return cs, err
@@ -56,7 +56,7 @@ func (c Client) ParentsURL(u string) ([]*semix.Concept, error) {
 
 // ParentsID get the parent concepts searching by id.
 func (c Client) ParentsID(id int) ([]*semix.Concept, error) {
-	url := c.host + fmt.Sprintf("/info?id=%d", id)
+	url := c.host + fmt.Sprintf("/parents?id=%d", id)
 	var cs []*semix.Concept
 	err := c.get(url, &cs)
 	return cs, err
@@ -95,10 +95,18 @@ func (c Client) ConceptID(id int) (*semix.Concept, error) {
 }
 
 // Get searches the index for the given query.
-func (c Client) Get(q string) ([]index.Entry, error) {
-	url := c.host + fmt.Sprintf("/get?q=%s", url.QueryEscape(q))
+func (c Client) Get(q string, n, s int) ([]index.Entry, error) {
+	data := struct {
+		Q    string
+		N, S int
+	}{q, n, s}
+	query, err := EncodeQuery(data)
+	if err != nil {
+		return nil, err
+	}
+	url := c.host + "/get" + query
 	var es []index.Entry
-	err := c.get(url, &es)
+	err = c.get(url, &es)
 	return es, err
 }
 
@@ -155,8 +163,8 @@ func (c Client) doPut(data PutData) ([]index.Entry, error) {
 
 // Ctx returns the context of a given citation.
 func (c Client) Ctx(u string, b, e, n int) (Context, error) {
-	url := fmt.Sprintf("/ctx?s=%s&b=%d&e=%d&n=%d",
-		url.QueryEscape(u), b, e, n)
+	url := fmt.Sprintf("%s/ctx?url=%s&b=%d&e=%d&n=%d",
+		c.host, url.QueryEscape(u), b, e, n)
 	var ctx Context
 	err := c.get(url, &ctx)
 	return ctx, err
@@ -169,6 +177,9 @@ func (c Client) get(url string, out interface{}) error {
 		return err
 	}
 	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
+		return fmt.Errorf("invalid status: %s", res.Status)
+	}
 	return json.NewDecoder(res.Body).Decode(out)
 }
 
@@ -179,5 +190,8 @@ func (c Client) post(url string, r io.Reader, ct string, out interface{}) error 
 		return err
 	}
 	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
+		return fmt.Errorf("invalid status: %s", res.Status)
+	}
 	return json.NewDecoder(res.Body).Decode(out)
 }

@@ -56,7 +56,7 @@ func run(s *rest.Server) {
 			}
 		}
 	}()
-	log.Printf("starting the server on %s", host)
+	log.Printf("starting daemon on %s", host)
 	err := s.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen and serve returned error: %s", err)

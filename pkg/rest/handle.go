@@ -147,14 +147,29 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 }
 
 func (h handle) get(r *http.Request) (interface{}, int, error) {
-	q := r.URL.Query().Get("q")
-	log.Printf("query: %s", q)
-	qu, err := query.New(q, h.getFixFunc())
-	if err != nil {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)
+	var data struct {
+		Q    string
+		N, S int
 	}
-	log.Printf("executing query: %s", qu)
-	es, err := qu.Execute(h.index)
+	if err := DecodeQuery(r.URL.Query(), &data); err != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %s", err)
+	}
+	q, err := query.New(data.Q, h.getFixFunc())
+	if err != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %s", err)
+	}
+	var es []index.Entry
+	err = q.ExecuteFunc(h.index, func(e index.Entry) bool {
+		if data.S > 0 {
+			data.S--
+			return true
+		}
+		if data.N == 0 || len(es) < data.N {
+			es = append(es, e)
+			return true
+		}
+		return false
+	})
 	if err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not execute query %q: %v", q, err)
@@ -188,7 +203,7 @@ func (h handle) ctx(r *http.Request) (interface{}, int, error) {
 		URL     string
 		B, E, N int
 	}
-	if err := DecodeQuery(r.URL.Query(), data); err != nil {
+	if err := DecodeQuery(r.URL.Query(), &data); err != nil {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query parameters: %s", err)
 	}

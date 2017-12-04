@@ -64,8 +64,9 @@ func (q *Query) fix(lookup LookupFunc) error {
 // the slice of the matched IndexEntries.
 func (q Query) Execute(idx index.Interface) ([]index.Entry, error) {
 	var es []index.Entry
-	err := q.ExecuteFunc(idx, func(e index.Entry) {
+	err := q.ExecuteFunc(idx, func(e index.Entry) bool {
 		es = append(es, e)
+		return true
 	})
 	if err != nil {
 		return nil, err
@@ -75,11 +76,11 @@ func (q Query) Execute(idx index.Interface) ([]index.Entry, error) {
 
 // ExecuteFunc executes the query on an index. The callback function
 // is called for every matched IndexEntry.
-func (q Query) ExecuteFunc(idx index.Interface, f func(index.Entry)) error {
+func (q Query) ExecuteFunc(idx index.Interface, f func(index.Entry) bool) error {
 	for url := range q.set {
 		err := idx.Get(url, func(e index.Entry) bool {
 			if q.match(e) {
-				f(e)
+				return f(e)
 			}
 			return true
 		})
