@@ -92,7 +92,7 @@ func WithEdges(cs ...*Concept) func(*Concept) {
 	}
 }
 
-// NewConcept create a new Concept with the given URL
+// NewConcept creates a new Concept with the given URL
 // and configuration functions.
 func NewConcept(url string, cfs ...func(*Concept)) *Concept {
 	c := &Concept{url: url}
