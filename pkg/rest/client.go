@@ -170,6 +170,14 @@ func (c Client) Ctx(u string, b, e, n int) (Context, error) {
 	return ctx, err
 }
 
+// DumpFile returns the dump file of the requested url.
+func (c Client) DumpFile(u string) (DumpFileContent, error) {
+	url := fmt.Sprintf("%s/dump?url=%s", c.host, url.QueryEscape(u))
+	var data DumpFileContent
+	err := c.get(url, &data)
+	return data, err
+}
+
 func (c Client) get(url string, out interface{}) error {
 	log.Printf("sending request [%s] %s", http.MethodGet, url)
 	res, err := c.client.Get(url)

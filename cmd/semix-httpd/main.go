@@ -7,7 +7,9 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"path/filepath"
+	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
@@ -29,6 +31,7 @@ var (
 	gettmpl    *template.Template
 	ctxtmpl    *template.Template
 	searchtmpl *template.Template
+	dumptmpl   *template.Template
 	dir        string
 	host       string
 	daemon     string
@@ -60,6 +63,7 @@ func main() {
 	searchtmpl = template.Must(template.ParseFiles(filepath.Join(dir, "search.html")))
 	gettmpl = template.Must(template.New("get.html").Funcs(funcs).ParseFiles(
 		filepath.Join(dir, "get.html")))
+	dumptmpl = template.Must(template.ParseFiles(filepath.Join(dir, "dump.html")))
 	// handlers
 	http.HandleFunc("/", rest.WithLogging(rest.WithGet(handle(home))))
 	http.HandleFunc("/index", rest.WithLogging(rest.WithGet(handle(home))))
@@ -158,6 +162,18 @@ func info(r *http.Request) (*template.Template, interface{}, status) {
 }
 
 func home(r *http.Request) (*template.Template, interface{}, status) {
+	if strings.HasPrefix(r.URL.RequestURI(), "/semix-") {
+		url, err := url.QueryUnescape(r.URL.RequestURI())
+		if err != nil {
+			return nil, nil, internalError(err)
+		}
+		log.Printf("r.URL.RequestURI(): %q", url)
+		content, err := rest.NewClient(daemon).DumpFile(url)
+		if err != nil {
+			return nil, nil, internalError(err)
+		}
+		return dumptmpl, content, ok()
+	}
 	return indextmpl, nil, ok()
 }
 

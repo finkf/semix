@@ -51,8 +51,6 @@ func work(i int, wg *sync.WaitGroup, achan <-chan article) {
 	client := rest.NewClient(daemon)
 	defer wg.Done()
 	for article := range achan {
-		log.Printf("%s\n%s", article.name, article.content)
-		continue
 		if es, err := client.PutContent(strings.NewReader(article.content),
 			article.name, "text/plain", nil, nil); err != nil {
 			log.Printf("[error] %s", err)

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -232,6 +233,20 @@ func (h handle) ctx(r *http.Request) (interface{}, int, error) {
 		Begin:  int(data.B),
 		End:    int(data.E),
 		Len:    int(data.N),
+	}, http.StatusOK, nil
+}
+
+func (h handle) dump(r *http.Request) (interface{}, int, error) {
+	file := openDumpFile(h.dir, r.URL.Query().Get("url"))
+	defer file.Close()
+	c, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return DumpFileContent{
+		Content:     string(c),
+		ContentType: "text/plain",
+		Path:        file.Path(),
 	}, http.StatusOK, nil
 }
 

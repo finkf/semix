@@ -3,7 +3,6 @@ package rest
 import (
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -23,8 +22,10 @@ func openDumpFile(dir, path string) semix.Document {
 }
 
 func newDumpFile(r io.Reader, dir, pre, ct string) (semix.Document, error) {
+	if err := os.MkdirAll(filepath.Join(dir, "dump"), os.ModePerm); err != nil {
+		return nil, err
+	}
 	path, err := makeFileName(pre, ct)
-	log.Printf("makeFileName(%s,%s) = %s", pre, ct, path)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +55,13 @@ type dumpFile struct {
 	r io.Reader
 	w io.WriteCloser
 	p string
+}
+
+func (d dumpFile) ContentType() string {
+	if strings.HasSuffix(d.p, "text-plain") {
+		return "text/plain"
+	}
+	return ""
 }
 
 func (d dumpFile) Close() error {

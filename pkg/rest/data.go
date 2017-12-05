@@ -11,6 +11,11 @@ import (
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
+// DumpFileContent defines the content and the content type of a dump file.
+type DumpFileContent struct {
+	ContentType, Content, Path string
+}
+
 // PutData defines the data that is send to the server's put method
 type PutData struct {
 	URL         string
