@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -78,6 +79,19 @@ func (h handle) predicates(r *http.Request) (interface{}, int, error) {
 	return cs, http.StatusOK, nil
 }
 
+func (h handle) concept(r *http.Request) (interface{}, int, error) {
+	var data lookupData
+	if err := DecodeQuery(r.URL.Query(), &data); err != nil {
+		return nil, http.StatusBadRequest,
+			fmt.Errorf("invalid query: %s", err)
+	}
+	c, ok := h.lookup(data)
+	if !ok {
+		return nil, http.StatusNotFound, nil
+	}
+	return c, http.StatusOK, nil
+}
+
 func (h handle) search(r *http.Request) (interface{}, int, error) {
 	q := r.URL.Query().Get("q")
 	if len(q) == 0 {
@@ -96,7 +110,7 @@ func (h handle) info(r *http.Request) (interface{}, int, error) {
 	}
 	c, ok := h.lookup(data)
 	if !ok {
-		return ConceptInfo{}, http.StatusOK, nil
+		return nil, http.StatusNotFound, nil
 	}
 	entries := h.searcher.SearchDictionaryEntries(c)
 	info := ConceptInfo{Concept: c, Entries: entries}
@@ -116,40 +130,52 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}
-	ts := Tokens{Tokens: []Token{}} // for json
+	var es []index.Entry
 	for t := range stream {
 		if t.Err != nil {
 			return nil, http.StatusInternalServerError,
-				fmt.Errorf("cannot index document: %v", t.Err)
+				fmt.Errorf("cannot index document: %s", t.Err)
 		}
-		ts.Tokens = append(ts.Tokens, NewTokens(t.Token)...)
+		es = append(es, index.Entry{
+			Path:       t.Token.Path,
+			Token:      t.Token.Token,
+			ConceptURL: t.Token.Concept.URL(),
+			Begin:      t.Token.Begin,
+			End:        t.Token.End,
+		})
 	}
-	return ts, http.StatusCreated, nil
+	return es, http.StatusCreated, nil
 }
 
 func (h handle) get(r *http.Request) (interface{}, int, error) {
-	q := r.URL.Query().Get("q")
-	log.Printf("query: %s", q)
-	qu, err := query.New(q, h.getFixFunc())
-	if err != nil {
-		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %v", err)
+	var data struct {
+		Q    string
+		N, S int
 	}
-	log.Printf("executing query: %s", qu)
-	es, err := qu.Execute(h.index)
+	if err := DecodeQuery(r.URL.Query(), &data); err != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %s", err)
+	}
+	q, err := query.New(data.Q, h.getFixFunc())
+	if err != nil {
+		return nil, http.StatusBadRequest, fmt.Errorf("invalid query: %s", err)
+	}
+	var es []index.Entry
+	err = q.ExecuteFunc(h.index, func(e index.Entry) bool {
+		if data.S > 0 {
+			data.S--
+			return true
+		}
+		if data.N == 0 || len(es) < data.N {
+			es = append(es, e)
+			return true
+		}
+		return false
+	})
 	if err != nil {
 		return nil, http.StatusInternalServerError,
 			fmt.Errorf("could not execute query %q: %v", q, err)
 	}
-	var ts Tokens
-	for _, e := range es {
-		t, err := NewTokenFromEntry(h.searcher, e)
-		if err != nil {
-			return nil, http.StatusInternalServerError,
-				fmt.Errorf("cannot convert %v: %v", e, err)
-		}
-		ts.Tokens = append(ts.Tokens, t)
-	}
-	return ts, http.StatusOK, nil
+	return es, http.StatusOK, nil
 }
 
 func (h handle) getFixFunc() query.LookupFunc {
@@ -178,7 +204,7 @@ func (h handle) ctx(r *http.Request) (interface{}, int, error) {
 		URL     string
 		B, E, N int
 	}
-	if err := DecodeQuery(r.URL.Query(), data); err != nil {
+	if err := DecodeQuery(r.URL.Query(), &data); err != nil {
 		return nil, http.StatusBadRequest,
 			fmt.Errorf("invalid query parameters: %s", err)
 	}
@@ -207,6 +233,20 @@ func (h handle) ctx(r *http.Request) (interface{}, int, error) {
 		Begin:  int(data.B),
 		End:    int(data.E),
 		Len:    int(data.N),
+	}, http.StatusOK, nil
+}
+
+func (h handle) dump(r *http.Request) (interface{}, int, error) {
+	file := openDumpFile(h.dir, r.URL.Query().Get("url"))
+	defer file.Close()
+	c, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return DumpFileContent{
+		Content:     string(c),
+		ContentType: "text/plain",
+		Path:        file.Path(),
 	}, http.StatusOK, nil
 }
 

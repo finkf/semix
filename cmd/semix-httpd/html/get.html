@@ -11,23 +11,34 @@
 	<body>
 		<a href="/">Home</a>
 		<h1>Semix Get</h1>
-		<h2>Results for {{printf "%s" .Query}}</h2>
+		<h2>Results for {{.Query}} ({{len .Entries}} results)</h2>
+		<div id='page-navigation'>
+		{{if eq .S 0}}
+		prev
+		{{else}}
+		<a href='/get?q={{urlquery .Query}}&n={{.N}}&s={{sub .S .N}}'>prev</a>
+		{{end}}
+		{{if or (eq (len .Entries) 0) (lt (len .Entries) 50)}}
+		next
+		{{else}}
+		<a href='/get?q={{urlquery .Query}}&n={{.N}}&s={{add .S .N}}'>next</a>
+		{{end}}
+		</div>
 		<div id='result-table'>
 			<table>
 				<th>Match</th>
 				<th>Predicate</th>
 				<th>Concept</th>
 				<th>Document</th>
-				{{range .Tokens.Tokens}}
+				{{range .Entries}}
 					{{if eq .L 0}}
 					<tr>
 					{{else}}
 					<tr class='grey'>
 					{{end}}
-					<td><a href="/ctx?url={{.Path}}&b={{.Begin}}&e={{.End}}&n=500">
-							{{.Token}} ({{.Begin}},{{.End}},{{.L}})</a></td>
+					<td><a href="/ctx?url={{.Path}}&b={{.Begin}}&e={{.End}}&n=500">{{.Token}}</a></td>
 					<td><a href="/info?url={{.RelationURL}}">{{.RelationURL}}</a></td>
-					<td><a href="/info?url={{.Concept.URL}}">{{.Concept.String}}</a></td>
+					<td><a href="/info?url={{.ConceptURL}}">{{.ConceptURL}}</a></td>
 					<td><a target="_blank" href="{{.Path}}">{{.Path}}</a></td>
 				</tr>
 				{{end}}

@@ -37,6 +37,7 @@ func New(self, dir string, r *semix.Resource, i index.Interface) (*Server, error
 		index:    i,
 	}
 	mux := http.NewServeMux()
+	mux.HandleFunc("/concept", WithLogging(WithGet(requestFunc(h.concept))))
 	mux.HandleFunc("/search", WithLogging(WithGet(requestFunc(h.search))))
 	mux.HandleFunc("/parents", WithLogging(WithGet(requestFunc(h.parents))))
 	mux.HandleFunc("/predicates", WithLogging(WithGet(requestFunc(h.predicates))))
@@ -44,6 +45,7 @@ func New(self, dir string, r *semix.Resource, i index.Interface) (*Server, error
 	mux.HandleFunc("/get", WithLogging(WithGet(requestFunc(h.get))))
 	mux.HandleFunc("/ctx", WithLogging(WithGet(requestFunc(h.ctx))))
 	mux.HandleFunc("/info", WithLogging(WithGet(requestFunc(h.info))))
+	mux.HandleFunc("/dump", WithLogging(WithGet(requestFunc(h.dump))))
 	return &Server{
 		server: &http.Server{
 			Addr:    self,

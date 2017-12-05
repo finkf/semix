@@ -7,8 +7,11 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"path/filepath"
+	"strings"
 
+	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -28,16 +31,21 @@ var (
 	gettmpl    *template.Template
 	ctxtmpl    *template.Template
 	searchtmpl *template.Template
+	dumptmpl   *template.Template
 	dir        string
 	host       string
 	daemon     string
 	help       bool
+	funcs      = template.FuncMap{
+		"add": func(a, b int) int { return a + b },
+		"sub": func(a, b int) int { return a - b },
+	}
 )
 
 func init() {
 	flag.StringVar(&dir, "dir", "cmd/semix-httpd/html", "set template directory")
 	flag.StringVar(&host, "host", "localhost:8181", "set listen host")
-	flag.StringVar(&daemon, "daemon", "localhost:6660", "set host of rest service")
+	flag.StringVar(&daemon, "daemon", "http://localhost:6606", "set host of rest service")
 	flag.BoolVar(&help, "help", false, "print this help")
 }
 
@@ -47,23 +55,29 @@ func main() {
 		flag.Usage()
 		return
 	}
+	// templates
 	infotmpl = template.Must(template.ParseFiles(filepath.Join(dir, "info.html")))
 	puttmpl = template.Must(template.ParseFiles(filepath.Join(dir, "put.html")))
 	indextmpl = template.Must(template.ParseFiles(filepath.Join(dir, "index.html")))
-	gettmpl = template.Must(template.ParseFiles(filepath.Join(dir, "get.html")))
 	ctxtmpl = template.Must(template.ParseFiles(filepath.Join(dir, "ctx.html")))
 	searchtmpl = template.Must(template.ParseFiles(filepath.Join(dir, "search.html")))
+	gettmpl = template.Must(template.New("get.html").Funcs(funcs).ParseFiles(
+		filepath.Join(dir, "get.html")))
+	dumptmpl = template.Must(template.ParseFiles(filepath.Join(dir, "dump.html")))
+	// handlers
 	http.HandleFunc("/", rest.WithLogging(rest.WithGet(handle(home))))
 	http.HandleFunc("/index", rest.WithLogging(rest.WithGet(handle(home))))
 	http.HandleFunc("/info", rest.WithLogging(rest.WithGet(handle(info))))
 	http.HandleFunc("/get", rest.WithLogging(rest.WithGet(handle(get))))
 	http.HandleFunc("/search", rest.WithLogging(rest.WithGet(handle(search))))
+	http.HandleFunc("/predicates", rest.WithLogging(rest.WithGet(handle(predicates))))
 	http.HandleFunc("/ctx", rest.WithLogging(rest.WithGet(handle(ctx))))
 	http.HandleFunc("/put", rest.WithLogging(rest.WithGetOrPost(handle(put))))
 	http.HandleFunc("/parents", rest.WithLogging(rest.WithGet(handle(parents))))
 	http.HandleFunc("/favicon.ico", rest.WithLogging(rest.WithGet(favicon)))
 	http.HandleFunc("/js/semix.js", rest.WithLogging(rest.WithGet(semixJS)))
 	log.Printf("starting the server on %s", host)
+	log.Printf("semix daemon: %s", daemon)
 	log.Fatal(http.ListenAndServe(host, nil))
 }
 
@@ -114,6 +128,18 @@ func search(r *http.Request) (*template.Template, interface{}, status) {
 	}{fmt.Sprintf("%q", q), cs}, ok()
 }
 
+func predicates(r *http.Request) (*template.Template, interface{}, status) {
+	q := r.URL.Query().Get("q")
+	cs, err := rest.NewClient(daemon).Predicates(q)
+	if err != nil {
+		return nil, nil, internalError(err)
+	}
+	return searchtmpl, struct {
+		Title    string
+		Concepts []*semix.Concept
+	}{fmt.Sprintf("%q", q), cs}, ok()
+}
+
 func parents(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("url")
 	cs, err := rest.NewClient(daemon).ParentsURL(q)
@@ -136,19 +162,38 @@ func info(r *http.Request) (*template.Template, interface{}, status) {
 }
 
 func home(r *http.Request) (*template.Template, interface{}, status) {
+	if strings.HasPrefix(r.URL.RequestURI(), "/semix-") {
+		url, err := url.QueryUnescape(r.URL.RequestURI())
+		if err != nil {
+			return nil, nil, internalError(err)
+		}
+		log.Printf("r.URL.RequestURI(): %q", url)
+		content, err := rest.NewClient(daemon).DumpFile(url)
+		if err != nil {
+			return nil, nil, internalError(err)
+		}
+		return dumptmpl, content, ok()
+	}
 	return indextmpl, nil, ok()
 }
 
 func get(r *http.Request) (*template.Template, interface{}, status) {
-	q := r.URL.Query().Get("q")
-	ts, err := rest.NewClient(daemon).Get(q)
+	var data struct {
+		Q    string
+		N, S int
+	}
+	if err := rest.DecodeQuery(r.URL.Query(), &data); err != nil {
+		return nil, nil, internalError(err)
+	}
+	es, err := rest.NewClient(daemon).Get(data.Q, data.N, data.S)
 	if err != nil {
 		return nil, nil, internalError(err)
 	}
 	return gettmpl, struct {
-		Query  string
-		Tokens rest.Tokens
-	}{q, ts}, ok()
+		Query   string
+		Entries []index.Entry
+		N, S    int
+	}{data.Q, es, data.N, data.S}, ok()
 }
 
 func ctx(r *http.Request) (*template.Template, interface{}, status) {
@@ -171,7 +216,7 @@ func put(r *http.Request) (*template.Template, interface{}, status) {
 	switch r.Method {
 	case http.MethodPost:
 		ct := "text/plain"
-		ts, err := rest.NewClient(daemon).PutContent(r.Body, ct, nil, nil)
+		ts, err := rest.NewClient(daemon).PutContent(r.Body, "", ct, nil, nil)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}

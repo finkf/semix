@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/args"
+	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -25,10 +26,13 @@ var (
 	threshold  float64
 	memsize    int
 	id         int
+	nget       int
+	skip       int
 	filelist   bool
 	local      bool
 	info       bool
 	parents    bool
+	concept    bool
 	help       bool
 	client     rest.Client
 	ls         args.IntList
@@ -38,17 +42,20 @@ var (
 func init() {
 	flag.Float64Var(&threshold, "threshold", 0, "set threshold for automatic resolver")
 	flag.IntVar(&memsize, "memsize", 0, "set memory size for resolvers")
-	flag.StringVar(&daemon, "daemon", "http://localhost:6660", "set daemon host")
+	flag.StringVar(&daemon, "daemon", "http://localhost:6606", "set daemon host")
 	flag.StringVar(&search, "search", "", "search for concepts")
 	flag.StringVar(&predicates, "predicates", "", "search for predicates")
 	flag.StringVar(&put, "put", "", "put files or directories into the index")
 	flag.StringVar(&get, "get", "", "execute a query on the index")
 	flag.IntVar(&id, "id", 0, "set search ID")
+	flag.IntVar(&skip, "skip", 0, "set number of entries to skip")
+	flag.IntVar(&nget, "nget", 0, "set number of entries")
 	flag.StringVar(&url, "url", "", "set search URL")
 	flag.BoolVar(&filelist, "filelist", false, "treat put arguments as path to a file list")
 	flag.BoolVar(&local, "local", false, "use local files")
 	flag.BoolVar(&info, "info", false, "get info (needs -id or -url)")
 	flag.BoolVar(&parents, "parents", false, "get parents of concept (needs -id or -url)")
+	flag.BoolVar(&concept, "concept", false, "lookup concept (needs -id or -url)")
 	flag.BoolVar(&help, "help", false, "print this help")
 	flag.Var(&rs, "r", "add named resolver (can be set multiple times)")
 	flag.Var(&ls, "l", "add levenshtein distance for approximate search (can be set multiple times)")
@@ -78,6 +85,9 @@ func main() {
 	}
 	if put != "" {
 		doPut()
+	}
+	if concept {
+		doConcept()
 	}
 }
 
@@ -113,6 +123,22 @@ func doInfo() {
 	fmt.Printf("%v\n", info)
 }
 
+func doConcept() {
+	assertSearchOK()
+	var err error
+	var c *semix.Concept
+	if url != "" {
+		c, err = client.ConceptURL(url)
+	}
+	if id != 0 {
+		c, err = client.ConceptID(id)
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s", c)
+}
+
 func doSearch() {
 	cs, err := client.Search(search)
 	if err != nil {
@@ -130,11 +156,11 @@ func doPredicates() {
 }
 
 func doGet() {
-	ts, err := client.Get(get)
+	ts, err := client.Get(get, nget, skip)
 	if err != nil {
 		log.Fatal(err)
 	}
-	printTokens(ts)
+	printEntries(ts)
 }
 
 func doPut() {
@@ -184,24 +210,24 @@ func putDir(path string) {
 }
 
 func putFile(path string) {
-	var ts rest.Tokens
+	var es []index.Entry
 	var err error
 	if isURL(path) {
-		ts, err = client.PutURL(path, ls, resolvers())
+		es, err = client.PutURL(path, ls, resolvers())
 	} else if local {
-		ts, err = client.PutLocalFile(path, ls, resolvers())
+		es, err = client.PutLocalFile(path, ls, resolvers())
 	} else {
 		is, err := os.Open(path)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer is.Close()
-		ts, err = client.PutContent(is, "text/plain", ls, resolvers())
+		es, err = client.PutContent(is, path, "text/plain", ls, resolvers())
 	}
 	if err != nil {
 		log.Fatal(err)
 	}
-	printTokens(ts)
+	printEntries(es)
 }
 
 func putFileList() {
@@ -240,19 +266,19 @@ func resolvers() []rest.Resolver {
 	return res
 }
 
-func printTokens(ts rest.Tokens) {
-	sort.Slice(ts.Tokens, func(i, j int) bool {
-		return ts.Tokens[i].Path < ts.Tokens[j].Path
+func printEntries(es []index.Entry) {
+	sort.Slice(es, func(i, j int) bool {
+		return es[i].Path < es[j].Path
 	})
-	for _, t := range ts.Tokens {
-		fmt.Printf("%q %q %q %q\n",
-			t.Token, t.RelationURL, t.Concept.ShortName(), t.Path)
+	for i, e := range es {
+		fmt.Printf("[%d/%d] %q %q %q %q\n",
+			i+1, len(es), e.Token, e.RelationURL, e.ConceptURL, e.Path)
 	}
 }
 
 func printConcepts(cs []*semix.Concept) {
-	for _, c := range cs {
-		fmt.Printf("%s\n", c)
+	for i, c := range cs {
+		fmt.Printf("[%d/%d] %s\n", i+1, len(cs), c)
 	}
 }
 

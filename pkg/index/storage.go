@@ -16,7 +16,7 @@ import (
 // Storage puts IndexEntries into files.
 type Storage interface {
 	Put(string, []Entry) error
-	Get(string, func(Entry)) error
+	Get(string, func(Entry) bool) error
 	Close() error
 }
 
@@ -64,7 +64,7 @@ func (s dirStorage) write(url string, ds []dse) error {
 	return nil
 }
 
-func (s dirStorage) Get(url string, f func(Entry)) error {
+func (s dirStorage) Get(url string, f func(Entry) bool) error {
 	path := preparePath(s.dir, url)
 	is, err := os.Open(path)
 	if os.IsNotExist(err) { // nothing in the index
@@ -84,7 +84,9 @@ func (s dirStorage) Get(url string, f func(Entry)) error {
 			return nil
 		}
 		for _, d := range ds {
-			f(d.entry(url, s.lookupIDs))
+			if !f(d.entry(url, s.lookupIDs)) {
+				return nil
+			}
 		}
 	}
 }

@@ -13,6 +13,11 @@ type Entry struct {
 	Ambiguous                            bool
 }
 
+// Direct returns true iff the entry represents a direct index entry.
+func (e Entry) Direct() bool {
+	return e.RelationURL == ""
+}
+
 // Putter represents a simple interface to put tokens into an index.
 type Putter interface {
 	Put(semix.Token) error
@@ -21,7 +26,7 @@ type Putter interface {
 // Interface represents the basic interface to put and get tokens from an index.
 type Interface interface {
 	Putter
-	Get(string, func(Entry)) error
+	Get(string, func(Entry) bool) error
 	Close() error
 }
 

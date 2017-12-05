@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>Semix dump file</title>
+		<style>
+			script[type="text/plain"] {display:block;}
+		</style>
+	</head>
+	<body>
+		<h1>{{.Path}}</h1>
+		<div class='dump-file-body'>
+			<script type="{{.ContentType}}">
+			{{.Content}}
+			</script>
+		</div>
+	</body>
+</html>
