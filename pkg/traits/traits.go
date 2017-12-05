@@ -10,14 +10,15 @@ type Interface interface {
 	IsAmbiguous(string) bool
 	IsInverted(string) bool
 	IsRule(string) bool
+	SplitAmbiguousURLs() bool
 }
 
 // Option speciefies an Option to set up a traits instance.
-type Option func(traits)
+type Option func(*traits)
 
 // WithIgnorePredicates specifies a list of symmetric predicate URLs.
 func WithIgnorePredicates(strs ...string) Option {
-	return func(t traits) {
+	return func(t *traits) {
 		for _, str := range strs {
 			t.i[str] = true
 		}
@@ -26,7 +27,7 @@ func WithIgnorePredicates(strs ...string) Option {
 
 // WithTransitivePredicates specifies a list of transitive predicate URLs.
 func WithTransitivePredicates(urls ...string) Option {
-	return func(t traits) {
+	return func(t *traits) {
 		for _, url := range urls {
 			t.t[url] = true
 		}
@@ -35,7 +36,7 @@ func WithTransitivePredicates(urls ...string) Option {
 
 // WithSymmetricPredicates specifies a list of symmetric predicate URLs.
 func WithSymmetricPredicates(urls ...string) Option {
-	return func(t traits) {
+	return func(t *traits) {
 		for _, url := range urls {
 			t.s[url] = true
 		}
@@ -44,7 +45,7 @@ func WithSymmetricPredicates(urls ...string) Option {
 
 // WithInvertedPredicates specifies a list of symmetric predicate URLs.
 func WithInvertedPredicates(urls ...string) Option {
-	return func(t traits) {
+	return func(t *traits) {
 		for _, url := range urls {
 			t.v[url] = true
 		}
@@ -53,7 +54,7 @@ func WithInvertedPredicates(urls ...string) Option {
 
 // WithNamePredicates specifies a list of name predicate URLs.
 func WithNamePredicates(urls ...string) Option {
-	return func(t traits) {
+	return func(t *traits) {
 		for _, url := range urls {
 			t.n[url] = true
 		}
@@ -62,7 +63,7 @@ func WithNamePredicates(urls ...string) Option {
 
 // WithDistinctPredicates specifies a list of distinct predicate URLs.
 func WithDistinctPredicates(urls ...string) Option {
-	return func(t traits) {
+	return func(t *traits) {
 		for _, url := range urls {
 			t.d[url] = true
 		}
@@ -71,26 +72,33 @@ func WithDistinctPredicates(urls ...string) Option {
 
 // WithAmbiguousPredicates specifies a list of ambiguous predicate URLs.
 func WithAmbiguousPredicates(urls ...string) Option {
-	return func(t traits) {
+	return func(t *traits) {
 		for _, url := range urls {
 			t.a[url] = true
 		}
 	}
 }
 
-// WithRulesPredicates specifies a list of ambiguous predicate URLs.
+// WithRulePredicates specifies a list of ambiguous predicate URLs.
 func WithRulePredicates(urls ...string) Option {
-	return func(t traits) {
+	return func(t *traits) {
 		for _, url := range urls {
 			t.r[url] = true
 		}
 	}
 }
 
+// WithSplitAmbiguousURLs specifies how to handle ambiguous lexicon entries.
+func WithSplitAmbiguousURLs(split bool) Option {
+	return func(t *traits) {
+		t.split = split
+	}
+}
+
 // New returns a new traits instance.
 // You can set the various urls manually.
 func New(opts ...Option) Interface {
-	t := traits{
+	t := &traits{
 		i: make(traitSet),
 		t: make(traitSet),
 		s: make(traitSet),
@@ -103,13 +111,18 @@ func New(opts ...Option) Interface {
 	for _, opt := range opts {
 		opt(t)
 	}
-	return &t
+	return t
 }
 
 type traitSet map[string]bool
 
 type traits struct {
 	i, t, s, n, d, a, v, r traitSet
+	split                  bool
+}
+
+func (t *traits) SplitAmbiguousURLs() bool {
+	return t.split
 }
 
 func (t *traits) Ignore(url string) bool {

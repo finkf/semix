@@ -23,6 +23,7 @@ const (
 
 type file struct {
 	Path, Type, Cache string
+	Merge             bool
 }
 
 type predicates struct {
@@ -103,6 +104,7 @@ func (c Config) Traits() traits.Interface {
 		traits.WithDistinctPredicates(c.Predicates.Distinct...),
 		traits.WithInvertedPredicates(c.Predicates.Inverted...),
 		traits.WithRulePredicates(c.Predicates.Rule...),
+		traits.WithSplitAmbiguousURLs(!c.File.Merge),
 	)
 }
 

@@ -133,3 +133,4 @@ func (testTraits) IsSymmetric(p string) bool  { return p == "s" }
 func (testTraits) IsTransitive(p string) bool { return p == "t" }
 func (testTraits) IsInverted(p string) bool   { return p == "v" }
 func (testTraits) IsRule(p string) bool       { return p == "r" }
+func (testTraits) SplitAmbiguousURLs() bool   { return true }

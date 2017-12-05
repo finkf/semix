@@ -69,14 +69,17 @@ func (g *Graph) Add(s, p, o string) (*Concept, *Concept, *Concept) {
 	if s == "" || p == "" || o == "" {
 		panic("cannot insert empty concept")
 	}
-	sc := g.register(s)
-	pc := g.register(p)
-	oc := g.register(o)
+	sc := g.Register(s)
+	pc := g.Register(p)
+	oc := g.Register(o)
 	sc.edges = append(sc.edges, Edge{P: pc, O: oc})
 	return sc, pc, oc
 }
 
-func (g *Graph) register(url string) *Concept {
+// Register registers new concept with the given URL in the Graph.
+// If the URL does already exist, the according cocnept is retuned.
+// This function will never return a nil concept.
+func (g *Graph) Register(url string) *Concept {
 	if c, ok := g.cMap[url]; ok {
 		return c
 	}
@@ -90,7 +93,7 @@ func (g *Graph) register(url string) *Concept {
 func (g *Graph) makeSplitConcept(c *Concept) *Concept {
 	split, ok := g.FindByURL(SplitURL)
 	if !ok {
-		split = g.register(SplitURL)
+		split = g.Register(SplitURL)
 	}
 	return &Concept{
 		url:   c.url,

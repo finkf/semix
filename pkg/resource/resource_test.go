@@ -38,4 +38,7 @@ func TestConfig(t *testing.T) {
 	if !traits.IsRule("http://example.org/rule") {
 		t.Fatalf("missing rule predicate")
 	}
+	if traits.SplitAmbiguousURLs() {
+		t.Fatalf("should merge ambiguous URLs")
+	}
 }
