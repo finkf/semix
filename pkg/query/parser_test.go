@@ -10,23 +10,23 @@ func TestParser(t *testing.T) {
 		query, want string
 		iserr       bool
 	}{
-		{"?(A, B({C, D}))", "?(A,B({C,D}))", false},
-		{"?({C})", "?({C})", false},
-		{"?(!A, B({C, D}))", "?(!A,B({C,D}))", false},
-		{"?(*({C, D}))", "?(*({C,D}))", false},
-		{"?(!*({C, D}))", "?(!*({C,D}))", false},
-		{"?10(!*({C, D}))", "?10(!*({C,D}))", false},
-		{"?*(!*({C, D}))", "?*(!*({C,D}))", false},
-		{"?10*(*({C, D}))", "?*10(*({C,D}))", false},
-		{"?*10(*({C, D}))", "?*10(*({C,D}))", false},
-		{`?("A"({"B","C"}))`, `?(A({B,C}))`, false},
-		{`?("A B"({"C D","E F"}))`, `?(A B({C D,E F}))`, false},
+		{"?(A, B(C, D))", "?(A,B(C,D))", false},
+		{"?(C)", "?(C)", false},
+		{"?(!A, B(C, D))", "?(!A,B(C,D))", false},
+		{"?(*(C, D))", "?(*(C,D))", false},
+		{"?10(*(C, D))", "?10(*(C,D))", false},
+		{"?*(*(C, D))", "?*(*(C,D))", false},
+		{"?10*(*(C, D))", "?*10(*(C,D))", false},
+		{"?*10(*(C, D))", "?*10(*(C,D))", false},
+		{`?("A"("B","C"))`, `?(A(B,C))`, false},
+		{`?("A B"("C D","E F"))`, `?(A B(C D,E F))`, false},
 		{"", "", true},
 		{"?(", "", true},
+		{"?(!*({C, D}))", "", true},
 		{"?({}({}", "", true},
 		{"?{}({})", "", true},
-		{"?({'A, B}({C, D}))", "", true},
-		{"?({'A, 10, B}({C, D}))", "", true},
+		{"?('A, B(C, D))", "", true},
+		{"?('A, 10, B}(C, D))", "", true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.query, func(t *testing.T) {

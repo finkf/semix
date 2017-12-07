@@ -17,34 +17,34 @@ func TestQueryExecute(t *testing.T) {
 		k           int
 		a           bool
 	}{
-		{"?(*({A}))", "[{A } {A R} {A S}]", false, 0, false},
-		{"?(R,S({A}))", "[{A } {A R} {A S}]", false, 0, false},
-		{"?(S({A}))", "[{A } {A S}]", false, 0, false},
-		{"?(!S({A}))", "[{A } {A R}]", false, 0, false},
-		{"?({A})", "[{A }]", false, 0, false},
-		{"?(*({A,B}))", "[{A } {A R} {A S} {B } {B R} {B S}]", false, 0, false},
-		{"?(R,S({A,B}))", "[{A } {A R} {A S} {B } {B R} {B S}]", false, 0, false},
-		{"?0(R,S({A,B}))", "[{A } {A R} {A S} {B } {B R} {B S}]", false, 0, false},
-		{"?1(R,S({A,B}))", "[]", false, 2, false},
-		{"?2(R,S({A,B}))", "[{A } {A R} {A S} {B } {B R} {B S}]", false, 2, false},
-		{"?3(R,S({A,B}))", "[{A } {A R} {A S} {B } {B R} {B S}]", false, 2, false},
-		{"?(S({A,B}))", "[{A } {A S} {B } {B S}]", false, 0, false},
-		{"?(!S({A,B}))", "[{A } {A R} {B } {B R}]", false, 0, false},
-		{"?({A,B})", "[{A } {B }]", false, 0, false},
-		{"?(R({A}))", "[]", false, 0, true},
-		{"?*(R({A}))", "[{A } {A R}]", false, 0, true},
-		{"?(R({A}))", "[]", false, 0, true},
-		{"?*(R({A}))", "[{A } {A R}]", false, 0, true},
-		{"?1(R({A}))", "[]", false, 2, true},
-		{"?2(R({A}))", "[]", false, 2, true},
-		{"?*1(R({A}))", "[]", false, 2, true},
-		{"?*2(R({A}))", "[{A } {A R}]", false, 0, true},
-		{"?1*(R({A}))", "[]", false, 2, true},
-		{"?2*(R({A}))", "[{A } {A R}]", false, 0, true},
-		{"?(}({A,B}))", "[]", true, 0, false},
-		{"?({A,B}({C,D}))", "[]", true, 0, false},
-		{"?(S({E,B}))", "", true, 0, false},
-		{"?(E({A,B}))", "", true, 0, false},
+		{"?(*(A))", "[{A } {A R} {A S}]", false, 0, false},
+		{"?(R,S(A))", "[{A } {A R} {A S}]", false, 0, false},
+		{"?(S(A))", "[{A } {A S}]", false, 0, false},
+		{"?(!S(A))", "[{A } {A R}]", false, 0, false},
+		{"?(A)", "[{A }]", false, 0, false},
+		{"?(*(A,B))", "[{A } {A R} {A S} {B } {B R} {B S}]", false, 0, false},
+		{"?(R,S(A,B))", "[{A } {A R} {A S} {B } {B R} {B S}]", false, 0, false},
+		{"?0(R,S(A,B))", "[{A } {A R} {A S} {B } {B R} {B S}]", false, 0, false},
+		{"?1(R,S(A,B))", "[]", false, 2, false},
+		{"?2(R,S(A,B))", "[{A } {A R} {A S} {B } {B R} {B S}]", false, 2, false},
+		{"?3(R,S(A,B))", "[{A } {A R} {A S} {B } {B R} {B S}]", false, 2, false},
+		{"?(S(A,B))", "[{A } {A S} {B } {B S}]", false, 0, false},
+		{"?(!S(A,B))", "[{A } {A R} {B } {B R}]", false, 0, false},
+		{"?(A,B)", "[{A } {B }]", false, 0, false},
+		{"?(R(A))", "[]", false, 0, true},
+		{"?*(R(A))", "[{A } {A R}]", false, 0, true},
+		{"?(R(A))", "[]", false, 0, true},
+		{"?*(R(A))", "[{A } {A R}]", false, 0, true},
+		{"?1(R(A))", "[]", false, 2, true},
+		{"?2(R(A))", "[]", false, 2, true},
+		{"?*1(R(A))", "[]", false, 2, true},
+		{"?*2(R(A))", "[{A } {A R}]", false, 0, true},
+		{"?1*(R(A))", "[]", false, 2, true},
+		{"?2*(R(A))", "[{A } {A R}]", false, 0, true},
+		{"?(}(A,B))", "[]", true, 0, false},
+		{"?(A,B}(C,D))", "[]", true, 0, false},
+		{"?(S(E,B))", "", true, 0, false},
+		{"?(E(A,B))", "", true, 0, false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.query, func(t *testing.T) {
@@ -56,6 +56,9 @@ func TestQueryExecute(t *testing.T) {
 			})
 			if tc.iserr && err != nil {
 				return
+			}
+			if err != nil {
+				t.Fatalf("got error: %s", err)
 			}
 			es, err := q.Execute(queryTestIndex{k: tc.k, a: tc.a})
 			if tc.iserr {

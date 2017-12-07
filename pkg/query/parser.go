@@ -39,73 +39,71 @@ func (p *Parser) Parse() (q *Query, err error) {
 			err = errors.New(r.msg)
 		}
 	}()
-	return p.parseQueryExp(), nil
+	return p.parseQuery(), nil
 }
 
-func (p *Parser) parseQueryExp() *Query {
+func (p *Parser) parseQuery() *Query {
 	p.eat('?')
-	var k int
+	k, a := p.parseQueryOpt()
+	p.eat('(')
+	c, s := p.parseQueryExp()
+	p.eat(')')
+	return &Query{set: s, constraint: c, l: k, a: a}
+}
+
+func (p *Parser) parseQueryOpt() (int, bool) {
+	var k int64
 	var a bool
 loop:
 	for {
-		switch tok := p.peek(); tok {
+		switch l := p.peek(); l {
 		case '*':
 			p.eat('*')
 			a = true
 		case scanner.Int:
 			_, str := p.eat(scanner.Int)
-			// ignore errors from strconv!
-			k, _ = strconv.Atoi(str)
+			k, _ = strconv.ParseInt(str, 10, 32)
 		default:
 			break loop
 		}
 	}
-	p.eat('(')
-	c, s := p.parseConstraint()
-	p.eat(')')
-	return &Query{set: s, constraint: c, l: k, a: a}
+	return int(k), a
 }
 
-func (p *Parser) parseConstraint() (constraint, set) {
+func (p *Parser) parseQueryExp() (constraint, set) {
 	var c constraint
-	l := p.peek()
-	// {<-...}
-	if l == '{' {
-		return c, p.parseSet()
-	}
-	// !<-...
-	if l == '!' {
+	switch l := p.peek(); l {
+	case '!':
 		p.eat('!')
 		c.not = true
-		l = p.peek()
-	}
-	// *<-(...)
-	if l == '*' {
+		c.set = p.parseList()
+		return c, p.parseSet()
+	case '*':
 		p.eat('*')
 		c.all = true
-		p.eat('(')
-		s := p.parseSet()
-		p.eat(')')
-		return c, s
+		return c, p.parseSet()
+	case scanner.String, scanner.Ident:
+		set := p.parseList()
+		if p.peek() == '(' {
+			c.set = set
+			return c, p.parseSet()
+		}
+		return c, set
+	default:
+		p.fatalf("exepected %s, %s, %s or %s; got %s",
+			scanner.TokenString(scanner.Ident),
+			scanner.TokenString(scanner.String),
+			scanner.TokenString('*'),
+			scanner.TokenString('!'),
+			scanner.TokenString(l))
 	}
-	if l != scanner.Ident && l != scanner.String {
-		p.fatalf("exepected %s (%d) or %s (%d); got %s (%d)",
-			scanner.TokenString(scanner.Ident), int(scanner.Ident),
-			scanner.TokenString(scanner.String), int(scanner.String),
-			scanner.TokenString(l), int(l))
-	}
-	// A<-,...
-	c.set = p.parseList()
-	p.eat('(')
-	s := p.parseSet()
-	p.eat(')')
-	return c, s
+	panic("unreacheable")
 }
 
 func (p *Parser) parseSet() set {
-	p.eat('{')
+	p.eat('(')
 	set := p.parseList()
-	p.eat('}')
+	p.eat(')')
 	return set
 }
 
