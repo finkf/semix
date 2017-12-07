@@ -1,3 +1,4 @@
+// Package traits defines a simple structure to configure traits.
 package traits
 
 import "bitbucket.org/fflo/semix/pkg/semix"

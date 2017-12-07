@@ -1,7 +1,6 @@
 package resource
 
 import (
-	"log"
 	"testing"
 )
 
@@ -41,8 +40,6 @@ func TestConfig(t *testing.T) {
 	if !traits.IsRule("http://example.org/rule") {
 		t.Fatalf("missing rule predicate")
 	}
-	log.Printf("h: %T", traits.HandleAmbigs())
-	log.Printf("h: %p", traits.HandleAmbigs())
 	if traits.HandleAmbigs()(nil) != nil {
 		t.Fatalf("invalid handle ambigs function returned")
 	}

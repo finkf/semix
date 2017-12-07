@@ -1,3 +1,6 @@
+// Package resource defines the configuration
+// for a knowledge base resource.
+// It uses a simple toml file format
 package resource
 
 import (
@@ -15,10 +18,18 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// The parser format identifiers.
+// Comparision ignores case
 const (
+	// RDFXML sets the input format to RDF XML
 	RDFXML = "rdfxml"
+	// Turtle sets the input format to Turtle
 	Turtle = "turtle"
+	// Discard sets the ambig handler to discard all ambiguities.
+	Discard = "discard"
+	// Merge sets the ambig handler to merge ambiguities to a distinct concept.
+	Merge = "merge"
+	// Split sets the ambig handler to split ambiguities to an ambigiuous concept.
+	Split = "split"
 )
 
 type file struct {
@@ -115,11 +126,11 @@ func (c *Config) Traits() semix.Traits {
 
 func (c *Config) newHandle() (semix.HandleAmbigsFunc, error) {
 	switch strings.ToLower(c.File.HandleAmbigs) {
-	case "merge":
+	case Merge:
 		return semix.HandleAmbigsWithMerge, nil
-	case "split":
+	case Split:
 		return semix.HandleAmbigsWithSplit, nil
-	case "discard":
+	case Discard:
 		return func(*semix.Graph, ...string) *semix.Concept {
 			return nil
 		}, nil
