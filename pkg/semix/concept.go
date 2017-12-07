@@ -137,6 +137,16 @@ func (c *Concept) Ambig() bool {
 	return c.edges[0].P.url == SplitURL
 }
 
+// FindEdge searches for the matching edge.
+func (c *Concept) FindEdge(p, o string) (Edge, bool) {
+	for _, e := range c.edges {
+		if e.P.URL() == p && e.O.URL() == o {
+			return e, true
+		}
+	}
+	return Edge{}, false
+}
+
 // ShortURL returns a short version of the URL of this concept.
 // The short URL is not necessarily unique.
 func (c *Concept) ShortURL() string {

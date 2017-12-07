@@ -8,11 +8,11 @@ import (
 // in the parsing of the knowledge base.
 // If the function is successfull, it must return a non nil concept,
 // otherwise the according dictionary entry is discarded.
-type HandleAmbigsFunc func(*Graph, string, ...string) *Concept
+type HandleAmbigsFunc func(*Graph, ...string) *Concept
 
 // HandleAmbigsWithSplit handles an ambiguity
 // by creating a new ambig split concept.
-func HandleAmbigsWithSplit(g *Graph, entry string, urls ...string) *Concept {
+func HandleAmbigsWithSplit(g *Graph, urls ...string) *Concept {
 	urls = sortUnique(urls)
 	newURL := CombineURLs(urls...)
 	c := g.Register(newURL)
@@ -24,7 +24,7 @@ func HandleAmbigsWithSplit(g *Graph, entry string, urls ...string) *Concept {
 
 // HandleAmbigsWithMerge handles ambiguities
 // by creating a new distinct concept.
-func HandleAmbigsWithMerge(g *Graph, entry string, urls ...string) *Concept {
+func HandleAmbigsWithMerge(g *Graph, urls ...string) *Concept {
 	urls = sortUnique(urls)
 	newURL := CombineURLs(urls...)
 	edges := IntersectEdges(g, urls...)

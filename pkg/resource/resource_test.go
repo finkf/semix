@@ -43,7 +43,7 @@ func TestConfig(t *testing.T) {
 	}
 	log.Printf("h: %T", traits.HandleAmbigs())
 	log.Printf("h: %p", traits.HandleAmbigs())
-	if traits.HandleAmbigs()(nil, "") != nil {
+	if traits.HandleAmbigs()(nil) != nil {
 		t.Fatalf("invalid handle ambigs function returned")
 	}
 }

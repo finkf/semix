@@ -120,7 +120,7 @@ func (c *Config) newHandle() (semix.HandleAmbigsFunc, error) {
 	case "split":
 		return semix.HandleAmbigsWithSplit, nil
 	case "discard":
-		return func(*semix.Graph, string, ...string) *semix.Concept {
+		return func(*semix.Graph, ...string) *semix.Concept {
 			return nil
 		}, nil
 	}

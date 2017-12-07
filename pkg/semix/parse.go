@@ -89,7 +89,7 @@ func (parser *parser) buildDictionary(g *Graph) Dictionary {
 	}
 	for e, urls := range parser.ambigs {
 		h := parser.traits.HandleAmbigs()
-		c := h(g, e, urls...)
+		c := h(g, urls...)
 		if c == nil {
 			continue
 		}
