@@ -2,7 +2,6 @@ package semix
 
 import (
 	"fmt"
-	"sort"
 
 	"bitbucket.org/fflo/semix/pkg/traits"
 )
@@ -30,7 +29,7 @@ type parser struct {
 	predicates map[string]map[spo]bool
 	names      map[string]string
 	labels     map[string]label
-	splits     map[string][]string
+	ambigs     map[string][]string
 	rules      RulesDictionary
 	traits     traits.Interface
 }
@@ -40,7 +39,7 @@ func newParser(traits traits.Interface) *parser {
 		predicates: make(map[string]map[spo]bool),
 		names:      make(map[string]string),
 		labels:     make(map[string]label),
-		splits:     make(map[string][]string),
+		ambigs:     make(map[string][]string),
 		rules:      make(RulesDictionary),
 		traits:     traits,
 	}
@@ -90,110 +89,22 @@ func (parser *parser) buildDictionary(g *Graph) Dictionary {
 			d[entry] = id
 		}
 	}
-	// ambiguities
-	var newURLs map[string]string
-	if parser.traits.SplitAmbiguousURLs() {
-		newURLs = parser.handleAmbiguitiesWithSplit(g)
-	} else {
-		newURLs = parser.handleAmbiguitiesWithMerge(g)
-	}
-	for entry, url := range newURLs {
-		c, ok := g.FindByURL(url)
-		if ok {
-			// nicer names for concepts
-			if c.Name == "" {
-				c.Name = entry
-			}
-			d[entry] = c.ID()
+	for e, urls := range parser.ambigs {
+		var c *Concept
+		if parser.traits.SplitAmbiguousURLs() {
+			c = HandleAmbiguitiesWithSplit(g, e, urls...)
+		} else {
+			c = HandleAmbiguitiesWithMerge(g, e, urls...)
 		}
+		if c == nil {
+			continue
+		}
+		if c.Name == "" {
+			c.Name = e
+		}
+		d[e] = c.ID()
 	}
 	return d
-}
-
-func (parser *parser) handleAmbiguitiesWithSplit(g *Graph) map[string]string {
-	newURLs := make(map[string]string)
-	for entry := range parser.splits {
-		urls := sortUnique(parser.splits[entry])
-		newURL := CombineURLs(urls...)
-		newURLs[entry] = newURL
-		for _, url := range urls {
-			g.Add(newURL, SplitURL, url)
-		}
-	}
-	return newURLs
-}
-
-func (parser *parser) handleAmbiguitiesWithMerge(g *Graph) map[string]string {
-	newURLs := make(map[string]string)
-	for entry := range parser.splits {
-		urls := sortUnique(parser.splits[entry])
-		newURL := CombineURLs(urls...)
-		newURLs[entry] = newURL
-		edges := intersectEdges(g, urls...)
-		g.Register(newURL)
-		for p, os := range edges {
-			for o := range os {
-				g.Add(newURL, p, o)
-			}
-		}
-	}
-	return newURLs
-}
-
-func intersectEdges(g *Graph, urls ...string) map[string]map[string]struct{} {
-	if len(urls) == 0 {
-		return nil
-	}
-	a := makeEdgesMap(g, urls[0])
-	for _, url := range urls[1:] {
-		a = intersect(a, makeEdgesMap(g, url))
-	}
-	return a
-}
-
-func intersect(a, b map[string]map[string]struct{}) map[string]map[string]struct{} {
-	c := make(map[string]map[string]struct{})
-	for p, os := range a {
-		for o := range os {
-			if _, ok := b[p]; ok {
-				if _, ok := b[p][o]; ok {
-					if _, ok := c[p]; !ok {
-						c[p] = make(map[string]struct{})
-					}
-					c[p][o] = struct{}{}
-				}
-			}
-		}
-	}
-	return c
-}
-
-func makeEdgesMap(g *Graph, url string) map[string]map[string]struct{} {
-	c, ok := g.FindByURL(url)
-	if !ok {
-		return nil
-	}
-	edges := make(map[string]map[string]struct{})
-	for _, e := range c.edges {
-		if edges[e.P.URL()] == nil {
-			edges[e.P.URL()] = make(map[string]struct{})
-		}
-		edges[e.P.URL()][e.O.URL()] = struct{}{}
-	}
-	return edges
-}
-
-func sortUnique(urls []string) []string {
-	urlset := make(map[string]bool)
-	for _, url := range urls {
-		urlset[url] = true
-	}
-	splits := make([]string, 0, len(urlset))
-	for url := range urlset {
-		splits = append(splits, url)
-	}
-	sort.Strings(splits)
-	return splits
 }
 
 func (parser *parser) add(s, p, o string) error {
@@ -232,14 +143,14 @@ func (parser *parser) addLabels(entry, url string, ambig, name bool) error {
 	}
 	for _, expanded := range labels {
 		normalized := NormalizeString(expanded, false)
-		if _, ok := parser.splits[normalized]; ok {
-			parser.splits[normalized] = append(parser.splits[normalized], url)
+		if _, ok := parser.ambigs[normalized]; ok {
+			parser.ambigs[normalized] = append(parser.ambigs[normalized], url)
 			return nil
 		}
 		if l, ok := parser.labels[normalized]; ok && l.url != url {
 			delete(parser.labels, normalized)
-			parser.splits[normalized] = append(parser.splits[normalized], url)
-			parser.splits[normalized] = append(parser.splits[normalized], l.url)
+			parser.ambigs[normalized] = append(parser.ambigs[normalized], url)
+			parser.ambigs[normalized] = append(parser.ambigs[normalized], l.url)
 			return nil
 		}
 		// name can/should never be part of a split
