@@ -20,6 +20,8 @@ func HandleAmbiguitiesWithSplit(g *Graph, entry string, urls ...string) *Concept
 	return c
 }
 
+// HandleAmbiguitiesWithMerge handles ambiguities
+// by creating a new distinct concept.
 func HandleAmbiguitiesWithMerge(g *Graph, entry string, urls ...string) *Concept {
 	urls = sortUnique(urls)
 	newURL := CombineURLs(urls...)
