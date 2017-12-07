@@ -25,7 +25,7 @@ func HandleAmbigsWithSplit(g *Graph, entry string, urls ...string) *Concept {
 func HandleAmbigsWithMerge(g *Graph, entry string, urls ...string) *Concept {
 	urls = sortUnique(urls)
 	newURL := CombineURLs(urls...)
-	edges := intersectEdges(g, urls...)
+	edges := IntersectEdges(g, urls...)
 	c := g.Register(newURL)
 	for p, os := range edges {
 		for o := range os {
@@ -33,38 +33,44 @@ func HandleAmbigsWithMerge(g *Graph, entry string, urls ...string) *Concept {
 		}
 	}
 	return c
-
 }
 
-func intersectEdges(g *Graph, urls ...string) map[string]map[string]struct{} {
+// EdgeSet represents a set of relations
+type EdgeSet map[string]map[string]struct{}
+
+// IntersectEdges calculates the intersection of the
+// relation sets of the given concepts.
+func IntersectEdges(g *Graph, urls ...string) EdgeSet {
 	if len(urls) == 0 {
 		return nil
 	}
-	a := makeEdgesMap(g, urls[0])
+	a := newEdgeSet(g, urls[0])
 	for _, url := range urls[1:] {
-		a = intersect(a, makeEdgesMap(g, url))
+		a = intersect(a, newEdgeSet(g, url))
 	}
 	return a
 }
 
-func intersect(a, b map[string]map[string]struct{}) map[string]map[string]struct{} {
-	c := make(map[string]map[string]struct{})
+func intersect(a, b EdgeSet) EdgeSet {
+	c := make(EdgeSet)
 	for p, os := range a {
 		for o := range os {
-			if _, ok := b[p]; ok {
-				if _, ok := b[p][o]; ok {
-					if _, ok := c[p]; !ok {
-						c[p] = make(map[string]struct{})
-					}
-					c[p][o] = struct{}{}
-				}
+			if _, ok := b[p]; !ok {
+				continue
 			}
+			if _, ok := b[p][o]; !ok {
+				continue
+			}
+			if _, ok := c[p]; !ok {
+				c[p] = make(map[string]struct{})
+			}
+			c[p][o] = struct{}{}
 		}
 	}
 	return c
 }
 
-func makeEdgesMap(g *Graph, url string) map[string]map[string]struct{} {
+func newEdgeSet(g *Graph, url string) map[string]map[string]struct{} {
 	c, ok := g.FindByURL(url)
 	if !ok {
 		return nil
