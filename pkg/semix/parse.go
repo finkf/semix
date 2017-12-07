@@ -92,9 +92,9 @@ func (parser *parser) buildDictionary(g *Graph) Dictionary {
 	for e, urls := range parser.ambigs {
 		var c *Concept
 		if parser.traits.SplitAmbiguousURLs() {
-			c = HandleAmbiguitiesWithSplit(g, e, urls...)
+			c = HandleAmbigsWithSplit(g, e, urls...)
 		} else {
-			c = HandleAmbiguitiesWithMerge(g, e, urls...)
+			c = HandleAmbigsWithMerge(g, e, urls...)
 		}
 		if c == nil {
 			continue

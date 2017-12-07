@@ -186,7 +186,7 @@ func (h handle) getFixFunc() query.LookupFunc {
 		}
 		var urls []string
 		for _, c := range cs {
-			if c.Ambiguous() {
+			if c.Ambig() {
 				for i := 0; i < c.EdgesLen(); i++ {
 					e := c.EdgeAt(i)
 					urls = append(urls, e.O.URL())

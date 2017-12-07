@@ -129,8 +129,8 @@ func (c *Concept) URL() string {
 	return c.url
 }
 
-// Ambiguous returns if the concept is ambiguous or not.
-func (c *Concept) Ambiguous() bool {
+// Ambig returns if the concept is ambiguous or not.
+func (c *Concept) Ambig() bool {
 	if len(c.edges) == 0 {
 		return false
 	}

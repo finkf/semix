@@ -28,7 +28,7 @@ func TestParse(t *testing.T) {
 		if tmp := c.URL(); tmp != url {
 			t.Fatalf("expected url=%s; got %s", url, tmp)
 		}
-		if tmp := c.Ambiguous(); tmp != false {
+		if tmp := c.Ambig(); tmp != false {
 			t.Fatalf("expected ambiguous = false; got %t", tmp)
 		}
 	}
@@ -41,7 +41,7 @@ func TestParse(t *testing.T) {
 		if tmp := c.URL(); tmp != url {
 			t.Fatalf("expected url=%s; got %s", url, tmp)
 		}
-		if tmp := c.Ambiguous(); tmp != true {
+		if tmp := c.Ambig(); tmp != true {
 			t.Fatalf("expected ambiguous = true; got %t", tmp)
 		}
 	}

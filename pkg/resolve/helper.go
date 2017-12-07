@@ -34,7 +34,7 @@ func maxConcept(cs []*semix.Concept, scores []float64) *semix.Concept {
 func referencedConcepts(c *semix.Concept) []*semix.Concept {
 	var cs []*semix.Concept
 	c.EachEdge(func(e semix.Edge) {
-		if e.O.Ambiguous() {
+		if e.O.Ambig() {
 			e.O.EachEdge(func(e semix.Edge) {
 				cs = append(cs, e.O)
 			})

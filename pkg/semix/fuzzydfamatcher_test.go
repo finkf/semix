@@ -69,7 +69,7 @@ func fuzzyConceptToString(t *testing.T, m MatchPos, a bool) string {
 	if m.Concept == nil {
 		return fmt.Sprintf("%v", m)
 	}
-	if aa := m.Concept.Ambiguous(); aa != a {
+	if aa := m.Concept.Ambig(); aa != a {
 		t.Errorf("expected concept.Ambiguous()=%t; got %t", a, aa)
 	}
 	sort.Slice(m.Concept.edges, func(i, j int) bool {
