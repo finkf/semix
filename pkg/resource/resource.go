@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
@@ -134,8 +135,16 @@ func (c *Config) newHandle() (semix.HandleAmbigsFunc, error) {
 		return func(*semix.Graph, ...string) *semix.Concept {
 			return nil
 		}, nil
+	default:
+		t, err := strconv.ParseFloat(c.File.HandleAmbigs, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid ambig handler: %s", c.File.HandleAmbigs)
+		}
+		if t < 0 || t > 1 {
+			return nil, fmt.Errorf("invalid ambig handler: %s", c.File.HandleAmbigs)
+		}
+		return automaticHandleAmbigsFunc(t), nil
 	}
-	return nil, fmt.Errorf("invalid ambig handler: %s", c.File.HandleAmbigs)
 }
 
 func (c *Config) newParser(r io.Reader) (semix.Parser, error) {
@@ -174,4 +183,35 @@ func (c *Config) writeCache(r *semix.Resource) error {
 	}
 	defer func() { _ = file.Close() }()
 	return gob.NewEncoder(file).Encode(r)
+}
+
+func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
+	return func(g *semix.Graph, urls ...string) *semix.Concept {
+		var min int
+		for _, url := range urls {
+			c, ok := g.FindByURL(url)
+			if !ok {
+				continue
+			}
+			if c.EdgesLen() < min {
+				min = c.EdgesLen()
+			}
+		}
+		if min == 0 {
+			return semix.HandleAmbigsWithSplit(g, urls...)
+		}
+		edges := semix.IntersectEdges(g, urls...)
+		var n int
+		for _, os := range edges {
+			n += len(os)
+		}
+		if n == 0 {
+			return semix.HandleAmbigsWithSplit(g, urls...)
+		}
+		o := float64(n) / float64(min)
+		if o >= t {
+			return semix.HandleAmbigsWithMerge(g, urls...)
+		}
+		return semix.HandleAmbigsWithSplit(g, urls...)
+	}
 }
