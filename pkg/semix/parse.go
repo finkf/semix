@@ -2,8 +2,6 @@ package semix
 
 import (
 	"fmt"
-
-	"bitbucket.org/fflo/semix/pkg/traits"
 )
 
 // Parser defines a parser that parses (Subject, Predicate, Object) triples.
@@ -12,7 +10,7 @@ type Parser interface {
 }
 
 // Parse creates a resource from a parser.
-func Parse(p Parser, t traits.Interface) (*Resource, error) {
+func Parse(p Parser, t Traits) (*Resource, error) {
 	parser := newParser(t)
 	if err := p.Parse(parser.add); err != nil {
 		return nil, err
@@ -31,10 +29,10 @@ type parser struct {
 	labels     map[string]label
 	ambigs     map[string][]string
 	rules      RulesDictionary
-	traits     traits.Interface
+	traits     Traits
 }
 
-func newParser(traits traits.Interface) *parser {
+func newParser(traits Traits) *parser {
 	return &parser{
 		predicates: make(map[string]map[spo]bool),
 		names:      make(map[string]string),
@@ -90,12 +88,8 @@ func (parser *parser) buildDictionary(g *Graph) Dictionary {
 		}
 	}
 	for e, urls := range parser.ambigs {
-		var c *Concept
-		if parser.traits.SplitAmbiguousURLs() {
-			c = HandleAmbigsWithSplit(g, e, urls...)
-		} else {
-			c = HandleAmbigsWithMerge(g, e, urls...)
-		}
+		h := parser.traits.HandleAmbigs()
+		c := h(g, e, urls...)
 		if c == nil {
 			continue
 		}

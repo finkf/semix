@@ -2,7 +2,7 @@
 path = "testdata/test.toml"
 type = "TESTTYPE"
 cache = "/tmp/test.cache"
-merge = true
+handleAmbigs = "discard"
 
 [predicates]
 ignore = [

@@ -22,8 +22,8 @@ const (
 )
 
 type file struct {
-	Path, Type, Cache string
-	Merge             bool
+	Path, Type, Cache, HandleAmbigs string
+	handle                          semix.HandleAmbigsFunc
 }
 
 type predicates struct {
@@ -60,11 +60,16 @@ func Read(file string) (*Config, error) {
 	if _, err := toml.DecodeFile(file, &c); err != nil {
 		return nil, err
 	}
+	handle, err := c.newHandle()
+	if err != nil {
+		return nil, err
+	}
+	c.File.handle = handle
 	return &c, nil
 }
 
 // Parse parses the configuration and returns the graph and the dictionary.
-func (c Config) Parse(useCache bool) (*semix.Resource, error) {
+func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 	if useCache && c.File.Cache != "" {
 		if r, err := c.readCache(); err == nil {
 			return r, nil
@@ -94,7 +99,7 @@ func (c Config) Parse(useCache bool) (*semix.Resource, error) {
 
 // Traits returns a new Traits interface using the configuration
 // of this config file.
-func (c Config) Traits() traits.Interface {
+func (c *Config) Traits() semix.Traits {
 	return traits.New(
 		traits.WithIgnorePredicates(c.Predicates.Ignore...),
 		traits.WithTransitivePredicates(c.Predicates.Transitive...),
@@ -104,11 +109,25 @@ func (c Config) Traits() traits.Interface {
 		traits.WithDistinctPredicates(c.Predicates.Distinct...),
 		traits.WithInvertedPredicates(c.Predicates.Inverted...),
 		traits.WithRulePredicates(c.Predicates.Rule...),
-		traits.WithSplitAmbiguousURLs(!c.File.Merge),
+		traits.WithHandleAmbigs(c.File.handle),
 	)
 }
 
-func (c Config) newParser(r io.Reader) (semix.Parser, error) {
+func (c *Config) newHandle() (semix.HandleAmbigsFunc, error) {
+	switch strings.ToLower(c.File.HandleAmbigs) {
+	case "merge":
+		return semix.HandleAmbigsWithMerge, nil
+	case "split":
+		return semix.HandleAmbigsWithSplit, nil
+	case "discard":
+		return func(*semix.Graph, string, ...string) *semix.Concept {
+			return nil
+		}, nil
+	}
+	return nil, fmt.Errorf("invalid ambig handler: %s", c.File.HandleAmbigs)
+}
+
+func (c *Config) newParser(r io.Reader) (semix.Parser, error) {
 	switch strings.ToLower(c.File.Type) {
 	case RDFXML:
 		return rdfxml.NewParser(r), nil
@@ -119,14 +138,14 @@ func (c Config) newParser(r io.Reader) (semix.Parser, error) {
 	}
 }
 
-func (c Config) readCache() (*semix.Resource, error) {
+func (c *Config) readCache() (*semix.Resource, error) {
 	log.Printf("readCache(): %s", c.File.Cache)
 	file, err := os.Open(c.File.Cache)
 	if err != nil {
 		log.Printf("error: %s", err)
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	r := new(semix.Resource)
 	if err := gob.NewDecoder(file).Decode(r); err != nil {
 		log.Printf("error: %s", err)
@@ -135,13 +154,13 @@ func (c Config) readCache() (*semix.Resource, error) {
 	return r, nil
 }
 
-func (c Config) writeCache(r *semix.Resource) error {
+func (c *Config) writeCache(r *semix.Resource) error {
 	log.Printf("writeCache(): %s", c.File.Cache)
 	file, err := os.Create(c.File.Cache)
 	if err != nil {
 		log.Printf("error: %s", err)
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	return gob.NewEncoder(file).Encode(r)
 }

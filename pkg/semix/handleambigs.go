@@ -1,6 +1,8 @@
 package semix
 
-import "sort"
+import (
+	"sort"
+)
 
 // HandleAmbigsFunc defines a function that handles ambiguities
 // in the parsing of the knowledge base.
