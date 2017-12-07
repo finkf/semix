@@ -26,7 +26,7 @@ func TestConfig(t *testing.T) {
 	if !traits.Ignore("http://example.org/ignore") {
 		t.Fatalf("missing ignore predicate")
 	}
-	if !traits.IsAmbiguous("http://example.org/ambiguous") {
+	if !traits.IsAmbig("http://example.org/ambiguous") {
 		t.Fatalf("missing ambiguous predicate")
 	}
 	if !traits.IsName("http://example.org/name") {

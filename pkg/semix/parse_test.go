@@ -128,7 +128,7 @@ type testTraits struct{}
 func (testTraits) Ignore(p string) bool       { return p == "i" }
 func (testTraits) IsName(p string) bool       { return p == "n" }
 func (testTraits) IsDistinct(p string) bool   { return p == "d" }
-func (testTraits) IsAmbiguous(p string) bool  { return p == "a" }
+func (testTraits) IsAmbig(p string) bool      { return p == "a" }
 func (testTraits) IsSymmetric(p string) bool  { return p == "s" }
 func (testTraits) IsTransitive(p string) bool { return p == "t" }
 func (testTraits) IsInverted(p string) bool   { return p == "v" }

@@ -7,7 +7,7 @@ type Interface interface {
 	IsTransitive(string) bool
 	IsName(string) bool
 	IsDistinct(string) bool
-	IsAmbiguous(string) bool
+	IsAmbig(string) bool
 	IsInverted(string) bool
 	IsRule(string) bool
 	SplitAmbiguousURLs() bool
@@ -149,7 +149,7 @@ func (t *traits) IsDistinct(url string) bool {
 	return t.d[url]
 }
 
-func (t *traits) IsAmbiguous(url string) bool {
+func (t *traits) IsAmbig(url string) bool {
 	return t.a[url]
 }
 

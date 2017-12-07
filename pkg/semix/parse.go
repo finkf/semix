@@ -118,7 +118,7 @@ func (parser *parser) add(s, p, o string) error {
 	if parser.traits.IsName(p) {
 		return parser.addLabels(o, s, false, true)
 	}
-	if parser.traits.IsAmbiguous(p) {
+	if parser.traits.IsAmbig(p) {
 		return parser.addLabels(o, s, true, false)
 	}
 	if parser.traits.IsDistinct(p) {
