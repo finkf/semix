@@ -35,8 +35,8 @@ const (
 )
 
 type file struct {
-	Path, Type, Cache, HandleAmbigs string
-	handle                          semix.HandleAmbigsFunc
+	Path, Type, Cache, Ambigs string
+	handle                    semix.HandleAmbigsFunc
 }
 
 type predicates struct {
@@ -127,7 +127,7 @@ func (c *Config) Traits() semix.Traits {
 }
 
 func (c *Config) newHandle() (semix.HandleAmbigsFunc, error) {
-	switch strings.ToLower(c.File.HandleAmbigs) {
+	switch strings.ToLower(c.File.Ambigs) {
 	case Merge:
 		return semix.HandleAmbigsWithMerge, nil
 	case Split:
@@ -137,12 +137,12 @@ func (c *Config) newHandle() (semix.HandleAmbigsFunc, error) {
 			return nil
 		}, nil
 	default:
-		t, err := strconv.ParseFloat(c.File.HandleAmbigs, 64)
+		t, err := strconv.ParseFloat(c.File.Ambigs, 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid ambig handler: %s", c.File.HandleAmbigs)
+			return nil, fmt.Errorf("invalid ambig handler: %s", c.File.Ambigs)
 		}
 		if t < 0 || t > 1 {
-			return nil, fmt.Errorf("invalid ambig handler: %s", c.File.HandleAmbigs)
+			return nil, fmt.Errorf("invalid ambig handler: %s", c.File.Ambigs)
 		}
 		return automaticHandleAmbigsFunc(t), nil
 	}

@@ -1,22 +1,26 @@
 [file]
-path = "testdata/ww1.ttl"
+path = "../ww1/ww1.ttl"
 type = "turtle"
 cache = "/tmp/ww1.gob"
+ambigs = "0.3"
 
 [predicates]
 ignore = []
 transitive = [
-	"http://ww1.cis.lmu.de/Type",
-	"http://ww1.cis.lmu.de/Location",
+	"http://bitbucket.org/fflo/ww1/predicates/date",
+	#"http://bitbucket.org/fflo/ww1/",
+	#"http://ww1.cis.lmu.de/Type",
+	#"http://ww1.cis.lmu.de/Location",
 ]
 symmetric = [
-	"http://ww1.cis.lmu.de/Date",
+	#"http://bitbucket.org/fflo/ww1/",
+	#"http://ww1.cis.lmu.de/Date",
 ]
 name = [
-	"http://ww1.cis.lmu.de/PrefName",
+	"http://bitbucket.org/fflo/ww1/predicates/pref-name",
 ]
 distinct = [
-	"http://ww1.cis.lmu.de/AltName",
+	"http://bitbucket.org/fflo/ww1/predicates/alt-name",
 ]
 rules = []
 ambiguous = []
