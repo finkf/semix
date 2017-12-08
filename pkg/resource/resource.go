@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -187,7 +188,7 @@ func (c *Config) writeCache(r *semix.Resource) error {
 
 func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 	return func(g *semix.Graph, urls ...string) *semix.Concept {
-		var min int
+		min := int(math.MaxInt64)
 		for _, url := range urls {
 			c, ok := g.FindByURL(url)
 			if !ok {
@@ -209,9 +210,9 @@ func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 			return semix.HandleAmbigsWithSplit(g, urls...)
 		}
 		o := float64(n) / float64(min)
-		if o >= t {
-			return semix.HandleAmbigsWithMerge(g, urls...)
+		if o < t {
+			return semix.HandleAmbigsWithSplit(g, urls...)
 		}
-		return semix.HandleAmbigsWithSplit(g, urls...)
+		return semix.HandleAmbigsWithMerge(g, urls...)
 	}
 }
