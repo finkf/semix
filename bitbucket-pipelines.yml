@@ -31,3 +31,5 @@ pipelines:
           - go build -v ${REPO}/cmd/semix-{httpd,daemon,crawl,client,wiki}
           - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml,turtle,resource,memory,rule,rest,resolve}
 		  - sh build-pkgs.sh ${BITBUCKET_REPO_OWNER} ${BITBUCKET_REPO_SLUG} ${SEMIX_AUTH}
+
+#done
