@@ -10,7 +10,7 @@
 		<ul>
 		{{range $i, $c := .Concepts}}
 			<li><a href="/info?url={{$c.URL}}">{{$c.ShortName}}</a></li>
-			{{if $c.Ambiguous}}
+			{{if $c.Ambig}}
 				<ul>
 					{{range $i, $e := $c.Edges}}
 						<li><a href="/info?url={{$e.O.URL}}">{{$e.O.ShortName}}</a></li>

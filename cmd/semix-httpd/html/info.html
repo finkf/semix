@@ -10,8 +10,8 @@
 		{{if .Concept}}
 		<h2>URL: <a href="{{.Concept.URL}}">{{.Concept.URL}}</a></h2>
 		<h2>Search Index:
-			<a href="/get?q={{printf "?({%q})" .Concept.URL}}&n=50&s=0">simple</a>
-			<a href="/get?q={{printf "?(*({%q}))" .Concept.URL}}&n=50&s=0">thematic</a>
+			<a href="/get?q={{printf "?(%q)" .Concept.URL}}&n=50&s=0">simple</a>
+			<a href="/get?q={{printf "?(*(%q))" .Concept.URL}}&n=50&s=0">thematic</a>
 		</h2>
 		<h2>Links (<a href="/parents?url={{.Concept.URL}}">Parents</a>):</h2>
 		<ul>

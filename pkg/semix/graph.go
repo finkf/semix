@@ -72,7 +72,9 @@ func (g *Graph) Add(s, p, o string) (*Concept, *Concept, *Concept) {
 	sc := g.Register(s)
 	pc := g.Register(p)
 	oc := g.Register(o)
-	sc.edges = append(sc.edges, Edge{P: pc, O: oc})
+	if _, ok := sc.FindEdge(pc.URL(), oc.URL()); !ok {
+		sc.edges = append(sc.edges, Edge{P: pc, O: oc})
+	}
 	return sc, pc, oc
 }
 

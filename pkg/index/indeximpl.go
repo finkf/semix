@@ -113,7 +113,7 @@ func (i memIndex) Close() error {
 }
 
 func putAll(t semix.Token, f func(Entry) error) error {
-	if t.Concept.Ambiguous() {
+	if t.Concept.Ambig() {
 		return putAllAmbiguous(t, f)
 	}
 	return putAllWithError(t, 0, f)
@@ -158,7 +158,7 @@ func putAllWithError(t semix.Token, k int, f func(Entry) error) error {
 // putAllAmbiguous handles tokens with ambiguous concepts.
 func putAllAmbiguous(t semix.Token, f func(Entry) error) error {
 	c := t.Concept
-	if !c.Ambiguous() {
+	if !c.Ambig() {
 		panic("putAllAmbiguous called with non ambiguous concept")
 	}
 	n := c.EdgesLen()

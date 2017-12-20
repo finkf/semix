@@ -38,9 +38,9 @@ func TestJSONMarshalling(t *testing.T) {
 				t.Fatalf("could not decode concept: %v", err)
 			}
 			cstr := fmt.Sprintf("{%s %s %d %v %t}",
-				c.URL(), c.Name, c.ID(), c.edges, c.Ambiguous())
+				c.URL(), c.Name, c.ID(), c.edges, c.Ambig())
 			dstr := fmt.Sprintf("{%s %s %d %v %t}",
-				d.URL(), d.Name, d.ID(), d.edges, c.Ambiguous())
+				d.URL(), d.Name, d.ID(), d.edges, c.Ambig())
 			if dstr != cstr {
 				t.Fatalf("expceted %s; got %s", cstr, dstr)
 			}

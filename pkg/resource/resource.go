@@ -1,3 +1,6 @@
+// Package resource defines the configuration
+// for a knowledge base resource.
+// It uses a simple toml file format
 package resource
 
 import (
@@ -6,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
@@ -15,15 +19,23 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// The parser format identifiers.
+// Comparision ignores case
 const (
+	// RDFXML sets the input format to RDF XML
 	RDFXML = "rdfxml"
+	// Turtle sets the input format to Turtle
 	Turtle = "turtle"
+	// Discard sets the ambig handler to discard all ambiguities.
+	Discard = "discard"
+	// Merge sets the ambig handler to merge ambiguities to a distinct concept.
+	Merge = "merge"
+	// Split sets the ambig handler to split ambiguities to an ambigiuous concept.
+	Split = "split"
 )
 
 type file struct {
-	Path, Type, Cache string
-	Merge             bool
+	Path, Type, Cache, Ambigs string
+	handle                    semix.HandleAmbigsFunc
 }
 
 type predicates struct {
@@ -60,11 +72,16 @@ func Read(file string) (*Config, error) {
 	if _, err := toml.DecodeFile(file, &c); err != nil {
 		return nil, err
 	}
+	handle, err := c.newHandle()
+	if err != nil {
+		return nil, err
+	}
+	c.File.handle = handle
 	return &c, nil
 }
 
 // Parse parses the configuration and returns the graph and the dictionary.
-func (c Config) Parse(useCache bool) (*semix.Resource, error) {
+func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 	if useCache && c.File.Cache != "" {
 		if r, err := c.readCache(); err == nil {
 			return r, nil
@@ -94,7 +111,7 @@ func (c Config) Parse(useCache bool) (*semix.Resource, error) {
 
 // Traits returns a new Traits interface using the configuration
 // of this config file.
-func (c Config) Traits() traits.Interface {
+func (c *Config) Traits() semix.Traits {
 	return traits.New(
 		traits.WithIgnorePredicates(c.Predicates.Ignore...),
 		traits.WithTransitivePredicates(c.Predicates.Transitive...),
@@ -104,11 +121,33 @@ func (c Config) Traits() traits.Interface {
 		traits.WithDistinctPredicates(c.Predicates.Distinct...),
 		traits.WithInvertedPredicates(c.Predicates.Inverted...),
 		traits.WithRulePredicates(c.Predicates.Rule...),
-		traits.WithSplitAmbiguousURLs(!c.File.Merge),
+		traits.WithHandleAmbigs(c.File.handle),
 	)
 }
 
-func (c Config) newParser(r io.Reader) (semix.Parser, error) {
+func (c *Config) newHandle() (semix.HandleAmbigsFunc, error) {
+	switch strings.ToLower(c.File.Ambigs) {
+	case Merge:
+		return semix.HandleAmbigsWithMerge, nil
+	case Split:
+		return semix.HandleAmbigsWithSplit, nil
+	case Discard:
+		return func(*semix.Graph, ...string) *semix.Concept {
+			return nil
+		}, nil
+	default:
+		t, err := strconv.ParseFloat(c.File.Ambigs, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid ambig handler: %s", c.File.Ambigs)
+		}
+		if t < 0 || t > 1 {
+			return nil, fmt.Errorf("invalid ambig handler: %s", c.File.Ambigs)
+		}
+		return automaticHandleAmbigsFunc(t), nil
+	}
+}
+
+func (c *Config) newParser(r io.Reader) (semix.Parser, error) {
 	switch strings.ToLower(c.File.Type) {
 	case RDFXML:
 		return rdfxml.NewParser(r), nil
@@ -119,14 +158,14 @@ func (c Config) newParser(r io.Reader) (semix.Parser, error) {
 	}
 }
 
-func (c Config) readCache() (*semix.Resource, error) {
+func (c *Config) readCache() (*semix.Resource, error) {
 	log.Printf("readCache(): %s", c.File.Cache)
 	file, err := os.Open(c.File.Cache)
 	if err != nil {
 		log.Printf("error: %s", err)
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	r := new(semix.Resource)
 	if err := gob.NewDecoder(file).Decode(r); err != nil {
 		log.Printf("error: %s", err)
@@ -135,13 +174,44 @@ func (c Config) readCache() (*semix.Resource, error) {
 	return r, nil
 }
 
-func (c Config) writeCache(r *semix.Resource) error {
+func (c *Config) writeCache(r *semix.Resource) error {
 	log.Printf("writeCache(): %s", c.File.Cache)
 	file, err := os.Create(c.File.Cache)
 	if err != nil {
 		log.Printf("error: %s", err)
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	return gob.NewEncoder(file).Encode(r)
+}
+
+func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
+	return func(g *semix.Graph, urls ...string) *semix.Concept {
+		min := -1
+		for _, url := range urls {
+			c, ok := g.FindByURL(url)
+			if !ok {
+				continue
+			}
+			if c.EdgesLen() < min || min == -1 {
+				min = c.EdgesLen()
+			}
+		}
+		if min == 0 {
+			return semix.HandleAmbigsWithSplit(g, urls...)
+		}
+		edges := semix.IntersectEdges(g, urls...)
+		var n int
+		for _, os := range edges {
+			n += len(os)
+		}
+		if n == 0 {
+			return semix.HandleAmbigsWithSplit(g, urls...)
+		}
+		o := float64(n) / float64(min)
+		if o < t {
+			return semix.HandleAmbigsWithSplit(g, urls...)
+		}
+		return semix.HandleAmbigsWithMerge(g, urls...)
+	}
 }

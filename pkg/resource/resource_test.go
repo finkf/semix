@@ -1,6 +1,8 @@
 package resource
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestConfig(t *testing.T) {
 	c, err := Read("testdata/test.toml")
@@ -26,7 +28,7 @@ func TestConfig(t *testing.T) {
 	if !traits.Ignore("http://example.org/ignore") {
 		t.Fatalf("missing ignore predicate")
 	}
-	if !traits.IsAmbiguous("http://example.org/ambiguous") {
+	if !traits.IsAmbig("http://example.org/ambiguous") {
 		t.Fatalf("missing ambiguous predicate")
 	}
 	if !traits.IsName("http://example.org/name") {
@@ -38,7 +40,7 @@ func TestConfig(t *testing.T) {
 	if !traits.IsRule("http://example.org/rule") {
 		t.Fatalf("missing rule predicate")
 	}
-	if traits.SplitAmbiguousURLs() {
-		t.Fatalf("should merge ambiguous URLs")
+	if traits.HandleAmbigs()(nil) != nil {
+		t.Fatalf("invalid handle ambigs function returned")
 	}
 }

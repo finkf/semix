@@ -27,9 +27,9 @@ function getQuery() {
 	var c = document.getElementById('query-index-input-concepts').value;
 	c = toQuotedArgs(c);
 	if (p.length === 0) {
-		return '?({' + c + '})';
+		return '?(' + c + ')';
 	}
-	return '?(' + p + '({' + c + '}))';
+	return '?(' + p + '(' + c + '))';
 }
 
 function sleep(millis) {
@@ -48,4 +48,3 @@ function ExecuteQuery() {
 	q = '/get?q=' + encodeURIComponent(q) + '&n=50&s=0';
 	document.location = q;
 }
-

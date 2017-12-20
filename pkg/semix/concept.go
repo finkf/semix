@@ -10,7 +10,7 @@ import (
 const (
 	// SplitURL is the name of predicates that denote ambiguous connections
 	// in the concept graph.
-	SplitURL = "http://bitbucket.org/fflo/semix/pkg/semix/split-url"
+	SplitURL = "http://bitbucket.org/fflo/semix/pkg/semix/a-star"
 )
 
 // Edge represents an edge in the concept graph that
@@ -129,12 +129,22 @@ func (c *Concept) URL() string {
 	return c.url
 }
 
-// Ambiguous returns if the concept is ambiguous or not.
-func (c *Concept) Ambiguous() bool {
+// Ambig returns if the concept is ambiguous or not.
+func (c *Concept) Ambig() bool {
 	if len(c.edges) == 0 {
 		return false
 	}
 	return c.edges[0].P.url == SplitURL
+}
+
+// FindEdge searches for the matching edge.
+func (c *Concept) FindEdge(p, o string) (Edge, bool) {
+	for _, e := range c.edges {
+		if e.P.URL() == p && e.O.URL() == o {
+			return e, true
+		}
+	}
+	return Edge{}, false
 }
 
 // ShortURL returns a short version of the URL of this concept.

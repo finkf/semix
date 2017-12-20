@@ -1,17 +1,7 @@
+// Package traits defines a simple structure to configure traits.
 package traits
 
-// Interface defines the interface for the different traits of predicates.
-type Interface interface {
-	Ignore(string) bool
-	IsSymmetric(string) bool
-	IsTransitive(string) bool
-	IsName(string) bool
-	IsDistinct(string) bool
-	IsAmbiguous(string) bool
-	IsInverted(string) bool
-	IsRule(string) bool
-	SplitAmbiguousURLs() bool
-}
+import "bitbucket.org/fflo/semix/pkg/semix"
 
 // Option speciefies an Option to set up a traits instance.
 type Option func(*traits)
@@ -88,16 +78,16 @@ func WithRulePredicates(urls ...string) Option {
 	}
 }
 
-// WithSplitAmbiguousURLs specifies how to handle ambiguous lexicon entries.
-func WithSplitAmbiguousURLs(split bool) Option {
+// WithHandleAmbigs specifies how to handle ambiguous lexicon entries.
+func WithHandleAmbigs(h semix.HandleAmbigsFunc) Option {
 	return func(t *traits) {
-		t.split = split
+		t.h = h
 	}
 }
 
 // New returns a new traits instance.
 // You can set the various urls manually.
-func New(opts ...Option) Interface {
+func New(opts ...Option) semix.Traits {
 	t := &traits{
 		i: make(traitSet),
 		t: make(traitSet),
@@ -118,11 +108,11 @@ type traitSet map[string]bool
 
 type traits struct {
 	i, t, s, n, d, a, v, r traitSet
-	split                  bool
+	h                      semix.HandleAmbigsFunc
 }
 
-func (t *traits) SplitAmbiguousURLs() bool {
-	return t.split
+func (t *traits) HandleAmbigs() semix.HandleAmbigsFunc {
+	return t.h
 }
 
 func (t *traits) Ignore(url string) bool {
@@ -149,7 +139,7 @@ func (t *traits) IsDistinct(url string) bool {
 	return t.d[url]
 }
 
-func (t *traits) IsAmbiguous(url string) bool {
+func (t *traits) IsAmbig(url string) bool {
 	return t.a[url]
 }
 

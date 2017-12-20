@@ -32,10 +32,10 @@ func Resolve(ctx context.Context, n int, r Interface, s semix.Stream) semix.Stre
 				if t.Err == nil && mem[t.Token.Path] == nil {
 					mem[t.Token.Path] = memory.New(n)
 				}
-				if t.Err == nil && t.Token.Concept != nil && t.Token.Concept.Ambiguous() {
+				if t.Err == nil && t.Token.Concept != nil && t.Token.Concept.Ambig() {
 					t.Token = doResolve(t.Token, r, mem[t.Token.Path])
 				}
-				if t.Err == nil && t.Token.Concept != nil && !t.Token.Concept.Ambiguous() {
+				if t.Err == nil && t.Token.Concept != nil && !t.Token.Concept.Ambig() {
 					mem[t.Token.Path].Push(t.Token.Concept)
 				}
 				rstream <- t

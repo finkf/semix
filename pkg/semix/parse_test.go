@@ -28,7 +28,7 @@ func TestParse(t *testing.T) {
 		if tmp := c.URL(); tmp != url {
 			t.Fatalf("expected url=%s; got %s", url, tmp)
 		}
-		if tmp := c.Ambiguous(); tmp != false {
+		if tmp := c.Ambig(); tmp != false {
 			t.Fatalf("expected ambiguous = false; got %t", tmp)
 		}
 	}
@@ -41,7 +41,7 @@ func TestParse(t *testing.T) {
 		if tmp := c.URL(); tmp != url {
 			t.Fatalf("expected url=%s; got %s", url, tmp)
 		}
-		if tmp := c.Ambiguous(); tmp != true {
+		if tmp := c.Ambig(); tmp != true {
 			t.Fatalf("expected ambiguous = true; got %t", tmp)
 		}
 	}
@@ -125,12 +125,12 @@ func makeNewTestParser() Parser {
 
 type testTraits struct{}
 
-func (testTraits) Ignore(p string) bool       { return p == "i" }
-func (testTraits) IsName(p string) bool       { return p == "n" }
-func (testTraits) IsDistinct(p string) bool   { return p == "d" }
-func (testTraits) IsAmbiguous(p string) bool  { return p == "a" }
-func (testTraits) IsSymmetric(p string) bool  { return p == "s" }
-func (testTraits) IsTransitive(p string) bool { return p == "t" }
-func (testTraits) IsInverted(p string) bool   { return p == "v" }
-func (testTraits) IsRule(p string) bool       { return p == "r" }
-func (testTraits) SplitAmbiguousURLs() bool   { return true }
+func (testTraits) Ignore(p string) bool           { return p == "i" }
+func (testTraits) IsName(p string) bool           { return p == "n" }
+func (testTraits) IsDistinct(p string) bool       { return p == "d" }
+func (testTraits) IsAmbig(p string) bool          { return p == "a" }
+func (testTraits) IsSymmetric(p string) bool      { return p == "s" }
+func (testTraits) IsTransitive(p string) bool     { return p == "t" }
+func (testTraits) IsInverted(p string) bool       { return p == "v" }
+func (testTraits) IsRule(p string) bool           { return p == "r" }
+func (testTraits) HandleAmbigs() HandleAmbigsFunc { return HandleAmbigsWithSplit }
