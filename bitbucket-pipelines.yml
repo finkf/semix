@@ -30,4 +30,4 @@ pipelines:
           - go build -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle,resource,memory,rule,rest,resolve}
           - go build -v ${REPO}/cmd/semix-{httpd,daemon,crawl,client,wiki}
           - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml,turtle,resource,memory,rule,rest,resolve}
-          - if test $(git rev-parse --abrev-ref HEAD) = master; then sh -x build-pkgs.sh ${BITBUCKET_REPO_OWNER} ${BITBUCKET_REPO_SLUG} ${SEMIX_AUTH}; fi
+          - if test "${BITBUCKET_BRANCH}" = "master"; then sh -x build-pkgs.sh ${BITBUCKET_REPO_OWNER} ${BITBUCKET_REPO_SLUG} ${SEMIX_AUTH}; fi
