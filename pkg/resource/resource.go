@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -188,13 +187,13 @@ func (c *Config) writeCache(r *semix.Resource) error {
 
 func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 	return func(g *semix.Graph, urls ...string) *semix.Concept {
-		min := int(math.MaxInt64)
+		min := -1
 		for _, url := range urls {
 			c, ok := g.FindByURL(url)
 			if !ok {
 				continue
 			}
-			if c.EdgesLen() < min {
+			if c.EdgesLen() < min || min == -1 {
 				min = c.EdgesLen()
 			}
 		}
