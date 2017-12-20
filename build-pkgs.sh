@@ -7,9 +7,8 @@ PKG=bitbucket.org/$OWNER/$SLUG
 
 mkdir -p build/bin
 cd build
-
-for os in darwin; do # linux windows; do
-	for arch in 386; do # amd64; do
+for os in darwin linux windows; do
+	for arch in 386 amd64; do
 		for cmd in semix-client semix-daemon semix-httpd; do
 			GOOS=$os GOARCH=$arch go build -o bin/$cmd $PKG/cmd/$cmd
 		done
@@ -20,5 +19,3 @@ for os in darwin; do # linux windows; do
 			 || exit 1
 	done
 done
-#cd ..
-#rm -rf build
