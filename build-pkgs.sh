@@ -12,10 +12,12 @@ for os in darwin linux windows; do
 		for cmd in semix-client semix-daemon semix-httpd; do
 			GOOS=$os GOARCH=$arch go build -o bin/$cmd $PKG/cmd/$cmd
 		done
+		ar=semix-$os-$arch.tar.bz2
+		tar -cjf $ar bin/*
 		zip semix-$os-$arch.zip bin/*
 		curl --user "$AUTH" \
 			 "https://api.bitbucket.org/2.0/repositories/$OWNER/$SLUG/downloads"\
-			 --form files=@"semix-$os-$arch.zip" \
+			 --form files=@"$ar"\
 			 || exit 1
 	done
 done
