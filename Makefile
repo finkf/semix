@@ -35,7 +35,7 @@ test:
 install: install-semix-daemon install-semix-client install-semix-httpd
 .PHONY: install-%
 install-%:
-	$S go install $(GOTAGS) $(REPO)/cmd/semix-$(call w3,$@)
+	$S go install $(GOTAGS) $(REPO)/cmd/semix-$(call w,3,$@)
 
 # build releases for different oses and architectures
 # semix-daemon-darwin-amd64 builds the semix-daemon for 64-bit osx
