@@ -11,7 +11,7 @@ func TestParse(t *testing.T) {
 		t.Fatalf("got error: %v", err)
 	}
 	// dictionray names are normalized
-	for _, name := range []string{"name", "distinct", "ambiguous", "abd", "acd",
+	for _, name := range []string{"distinct", "ambiguous", "abd", "acd",
 		"split name", "second split name"} {
 		if _, ok := r.Dictionary[name]; !ok {
 			t.Fatalf("could not find %q in dictionary", name)
@@ -50,7 +50,8 @@ func TestParse(t *testing.T) {
 			t.Fatalf("found something for url=%s", url)
 		}
 	}
-	if c, _ := r.Graph.FindByURL("A"); c.Name != "name" {
+	// Names are not normalized
+	if c, _ := r.Graph.FindByURL("A"); c.Name != "Name" {
 		t.Fatalf("expected name=%s; got %s", "name", c.Name)
 	}
 	if got, ok := r.Rules["R"]; !ok || got != "rule" {
@@ -106,7 +107,7 @@ func makeNewTestParser() Parser {
 		"A", "p", "B", // normal
 		"B", "p", "C", // normal
 		"X", "i", "X", // ignore
-		"A", "n", "name", // name
+		"A", "n", "Name", // name
 		"A", "d", "distinct", // distinct label
 		"A", "d", "a{b,c}d", // distinct label
 		"A", "a", "ambiguous", // ambiguous label
