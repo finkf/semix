@@ -5,13 +5,19 @@ AUTH ?= $(OWNER):NONE
 GOTAGS ?=
 REPO := bitbucket.org/$(OWNER)/$(SLUG)
 
-# default is test
+# $(w n,$x) takes the nth word of a `-` separated name
+define w
+$(word $1,$(subst -, ,$2))
+endef
+
+# default target is `test`
 default: test
 
 # clean target
 .PHONY: clean
 clean:
 	$S $(RM) $(RELEASES)
+	$S $(RM) *.tar.gz
 
 # go get dependencies
 .PHONY: go-get
@@ -29,27 +35,23 @@ test:
 install: install-semix-daemon install-semix-client install-semix-httpd
 .PHONY: install-%
 install-%:
-	$S go install $(GOTAGS) $(REPO)/cmd/semix-$(word 3,$(subst -, ,$@))
+	$S go install $(GOTAGS) $(REPO)/cmd/semix-$(call w3,$@)
 
 # build releases for different oses and architectures
-RELEASES += semix-daemon-darwin-amd64
-RELEASES += semix-daemon-linux-amd64
-RELEASES += semix-daemon-windows-amd64
-RELEASES += semix-client-darwin-amd64
-RELEASES += semix-client-linux-amd64
-RELEASES += semix-client-windows-amd64
-RELEASES += semix-httpd-darwin-amd64
-RELEASES += semix-httpd-linux-amd64
-RELEASES += semix-httpd-windows-amd64
-release: $(RELEASES)
+# semix-daemon-darwin-amd64 builds the semix-daemon for 64-bit osx
 semix-%:
-	$S GOOS=$(word 3,$(subst -, ,$@)) GOARCH=$(word 4,$(subst -, ,$@)) \
-		go build -o $@ $(REPO)/cmd/semix-$(word 2,$(subst -, ,$@))
+	$S GOOS=$(call w,3,$@) GOARCH=$(call w,4,$@) go build -o $@ $(REPO)/cmd/semix-$(call w,2,$@)
 
 # upload releases to bitbucket's download page
-upload: $(addprefix upload-,$(RELEASES))
+.PHONY: upload
+upload: upload-semix-darwin-amd64.tar.gz upload-semix-linux-amd64.tar.gz upload-semix-windows-amd64.tar.gz
 .PHONY: upload-%
 .SECONDEXPANSION:
 upload-%: $$(subst upload-,,$$@)
 	$S curl --user $(AUTH) --fail --form files=@"$<" \
 		"https://api.bitbucket.org/2.0/repositories/$(OWNER)/$(SLUG)/downloads"
+
+# packages
+.SECONDEXPANSION:
+semix-%.tar.gz: semix-daemon-% semix-client-% semix-httpd-%
+	$S tar -czf $@ semix-*-$(call w,1,$*)-$(call w,2,$*)
