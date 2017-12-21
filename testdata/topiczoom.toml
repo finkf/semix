@@ -2,7 +2,7 @@
 path = "../../testdata/topiczoom.skos.rdf.xml"
 type = "RDFXML"
 cache = "/tmp/topiczoom.gob"
-merge = true
+ambigs = "merge"
 
 [predicates]
 ignore = [

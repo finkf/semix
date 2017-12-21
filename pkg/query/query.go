@@ -97,7 +97,6 @@ func (q Query) match(e index.Entry) bool {
 
 // String returns a string representing the query.
 func (q Query) String() string {
-	c := q.constraint.String()
 	pre := "?"
 	if q.a {
 		pre += "*"
@@ -105,10 +104,11 @@ func (q Query) String() string {
 	if q.l != 0 {
 		pre += fmt.Sprintf("%d", q.l)
 	}
+	c := q.constraint.String()
 	if len(c) == 0 {
-		return pre + "({" + q.set.String() + "})"
+		return pre + "(" + q.set.String() + ")"
 	}
-	return pre + "(" + c + "({" + q.set.String() + "}))"
+	return pre + "(" + c + "(" + q.set.String() + "))"
 }
 
 type set map[string]bool
@@ -144,14 +144,13 @@ type constraint struct {
 }
 
 func (c constraint) String() string {
-	str := ""
-	if c.not {
-		str = "!"
-	}
 	if c.all {
-		return str + "*"
+		return "*"
 	}
-	return str + c.set.String()
+	if c.not {
+		return "!" + c.set.String()
+	}
+	return c.set.String()
 }
 
 // not & in   -> false
