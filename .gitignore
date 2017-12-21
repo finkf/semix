@@ -1,6 +1,6 @@
 cmd/tryout
-semix-client
-semix-daemon
-semix-httpd
-semix-wiki
-
+semix-client*
+semix-daemon*
+semix-httpd*
+semix-wiki*
+semix-crawl*
