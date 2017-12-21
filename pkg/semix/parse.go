@@ -117,10 +117,10 @@ func (parser *parser) add(s, p, o string) error {
 		parser.names[s] = o
 	}
 	if parser.traits.IsAmbig(p) {
-		return parser.addLabels(o, s, true, false)
+		return parser.addLabels(o, s, true)
 	}
 	if parser.traits.IsDistinct(p) {
-		return parser.addLabels(o, s, false, false)
+		return parser.addLabels(o, s, false)
 	}
 	// If p is a name we are done.
 	// We checked for lexicon entries,
@@ -140,7 +140,7 @@ func (parser *parser) addTriple(s, p, o string) error {
 	return nil
 }
 
-func (parser *parser) addLabels(entry, url string, ambig, name bool) error {
+func (parser *parser) addLabels(entry, url string, ambig bool) error {
 	labels, err := ExpandBraces(entry)
 	if err != nil {
 		return fmt.Errorf("could not expand: %v", err)
@@ -156,14 +156,6 @@ func (parser *parser) addLabels(entry, url string, ambig, name bool) error {
 			parser.ambigs[normalized] = append(parser.ambigs[normalized], url)
 			parser.ambigs[normalized] = append(parser.ambigs[normalized], l.url)
 			return nil
-		}
-		// name can/should never be part of a split
-		if name && !ambig {
-			if _, ok := parser.names[url]; !ok {
-				// the name should not be normalized, so it looks nicer.
-				// the name is still put normalized into the dictionary.
-
-			}
 		}
 		parser.labels[normalized] = label{url, ambig}
 	}
