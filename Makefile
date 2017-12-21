@@ -2,6 +2,7 @@ S ?= @
 OWNER ?= fflo
 SLUG ?= semix
 AUTH ?= $(OWNER):NONE
+GOTAGS ?= ''
 REPO := bitbucket.org/$(OWNER)/$(SLUG)
 
 # default is test
@@ -21,14 +22,14 @@ go-get:
 PKGS := $(addprefix $(REPO)/pkg/,$(shell ls pkg/))
 .PHONY: test
 test:
-	$S go test -cover -race $(PKGS)
+	$S go test $(GOTAGS) -cover -race $(PKGS)
 
 # install target
 .PHONY: install
 install: install-semix-daemon install-semix-client install-semix-httpd
 .PHONY: install-%
 install-%:
-	$S go install $(REPO)/cmd/semix-$(word 3,$(subst -, ,$@))
+	$S go install $(GOTAGS) $(REPO)/cmd/semix-$(word 3,$(subst -, ,$@))
 
 # build releases for different oses and architectures
 RELEASES += semix-daemon-darwin-amd64
