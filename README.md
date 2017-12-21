@@ -1,6 +1,17 @@
 # Semix
 Semantic indexing
 
+## Testing
+`[make go-get &&] make test`
+
+## Installing
+`[make go-get &&] make install`
+
+## Building packages
+`[make go-get &&] make semix-os-arch.tar.gz`
+You need to specify the according OS and architecture in the package name.
+So the package name `semix-linux-amd64.tar.gz` builds a package for 64-bit linux.
+
 ## Build tags
 There a are 5 optional build tags, that control the size of the
 directory storage entries (DSE):
@@ -13,4 +24,3 @@ directory storage entries (DSE):
 
 You can choose to compile this project using *one* of
 the four available build tags: `go build -tags isize1`.
-
