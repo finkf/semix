@@ -13,10 +13,16 @@ for os in darwin linux windows; do
 			GOOS=$os GOARCH=$arch go build -o bin/$cmd $PKG/cmd/$cmd
 		done
 		ar=semix-$os-$arch.tar.gz
+		sum=semix-$os$arch.sha1
 		tar -czf $ar bin/*
+		sha1sum $ar > $sum
 		curl --user "$AUTH" \
 			 "https://api.bitbucket.org/2.0/repositories/$OWNER/$SLUG/downloads"\
 			 --form files=@"$ar"\
+			|| exit 1
+		curl -- user "$AUTH" \
+			 "https://api.bitbucket.org/2.0/repositories/$OWNER/$SLUG/downloads"\
+			 -- form files=@"$sum"\
 			 || exit 1
 	done
 done
