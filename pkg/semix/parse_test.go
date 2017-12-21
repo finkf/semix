@@ -50,7 +50,8 @@ func TestParse(t *testing.T) {
 			t.Fatalf("found something for url=%s", url)
 		}
 	}
-	if c, _ := r.Graph.FindByURL("A"); c.Name != "name" {
+	// Names are not normalized
+	if c, _ := r.Graph.FindByURL("A"); c.Name != "(name)" {
 		t.Fatalf("expected name=%s; got %s", "name", c.Name)
 	}
 	if got, ok := r.Rules["R"]; !ok || got != "rule" {
@@ -106,7 +107,7 @@ func makeNewTestParser() Parser {
 		"A", "p", "B", // normal
 		"B", "p", "C", // normal
 		"X", "i", "X", // ignore
-		"A", "n", "name", // name
+		"A", "n", "(name)", // name
 		"A", "d", "distinct", // distinct label
 		"A", "d", "a{b,c}d", // distinct label
 		"A", "a", "ambiguous", // ambiguous label
@@ -127,7 +128,7 @@ type testTraits struct{}
 
 func (testTraits) Ignore(p string) bool           { return p == "i" }
 func (testTraits) IsName(p string) bool           { return p == "n" }
-func (testTraits) IsDistinct(p string) bool       { return p == "d" }
+func (testTraits) IsDistinct(p string) bool       { return p == "d" || p == "n" }
 func (testTraits) IsAmbig(p string) bool          { return p == "a" }
 func (testTraits) IsSymmetric(p string) bool      { return p == "s" }
 func (testTraits) IsTransitive(p string) bool     { return p == "t" }
