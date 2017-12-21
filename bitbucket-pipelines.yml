@@ -15,19 +15,12 @@ pipelines:
           - tar -cO --exclude-vcs --exclude=bitbucket-pipelines.yml . | tar -xv -C "${PACKAGE_PATH}"
           - cd "${PACKAGE_PATH}"
           - REPO=bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}
-          - go get -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle,resource,rule,rest,resolve}
-          - go get -v ${REPO}/cmd/semix-{httpd,daemon,crawl,client,wiki}
-          - go build -tags isize1 ${REPO}/pkg/index
-          - go test -cover -race -tags isize1 ${REPO}/pkg/index
-          - go build -tags isize2 ${REPO}/pkg/index
-          - go test -cover -race -tags isize2 ${REPO}/pkg/index
-          - go build -tags isize3 ${REPO}/pkg/index
-          - go test -cover -race -tags isize3 ${REPO}/pkg/index
-          - go build -tags isize4 ${REPO}/pkg/index
-          - go test -cover -race -tags isize4 ${REPO}/pkg/index
-          - go build -tags isize5 ${REPO}/pkg/index
-          - go test -cover -race -tags isize5 ${REPO}/pkg/index
-          - go build -v ${REPO}/pkg/{semix,index,query,rdfxml,turtle,resource,memory,rule,rest,resolve}
-          - go build -v ${REPO}/cmd/semix-{httpd,daemon,crawl,client,wiki}
-          - go test -race -cover ${REPO}/pkg/{semix,index,query,rdfxml,turtle,resource,memory,rule,rest,resolve}
-          - if test "${BITBUCKET_BRANCH}" = "master"; then sh -x build-pkgs.sh ${BITBUCKET_REPO_OWNER} ${BITBUCKET_REPO_SLUG} ${SEMIX_AUTH}; fi
+          - make go-get
+          - make test GOTAGS='-tags isize1'
+          - make test GOTAGS='-tags isize2'
+          - make test GOTAGS='-tags isize3'
+          - make test GOTAGS='-tags isize4'
+          - make test GOTAGS='-tags isize5'
+          - make install
+          - make test
+          - if test "${BITBUCKET_BRANCH}" = "master"; then make upload AUTH=${SEMIX_AUTH}; fi
