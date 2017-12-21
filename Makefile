@@ -2,7 +2,7 @@ S ?= @
 OWNER ?= fflo
 SLUG ?= semix
 AUTH ?= $(OWNER):NONE
-GOTAGS ?= ''
+GOTAGS ?=
 REPO := bitbucket.org/$(OWNER)/$(SLUG)
 
 # default is test
