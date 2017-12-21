@@ -1,6 +1,9 @@
 package semix
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+)
 
 // NormalizeString normalizes a given string.
 // The normalization converts any non empty sequence of
@@ -9,10 +12,11 @@ import "regexp"
 // If sourround is true, the result string is sourrounded
 // with exactly one whitespace.
 func NormalizeString(str string, sourround bool) string {
+	str = strings.Trim(normalizeRegexp.ReplaceAllLiteralString(str, " "), " ")
 	if sourround {
 		str = " " + str + " "
 	}
-	return normalizeRegexp.ReplaceAllLiteralString(str, " ")
+	return str
 }
 
 var normalizeRegexp = regexp.MustCompile(`[\s\pP\pS\pZ]+`)

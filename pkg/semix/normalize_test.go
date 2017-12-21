@@ -12,6 +12,10 @@ func TestNormalizeString(t *testing.T) {
 		{"a, b, c", "a b c", false},
 		{"a, b, c", " a b c ", true},
 		{" a,b,\u00a0c ", " a b c ", true},
+		{"(abc)", "abc", false},
+		{" abc ", "abc", false},
+		{" (abc) ", "abc", false},
+		{" (abc) ", " abc ", true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
