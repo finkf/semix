@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bitbucket.org/fflo/semix/pkg/rest"
 	"github.com/spf13/cobra"
 )
 
@@ -10,7 +11,8 @@ var (
 
 var semixCmd = &cobra.Command{
 	Use:   "semix",
-	Short: "semix is a semantic indexer",
+	Long:  `SEMantic IndeXing`,
+	Short: `SEMantic IndeXing`,
 	Run:   semix,
 }
 
@@ -18,11 +20,19 @@ func init() {
 	semixCmd.PersistentFlags().StringVarP(
 		&daemonHost,
 		"daemon",
-		"d",
+		"D",
 		"localhost:6606",
-		"set semix daemon address",
+		"set semix daemon host address",
 	)
 	semixCmd.AddCommand(putCmd)
+	semixCmd.AddCommand(getCmd)
+	semixCmd.AddCommand(searchCmd)
+	semixCmd.AddCommand(infoCmd)
+}
+
+func client() *rest.Client {
+	client := rest.NewClient(daemonHost)
+	return &client
 }
 
 func semix(cmd *cobra.Command, args []string) {

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,7 +25,6 @@ In the latter case the daemon reads the file itself and no local copy is made.
 If a path looks like an URL (starts with either http:// or https://)
 the URL is given to the semix daemon, which downloads the file and puts
 its contents into the semantic index.`,
-	Args: cobra.MinimumNArgs(1),
 	RunE: put,
 }
 
@@ -35,7 +33,7 @@ func init() {
 }
 
 func put(cmd *cobra.Command, args []string) error {
-	client := rest.NewClient(daemonHost)
+	client := client()
 	for _, arg := range args {
 		if err := putPath(client, arg); err != nil {
 			return err
@@ -44,13 +42,13 @@ func put(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func putPath(client rest.Client, path string) error {
+func putPath(client *rest.Client, path string) error {
 	if isURL(path) {
 		return putFileOrURL(client, path)
 	}
 	info, err := os.Stat(path)
 	if err != nil {
-		return errors.Wrapf(err, "cannot put %s", path)
+		return errors.Wrapf(err, "[put] cannot index %s", path)
 	}
 	if info.IsDir() {
 		return putDir(client, path)
@@ -58,10 +56,10 @@ func putPath(client rest.Client, path string) error {
 	return putFileOrURL(client, path)
 }
 
-func putDir(client rest.Client, path string) error {
+func putDir(client *rest.Client, path string) error {
 	return filepath.Walk(path, func(p string, i os.FileInfo, err error) error {
 		if err != nil {
-			return errors.Wrapf(err, "cannot put %s", p)
+			return errors.Wrapf(err, "[put] cannot index %s", p)
 		}
 		if i.IsDir() {
 			return putDir(client, p)
@@ -70,7 +68,7 @@ func putDir(client rest.Client, path string) error {
 	})
 }
 
-func putFileOrURL(client rest.Client, path string) error {
+func putFileOrURL(client *rest.Client, path string) error {
 	var es []index.Entry
 	var err error
 	if isURL(path) {
@@ -86,9 +84,9 @@ func putFileOrURL(client rest.Client, path string) error {
 		es, err = client.PutContent(file, path, "text/plain", nil, nil)
 	}
 	if err != nil {
-		return errors.Wrapf(err, "cannot put %s", path)
+		return errors.Wrapf(err, "[put] cannot index %s", path)
 	}
-	fmt.Printf("%v\n", es)
+	printEntries(path, es)
 	return nil
 }
 
