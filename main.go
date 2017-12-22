@@ -1,7 +1,15 @@
 package main
 
-import "bitbucket.org/fflo/semix/pkg/cmd"
+import (
+	"fmt"
+	"os"
+
+	"bitbucket.org/fflo/semix/pkg/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %s\n", err)
+		os.Exit(1)
+	}
 }
