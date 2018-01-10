@@ -28,7 +28,7 @@ func init() {
 	semixCmd.AddCommand(getCmd)
 	semixCmd.AddCommand(searchCmd)
 	semixCmd.AddCommand(infoCmd)
-	semixCmd.AddCommand(deamonCmd)
+	semixCmd.AddCommand(daemonCmd)
 }
 
 func client() *rest.Client {
