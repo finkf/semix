@@ -11,8 +11,8 @@ import (
 )
 
 var getCmd = &cobra.Command{
-	Use:          "get",
-	Short:        "get [options] [queries...]",
+	Use:          "get [query...]",
+	Short:        "Query the semantic index",
 	Long:         `The get command sends queries to the daemon.`,
 	RunE:         get,
 	SilenceUsage: true,

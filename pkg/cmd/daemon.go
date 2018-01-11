@@ -16,7 +16,7 @@ import (
 
 var daemonCmd = &cobra.Command{
 	Use:          "daemon",
-	Short:        "daemon [options...]",
+	Short:        "Starts the daemon",
 	Long:         `The daemon command starts the semix daemon.`,
 	RunE:         daemon,
 	SilenceUsage: true,

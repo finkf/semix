@@ -11,8 +11,8 @@ import (
 )
 
 var searchCmd = &cobra.Command{
-	Use:   "search",
-	Short: "search [pattern...]",
+	Use:   "search [pattern...]",
+	Short: "Search concepts",
 	Long: `
 The search command searches for concepts or predicates that match
 a given pattern. A pattern matches either a normalized dictionary

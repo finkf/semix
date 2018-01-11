@@ -18,7 +18,7 @@ import (
 
 var httpdCmd = &cobra.Command{
 	Use:          "httpd",
-	Short:        "httpd",
+	Short:        "Start an http server",
 	Long:         "The httpd command starts an http server.",
 	RunE:         httpd,
 	SilenceUsage: true,

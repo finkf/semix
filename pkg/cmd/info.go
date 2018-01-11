@@ -10,8 +10,8 @@ import (
 )
 
 var infoCmd = &cobra.Command{
-	Use:   "info",
-	Short: "info [URL|ID ...]",
+	Use:   "info [URL|ID ...]",
+	Short: "Print information about a concept",
 	Long: `The info command prints out info about a concept.
 The concept can be specified either with an ID or and URL.`,
 	RunE:         info,
