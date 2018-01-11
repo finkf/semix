@@ -43,7 +43,7 @@ test: go-get
 
 # install target
 .PHONY: install
-install: go-get main.go
+install: go-get semix.go
 	$S $(GO) install $(GOTAGS)
 
 # tar.gz files
