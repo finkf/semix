@@ -48,12 +48,10 @@ func run(s *rest.Server) {
 	sigch := make(chan os.Signal)
 	signal.Notify(sigch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
-		select {
-		case sig := <-sigch:
-			log.Printf("got signal: %d", sig)
-			if err := s.Close(); err != nil {
-				log.Fatalf("could not close server: %s", err)
-			}
+		sig := <-sigch
+		log.Printf("got signale: %d", sig)
+		if err := s.Close(); err != nil {
+			log.Printf("error closing server: %s", err)
 		}
 	}()
 	log.Printf("starting daemon on %s", host)
