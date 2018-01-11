@@ -22,5 +22,4 @@ pipelines:
           - make test GOTAGS='-tags isize4'
           - make test GOTAGS='-tags isize5'
           - make install
-          # - if test "${BITBUCKET_BRANCH}" = "master"; then make upload AUTH=${SEMIX_AUTH}; fi
-          - make upload AUTH=${SEMIX_AUTH}
+          - if test "${BITBUCKET_BRANCH}" = "master"; then make upload AUTH=${SEMIX_AUTH}; fi
