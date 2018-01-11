@@ -13,8 +13,8 @@ import (
 
 var putLocal bool
 var putCmd = &cobra.Command{
-	Use:   "put",
-	Short: "put [paths...]",
+	Use:   "put [paths...]",
+	Short: "Put a file into the semantic index",
 	Long: `The put command puts files into the semantic index.
 If a path is directory all files and directories are put recursively.
 

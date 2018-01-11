@@ -30,6 +30,7 @@ func init() {
 	semixCmd.AddCommand(searchCmd)
 	semixCmd.AddCommand(infoCmd)
 	semixCmd.AddCommand(daemonCmd)
+	semixCmd.AddCommand(httpdCmd)
 }
 
 func newClient() *rest.Client {

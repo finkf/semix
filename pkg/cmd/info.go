@@ -10,8 +10,8 @@ import (
 )
 
 var infoCmd = &cobra.Command{
-	Use:   "info",
-	Short: "info [URL|ID ...]",
+	Use:   "info [URL|ID ...]",
+	Short: "Print information about a concept",
 	Long: `The info command prints out info about a concept.
 The concept can be specified either with an ID or and URL.`,
 	RunE:         info,
@@ -34,8 +34,9 @@ func doInfo(client *rest.Client, concept string) error {
 	id, err := strconv.Atoi(concept)
 	if err == nil && id > 0 {
 		info, err = client.InfoID(id)
+	} else {
+		info, err = client.InfoURL(concept)
 	}
-	info, err = client.InfoURL(concept)
 	if err != nil {
 		return err
 	}
