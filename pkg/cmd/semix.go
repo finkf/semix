@@ -15,7 +15,6 @@ var semixCmd = &cobra.Command{
 	Use:   "semix",
 	Long:  `SEMantic IndeXing`,
 	Short: `SEMantic IndeXing`,
-	RunE:  semix,
 }
 
 func init() {
@@ -41,10 +40,6 @@ func newClient() *rest.Client {
 	}
 	client := rest.NewClient(host)
 	return &client
-}
-
-func semix(cmd *cobra.Command, args []string) error {
-	return cmd.Help()
 }
 
 // Execute runs the main semix command.
