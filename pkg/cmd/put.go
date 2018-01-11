@@ -33,7 +33,7 @@ func init() {
 }
 
 func put(cmd *cobra.Command, args []string) error {
-	client := client()
+	client := newClient()
 	for _, arg := range args {
 		if err := putPath(client, arg); err != nil {
 			return err

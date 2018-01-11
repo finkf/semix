@@ -31,7 +31,7 @@ func init() {
 	semixCmd.AddCommand(daemonCmd)
 }
 
-func client() *rest.Client {
+func newClient() *rest.Client {
 	client := rest.NewClient(daemonHost)
 	return &client
 }

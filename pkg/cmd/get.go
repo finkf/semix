@@ -28,7 +28,7 @@ func init() {
 }
 
 func get(cmd *cobra.Command, args []string) error {
-	client := client()
+	client := newClient()
 	for _, query := range args {
 		if err := doGet(client, query); err != nil {
 			return err

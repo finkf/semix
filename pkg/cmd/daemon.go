@@ -22,10 +22,10 @@ var daemonCmd = &cobra.Command{
 }
 
 var (
-	daemonDir             string
-	daemonResource        string
-	daemonNoCache         bool
-	daemonIndexBufferSize int
+	daemonDir       string
+	daemonResource  string
+	daemonNoCache   bool
+	indexBufferSize int
 )
 
 func init() {
@@ -35,7 +35,7 @@ func init() {
 		"semix.toml", "set path of resource file")
 	daemonCmd.Flags().BoolVar(&daemonNoCache, "no-cache",
 		false, "do not load cached resources")
-	daemonCmd.Flags().IntVar(&daemonIndexBufferSize, "index-size",
+	daemonCmd.Flags().IntVar(&indexBufferSize, "index-size",
 		index.DefaultBufferSize, "set buffer size of index")
 }
 
@@ -61,7 +61,7 @@ func daemon(cmd *cobra.Command, args []string) error {
 }
 
 func newServer() (*rest.Server, error) {
-	index, err := index.New(daemonDir, daemonIndexBufferSize)
+	index, err := index.New(daemonDir, indexBufferSize)
 	if err != nil {
 		return nil, err
 	}

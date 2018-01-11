@@ -18,7 +18,7 @@ The concept can be specified either with an ID or and URL.`,
 }
 
 func info(cmd *cobra.Command, args []string) error {
-	client := client()
+	client := newClient()
 	for _, concept := range args {
 		if err := doInfo(client, concept); err != nil {
 			return errors.Wrapf(err, "[info] could not get info for %s", concept)

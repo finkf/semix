@@ -33,7 +33,7 @@ func init() {
 }
 
 func search(cmd *cobra.Command, args []string) error {
-	client := client()
+	client := newClient()
 	doSearch := doConcepts
 	if searchPredicates {
 		doSearch = doPredicates
