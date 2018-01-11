@@ -1,5 +1,5 @@
 # Semix
-Semantic indexing
+SEMantic IndeXing
 
 ## Build tags
 There a are 5 optional build tags, that control the size of the
@@ -13,4 +13,3 @@ directory storage entries (DSE):
 
 You can choose to compile this project using *one* of
 the four available build tags: `go build -tags isize1`.
-
