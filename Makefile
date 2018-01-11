@@ -17,8 +17,12 @@ RELS += semix-darwin-amd64
 RELS += semix-linux-amd64
 RELS += semix-windows-amd64.exe
 
-# default target is `test`
-default: test
+# default target is `semix`
+default: semix
+
+# build semix exectutable
+semix: main.go
+	$S $(GO) $(GOTAGS) -o $@ $<
 
 # clean target
 .PHONY: clean
@@ -44,26 +48,33 @@ install: go-get main.go
 
 # tar.gz files
 %.tar.gz: %
+	@echo 'fucking tar baby' $@: $<
 	$S tar -czf $@ $<
 
 # build releases for different oses and architectures
-# semix-darwin-amd64 builds the semix-daemon for 64-bit osx
+#$S GOOS=$(call w,2,$@) GOARCH=$(call w,3,$@) $(GO) get $(PKGS)# semix-darwin-amd64 builds the semix-daemon for 64-bit osx
 semix-%: main.go
-	$S echo $@
-	$S GOOS=$(call w,2,$@) GOARCH=$(call w,3,$@) $(GO) get $(PKGS)
+	@echo $@
 	$S GOOS=$(call w,2,$@) GOARCH=$(call w,3,$@) $(GO) build -o $@ main.go
-semix-windows-%.exe: main.go
-	$S echo 'fucking windows baby: ' $@
-	$S GOOS=windows GOARCH=$* $(GO) get $(PKGS)
-	$S GOOS=windows GOARCH=$* $(GO) build -o $@ main.go
+#$S GOOS=windows GOARCH=$* $(GO) get $(PKGS)
+%.exe: main.go
+	@echo 'fucking windows baby: ' $@
+	$S GOOS=windows GOARCH=$(subst .exe,,$(call w,3,$@)) $(GO) build -o $@ main.go
 
 # upload releases to bitbucket's download page
 .PHONY: upload
-upload: $(addprefix upload-,$(RELS))
-	echo $^
+upload: $(addsuffix .upload,$(RELS))
+	@echo upload $@: $^
+
+.PHONY: %.upload
+%.upload: %.tar.gz
+	@echo 'upload:' $@: $<
+	$S curl --user $(AUTH) --fail --form files=@"$<" \
+		"https://api.bitbucket.org/2.0/repositories/$(OWNER)/$(SLUG)/downloads"
 
 .PHONY: upload-%
 .SECONDEXPANSION:
 upload-%: $$(subst upload-,,$$@.tar.gz)
+	@echo 'upload:' $@: $<
 	$S curl --user $(AUTH) --fail --form files=@"$<" \
 		"https://api.bitbucket.org/2.0/repositories/$(OWNER)/$(SLUG)/downloads"
