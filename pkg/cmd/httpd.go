@@ -17,10 +17,11 @@ import (
 )
 
 var httpdCmd = &cobra.Command{
-	Use:   "httpd",
-	Short: "httpd",
-	Long:  "The httpd command starts an http server.",
-	RunE:  httpd,
+	Use:          "httpd",
+	Short:        "httpd",
+	Long:         "The httpd command starts an http server.",
+	RunE:         httpd,
+	SilenceUsage: true,
 }
 
 var (
