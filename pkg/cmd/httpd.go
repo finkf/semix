@@ -109,7 +109,7 @@ type status struct {
 
 type httpdHandle func(*http.Request) (*template.Template, interface{}, status)
 
-func handle(f httpdHandle) http.HandleFunc {
+func handle(f httpdHandle) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		t, x, s := f(r)
 		if s.err != nil {
@@ -141,7 +141,7 @@ func semixJS(w http.ResponseWriter, r *http.Request) {
 
 func httpdSearch(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("q")
-	cs, err := client().Search(q)
+	cs, err := newClient().Search(q)
 	if err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -153,7 +153,7 @@ func httpdSearch(r *http.Request) (*template.Template, interface{}, status) {
 
 func predicates(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("q")
-	cs, err := client().Predicates(q)
+	cs, err := newClient().Predicates(q)
 	if err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -165,7 +165,7 @@ func predicates(r *http.Request) (*template.Template, interface{}, status) {
 
 func parents(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("url")
-	cs, err := client().ParentsURL(q)
+	cs, err := newClient().ParentsURL(q)
 	if err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -177,7 +177,7 @@ func parents(r *http.Request) (*template.Template, interface{}, status) {
 
 func httpdInfo(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("url")
-	info, err := client().InfoURL(q)
+	info, err := newClient().InfoURL(q)
 	if err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -191,7 +191,7 @@ func home(r *http.Request) (*template.Template, interface{}, status) {
 			return nil, nil, internalError(err)
 		}
 		log.Printf("r.URL.RequestURI(): %q", url)
-		content, err := client().DumpFile(url)
+		content, err := newClient().DumpFile(url)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
@@ -208,7 +208,7 @@ func httpdGet(r *http.Request) (*template.Template, interface{}, status) {
 	if err := rest.DecodeQuery(r.URL.Query(), &data); err != nil {
 		return nil, nil, internalError(err)
 	}
-	es, err := client().Get(data.Q, data.N, data.S)
+	es, err := newClient().Get(data.Q, data.N, data.S)
 	if err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -228,7 +228,7 @@ func ctx(r *http.Request) (*template.Template, interface{}, status) {
 	if err := rest.DecodeQuery(r.URL.Query(), &data); err != nil {
 		return nil, nil, internalError(err)
 	}
-	ctx, err := client().Ctx(data.URL, data.B, data.E, data.N)
+	ctx, err := newClient().Ctx(data.URL, data.B, data.E, data.N)
 	if err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -239,7 +239,7 @@ func httpdPut(r *http.Request) (*template.Template, interface{}, status) {
 	switch r.Method {
 	case http.MethodPost:
 		ct := "text/plain"
-		ts, err := client().PutContent(r.Body, "", ct, nil, nil)
+		ts, err := newClient().PutContent(r.Body, "", ct, nil, nil)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
@@ -253,7 +253,7 @@ func httpdPut(r *http.Request) (*template.Template, interface{}, status) {
 		if err := rest.DecodeQuery(r.URL.Query(), &ps); err != nil {
 			return nil, nil, internalError(err)
 		}
-		ts, err := client().PutURL(ps.URL, ps.Ls, nil)
+		ts, err := newClient().PutURL(ps.URL, ps.Ls, nil)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
