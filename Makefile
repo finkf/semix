@@ -22,7 +22,7 @@ default: semix
 
 # build semix exectutable
 semix: main.go
-	$S $(GO) $(GOTAGS) -o $@ $<
+	$S $(GO) build $(GOTAGS) -o $@ $<
 
 # clean target
 .PHONY: clean
