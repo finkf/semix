@@ -21,8 +21,8 @@ RELS += semix-windows-amd64.exe
 default: semix
 
 # build semix exectutable
-semix: main.go
-	$S $(GO) build $(GOTAGS) -o $@ $<
+semix: semix.go
+	$S $(GO) build $(GOTAGS) $<
 
 # clean target
 .PHONY: clean
@@ -47,24 +47,20 @@ install: go-get main.go
 	$S $(GO) install $(GOTAGS)
 
 # tar.gz files
-%.tar.gz: %
-	$S tar -czf $@ $<
-
-# build releases for different oses and architectures
-# semix-darwin-amd64 builds the semix-daemon for 64-bit osx
-.DEFAULT: main.go
-	$S GOOS=$(call w,2,$@) GOARCH=$(call w,3,$@) $(GO) get $(PKGS)
-	$S GOOS=$(call w,2,$@) GOARCH=$(call w,3,$@) $(GO) build -o $@ main.go
-
-%.exe: main.go
-	$S $(GO) get "github.com/inconshreveable/mousetrap"
-	$S GOOS=windows GOARCH=$(subst .exe,,$(call w,3,$@)) $(GO) build -o $@ main.go
+%.gz: %
+	$S gzip $<
 
 # upload releases to bitbucket's download page
+%.upload: %.gz
+	$S curl --user $(AUTH) --fail --form files=@"$<" \
+		"https://api.bitbucket.org/2.0/repositories/$(OWNER)/$(SLUG)/downloads"
 .PHONY: upload
 upload: $(addsuffix .upload,$(RELS))
 
-.PHONY: %.upload
-%.upload: %.tar.gz
-	$S curl --user $(AUTH) --fail --form files=@"$<" \
-		"https://api.bitbucket.org/2.0/repositories/$(OWNER)/$(SLUG)/downloads"
+# build releases for different oses and architectures
+# semix-darwin-amd64 builds the semix-daemon for 64-bit osx
+%.exe: semix.go
+	$S $(GO) get "github.com/inconshreveable/mousetrap"
+	$S GOOS=windows GOARCH=$(subst .exe,,$(call w,3,$@)) $(GO) build -o $@ $<
+semix-darwin-amd64 semix-linux-amd64: semix.go
+	$S GOOS=$(call w,2,$@) GOARCH=$(call w,3,$@) $(GO) build -o $@ $<
