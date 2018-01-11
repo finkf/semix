@@ -42,7 +42,7 @@ func daemon(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
 		return errors.New("[daemon] missing ressource file")
 	}
-	s, err := newServer(args[1])
+	s, err := newServer(args[0])
 	if err != nil {
 		return err
 	}
