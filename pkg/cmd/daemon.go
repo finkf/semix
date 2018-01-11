@@ -50,7 +50,7 @@ func daemon(cmd *cobra.Command, args []string) error {
 	signal.Notify(sigch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		sig := <-sigch
-		log.Printf("got signale: %d", sig)
+		log.Printf("got signal: %d", sig)
 		if err := s.Close(); err != nil {
 			log.Printf("error closing server: %s", err)
 		}
