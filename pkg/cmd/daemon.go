@@ -11,11 +11,12 @@ import (
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/resource"
 	"bitbucket.org/fflo/semix/pkg/rest"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
 var daemonCmd = &cobra.Command{
-	Use:          "daemon",
+	Use:          "daemon <ressource>",
 	Short:        "Starts the daemon",
 	Long:         `The daemon command starts the semix daemon.`,
 	RunE:         daemon,
@@ -24,7 +25,6 @@ var daemonCmd = &cobra.Command{
 
 var (
 	daemonDir       string
-	daemonResource  string
 	daemonNoCache   bool
 	indexBufferSize int
 )
@@ -32,8 +32,6 @@ var (
 func init() {
 	daemonCmd.Flags().StringVarP(&daemonDir, "dir", "d",
 		filepath.Join(os.Getenv("HOME"), "semix"), "set semix index directory")
-	daemonCmd.Flags().StringVarP(&daemonResource, "resource", "r",
-		"semix.toml", "set path of resource file")
 	daemonCmd.Flags().BoolVar(&daemonNoCache, "no-cache",
 		false, "do not load cached resources")
 	daemonCmd.Flags().IntVar(&indexBufferSize, "index-size",
@@ -41,7 +39,10 @@ func init() {
 }
 
 func daemon(cmd *cobra.Command, args []string) error {
-	s, err := newServer()
+	if len(args) != 1 {
+		return errors.New("[daemon] missing ressource file")
+	}
+	s, err := newServer(args[1])
 	if err != nil {
 		return err
 	}
@@ -61,12 +62,12 @@ func daemon(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func newServer() (*rest.Server, error) {
+func newServer(res string) (*rest.Server, error) {
 	index, err := index.New(daemonDir, indexBufferSize)
 	if err != nil {
 		return nil, err
 	}
-	r, err := resource.Parse(daemonResource, !daemonNoCache)
+	r, err := resource.Parse(res, !daemonNoCache)
 	if err != nil {
 		return nil, err
 	}
