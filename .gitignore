@@ -2,3 +2,4 @@ semix*
 semix-*
 cmd/tryout
 go-get
+Dockerfile
