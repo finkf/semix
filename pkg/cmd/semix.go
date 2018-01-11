@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"strings"
+
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"github.com/spf13/cobra"
 )
@@ -32,7 +34,12 @@ func init() {
 }
 
 func newClient() *rest.Client {
-	client := rest.NewClient(daemonHost)
+	host := daemonHost
+	if !strings.HasPrefix(host, "http://") ||
+		!strings.HasPrefix(host, "https://") {
+		host = "http://" + host
+	}
+	client := rest.NewClient(host)
 	return &client
 }
 
