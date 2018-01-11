@@ -48,33 +48,23 @@ install: go-get main.go
 
 # tar.gz files
 %.tar.gz: %
-	@echo 'fucking tar baby' $@: $<
 	$S tar -czf $@ $<
 
 # build releases for different oses and architectures
-#$S GOOS=$(call w,2,$@) GOARCH=$(call w,3,$@) $(GO) get $(PKGS)# semix-darwin-amd64 builds the semix-daemon for 64-bit osx
-semix-%: main.go
-	@echo $@
+# semix-darwin-amd64 builds the semix-daemon for 64-bit osx
+.DEFAULT: main.go
+	$S GOOS=$(call w,2,$@) GOARCH=$(call w,3,$@) $(GO) get $(PKGS)
 	$S GOOS=$(call w,2,$@) GOARCH=$(call w,3,$@) $(GO) build -o $@ main.go
-#$S GOOS=windows GOARCH=$* $(GO) get $(PKGS)
+
 %.exe: main.go
-	@echo 'fucking windows baby: ' $@
+	$S $(GO) get "github.com/inconshreveable/mousetrap"
 	$S GOOS=windows GOARCH=$(subst .exe,,$(call w,3,$@)) $(GO) build -o $@ main.go
 
 # upload releases to bitbucket's download page
 .PHONY: upload
 upload: $(addsuffix .upload,$(RELS))
-	@echo upload $@: $^
 
 .PHONY: %.upload
 %.upload: %.tar.gz
-	@echo 'upload:' $@: $<
-	$S curl --user $(AUTH) --fail --form files=@"$<" \
-		"https://api.bitbucket.org/2.0/repositories/$(OWNER)/$(SLUG)/downloads"
-
-.PHONY: upload-%
-.SECONDEXPANSION:
-upload-%: $$(subst upload-,,$$@.tar.gz)
-	@echo 'upload:' $@: $<
 	$S curl --user $(AUTH) --fail --form files=@"$<" \
 		"https://api.bitbucket.org/2.0/repositories/$(OWNER)/$(SLUG)/downloads"
