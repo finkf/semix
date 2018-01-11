@@ -15,13 +15,12 @@ pipelines:
           - tar -cO --exclude-vcs --exclude=bitbucket-pipelines.yml . | tar -xv -C "${PACKAGE_PATH}"
           - cd "${PACKAGE_PATH}"
           - REPO=bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}
-          - make go-get
+          - make test
           - make test GOTAGS='-tags isize1'
           - make test GOTAGS='-tags isize2'
           - make test GOTAGS='-tags isize3'
           - make test GOTAGS='-tags isize4'
           - make test GOTAGS='-tags isize5'
           - make install
-          - make test
           # - if test "${BITBUCKET_BRANCH}" = "master"; then make upload AUTH=${SEMIX_AUTH}; fi
           - make upload AUTH=${SEMIX_AUTH}
