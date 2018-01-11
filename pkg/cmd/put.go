@@ -25,7 +25,8 @@ In the latter case the daemon reads the file itself and no local copy is made.
 If a path looks like an URL (starts with either http:// or https://)
 the URL is given to the semix daemon, which downloads the file and puts
 its contents into the semantic index.`,
-	RunE: put,
+	RunE:         put,
+	SilenceUsage: true,
 }
 
 func init() {

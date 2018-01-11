@@ -15,10 +15,11 @@ import (
 )
 
 var daemonCmd = &cobra.Command{
-	Use:   "daemon",
-	Short: "daemon [options...]",
-	Long:  `The daemon command starts the semix daemon.`,
-	RunE:  daemon,
+	Use:          "daemon",
+	Short:        "daemon [options...]",
+	Long:         `The daemon command starts the semix daemon.`,
+	RunE:         daemon,
+	SilenceUsage: true,
 }
 
 var (

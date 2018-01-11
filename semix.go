@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"bitbucket.org/fflo/semix/pkg/cmd"
@@ -9,7 +8,9 @@ import (
 
 func main() {
 	if err := cmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err)
+		// no need to print error
+		// since cobra takes care of this
+		// fmt.Fprintf(os.Stderr, "error: %s\n", err)
 		os.Exit(1)
 	}
 }

@@ -17,7 +17,8 @@ var searchCmd = &cobra.Command{
 The search command searches for concepts or predicates that match
 a given pattern. A pattern matches either a normalized dictionary
 entry of a concept or any part of a concept's URL or name.`,
-	RunE: search,
+	RunE:         search,
+	SilenceUsage: true,
 }
 
 var searchPredicates bool

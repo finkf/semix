@@ -14,7 +14,8 @@ var infoCmd = &cobra.Command{
 	Short: "info [URL|ID ...]",
 	Long: `The info command prints out info about a concept.
 The concept can be specified either with an ID or and URL.`,
-	RunE: info,
+	RunE:         info,
+	SilenceUsage: true,
 }
 
 func info(cmd *cobra.Command, args []string) error {
