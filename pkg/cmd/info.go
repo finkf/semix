@@ -34,8 +34,9 @@ func doInfo(client *rest.Client, concept string) error {
 	id, err := strconv.Atoi(concept)
 	if err == nil && id > 0 {
 		info, err = client.InfoID(id)
+	} else {
+		info, err = client.InfoURL(concept)
 	}
-	info, err = client.InfoURL(concept)
 	if err != nil {
 		return err
 	}
