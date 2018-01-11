@@ -3,53 +3,64 @@ OWNER ?= fflo
 SLUG ?= semix
 AUTH ?= $(OWNER):NONE
 GOTAGS ?=
+GO ?= go
 REPO := bitbucket.org/$(OWNER)/$(SLUG)
 
-# default is test
-default: test
+# $(w n,$x) takes the nth word of a `-` separated name
+define w
+$(word $1,$(subst -, ,$2))
+endef
+
+# packages and releases
+PKGS := $(addprefix $(REPO)/pkg/,$(shell ls pkg/))
+RELS += semix-darwin-amd64
+RELS += semix-linux-amd64
+RELS += semix-windows-amd64.exe
+
+# default target is `semix`
+default: semix
+
+# build semix exectutable
+semix: semix.go
+	$S $(GO) build $(GOTAGS) $<
 
 # clean target
 .PHONY: clean
 clean:
-	$S $(RM) $(RELEASES)
+	$S $(GO) clean
+	$S $(RM) go-get
+	$S $(RM) $(RELS)
 
 # go get dependencies
-.PHONY: go-get
 go-get:
-	$S go get -v $(PKGS)
+	$S $(GO) get -v $(PKGS)
+	$S touch $@
 
 # test target
-PKGS := $(addprefix $(REPO)/pkg/,$(shell ls pkg/))
 .PHONY: test
-test:
-	$S go test $(GOTAGS) -cover -race $(PKGS)
+test: go-get
+	$S $(GO) test $(GOTAGS) -cover -race $(PKGS)
 
 # install target
 .PHONY: install
-install: install-semix-daemon install-semix-client install-semix-httpd
-.PHONY: install-%
-install-%:
-	$S go install $(GOTAGS) $(REPO)/cmd/semix-$(word 3,$(subst -, ,$@))
+install: go-get semix.go
+	$S $(GO) install $(GOTAGS)
 
-# build releases for different oses and architectures
-RELEASES += semix-daemon-darwin-amd64
-RELEASES += semix-daemon-linux-amd64
-RELEASES += semix-daemon-windows-amd64
-RELEASES += semix-client-darwin-amd64
-RELEASES += semix-client-linux-amd64
-RELEASES += semix-client-windows-amd64
-RELEASES += semix-httpd-darwin-amd64
-RELEASES += semix-httpd-linux-amd64
-RELEASES += semix-httpd-windows-amd64
-release: $(RELEASES)
-semix-%:
-	$S GOOS=$(word 3,$(subst -, ,$@)) GOARCH=$(word 4,$(subst -, ,$@)) \
-		go build -o $@ $(REPO)/cmd/semix-$(word 2,$(subst -, ,$@))
+# tar.gz files
+%.gz: %
+	$S gzip $<
 
 # upload releases to bitbucket's download page
-upload: $(addprefix upload-,$(RELEASES))
-.PHONY: upload-%
-.SECONDEXPANSION:
-upload-%: $$(subst upload-,,$$@)
+%.upload: %.gz
 	$S curl --user $(AUTH) --fail --form files=@"$<" \
 		"https://api.bitbucket.org/2.0/repositories/$(OWNER)/$(SLUG)/downloads"
+.PHONY: upload
+upload: $(addsuffix .upload,$(RELS))
+
+# build releases for different oses and architectures
+# semix-darwin-amd64 builds the semix-daemon for 64-bit osx
+%.exe: semix.go
+	$S $(GO) get "github.com/inconshreveable/mousetrap"
+	$S GOOS=windows GOARCH=$(subst .exe,,$(call w,3,$@)) $(GO) build -o $@ $<
+semix-darwin-amd64 semix-linux-amd64: semix.go
+	$S GOOS=$(call w,2,$@) GOARCH=$(call w,3,$@) $(GO) build -o $@ $<
