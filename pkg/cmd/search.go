@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 
 	"bitbucket.org/fflo/semix/pkg/rest"
@@ -21,16 +23,13 @@ entry of a concept or any part of a concept's URL or name.`,
 	SilenceUsage: true,
 }
 
-var searchPredicates bool
+var (
+	searchPredicates bool
+)
 
 func init() {
-	searchCmd.Flags().BoolVarP(
-		&searchPredicates,
-		"predicates",
-		"p",
-		false,
-		"search for matching predicates",
-	)
+	searchCmd.Flags().BoolVarP(&searchPredicates, "predicates", "p",
+		false, "search for matching predicates")
 }
 
 func search(cmd *cobra.Command, args []string) error {
@@ -69,7 +68,21 @@ func printConcepts(pattern string, cs []*x.Concept) {
 	sort.Slice(cs, func(i, j int) bool {
 		return cs[i].Name < cs[j].Name
 	})
-	for i, c := range cs {
-		fmt.Printf("%s:%d:%d: %s\n", pattern, i+1, len(cs), c)
+	if jsonOutput {
+		_ = json.NewEncoder(os.Stdout).Encode(cs)
+	} else {
+		for i, c := range cs {
+			prettyPrintConcept(pattern, i, len(cs), c)
+		}
 	}
+}
+
+func prettyPrintConcept(pattern string, i, n int, c *x.Concept) {
+	fmt.Printf("%s:%d:%d: %s (%d)\n", pattern, i+1, n, c.ShortName(), c.ID())
+	c.EachEdge(func(edge x.Edge) {
+		fmt.Printf("%s:%d:%d: + %d %s (%d) -> %s (%d)\n",
+			pattern, i+1, n,
+			edge.L, edge.P.ShortName(), edge.P.ID(),
+			edge.O.ShortName(), edge.O.ID())
+	})
 }

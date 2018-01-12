@@ -87,7 +87,7 @@ func putFileOrURL(client *rest.Client, path string) error {
 	if err != nil {
 		return errors.Wrapf(err, "[put] cannot index %s", path)
 	}
-	printEntries(path, es)
+	prettyPrintEntries(path, es)
 	return nil
 }
 
