@@ -1,5 +1,5 @@
 [file]
-path = "../../testdata/topiczoom.skos.rdf.xml"
+path = "testdata/topiczoom.skos.rdf.xml"
 type = "RDFXML"
 cache = "/tmp/topiczoom.gob"
 ambigs = "merge"

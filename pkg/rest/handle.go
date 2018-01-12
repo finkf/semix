@@ -238,7 +238,7 @@ func (h handle) ctx(r *http.Request) (interface{}, int, error) {
 
 func (h handle) dump(r *http.Request) (interface{}, int, error) {
 	file := openDumpFile(h.dir, r.URL.Query().Get("url"))
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	c, err := ioutil.ReadAll(file)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err

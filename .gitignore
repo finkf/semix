@@ -1,6 +1,5 @@
+semix*
+semix-*
 cmd/tryout
-semix-client*
-semix-daemon*
-semix-httpd*
-semix-wiki*
-semix-crawl*
+go-get
+Dockerfile

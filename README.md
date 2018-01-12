@@ -1,5 +1,5 @@
 # Semix
-Semantic indexing
+SEMantic IndeXing
 
 ## Testing
 `[make go-get &&] make test`
