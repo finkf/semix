@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -87,7 +88,11 @@ func putFileOrURL(client *rest.Client, path string) error {
 	if err != nil {
 		return errors.Wrapf(err, "[put] cannot index %s", path)
 	}
-	prettyPrintEntries(path, es)
+	if jsonOutput {
+		_ = json.NewEncoder(os.Stdout).Encode(es)
+	} else {
+		prettyPrintEntries(path, es)
+	}
 	return nil
 }
 
