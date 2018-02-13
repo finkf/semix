@@ -27,7 +27,7 @@ for os in darwin linux windows; do
 				curl --user $auth --fail --form files="@$sha256file" $url
 
 				md5file=$out.md5
-				md5sum $out > md5file
+				md5sum $out > $md5file
 				curl --user $auth --fail --form files="@$md5file" $url
 		done
 done
