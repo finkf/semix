@@ -197,7 +197,7 @@ func (c Client) post(url string, r io.Reader, ct string, out interface{}) error 
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 		return fmt.Errorf("invalid status: %s", res.Status)
 	}
