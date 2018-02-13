@@ -188,7 +188,7 @@ func (c Client) get(url string, out interface{}) error {
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 		return fmt.Errorf("invalid status: %s", res.Status)
 	}
-	return json.NewDecoder(res.Body).Decode(out)
+	return decodeFromJSON(res.Body, out)
 }
 
 func (c Client) post(url string, r io.Reader, ct string, out interface{}) error {
@@ -197,9 +197,14 @@ func (c Client) post(url string, r io.Reader, ct string, out interface{}) error 
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 		return fmt.Errorf("invalid status: %s", res.Status)
 	}
-	return json.NewDecoder(res.Body).Decode(out)
+	return decodeFromJSON(res.Body, out)
+}
+
+func decodeFromJSON(in io.Reader, out interface{}) error {
+	// in = io.TeeReader(in, os.Stdout)
+	return json.NewDecoder(in).Decode(out)
 }

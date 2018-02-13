@@ -9,17 +9,25 @@ pipelines:
   default:
     - step:
         script: # Modify the commands below to build your repository.
+          - apt-get update
+          - apt-get install -y zip
           - git config --global url."git@bitbucket.org:".insteadOf "https://bitbucket.org/"
           - PACKAGE_PATH="${GOPATH}/src/bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}"
           - mkdir -pv "${PACKAGE_PATH}"
           - tar -cO --exclude-vcs --exclude=bitbucket-pipelines.yml . | tar -xv -C "${PACKAGE_PATH}"
           - cd "${PACKAGE_PATH}"
           - REPO=bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}
-          - make test
-          - make test GOTAGS='-tags isize1'
-          - make test GOTAGS='-tags isize2'
-          - make test GOTAGS='-tags isize3'
-          - make test GOTAGS='-tags isize4'
-          - make test GOTAGS='-tags isize5'
-          - make install
-          - if test "${BITBUCKET_BRANCH}" = "master"; then make upload AUTH=${SEMIX_AUTH}; fi
+          - go get -v ./...
+          - go get -v github.com/golang/lint/golint
+          - go get -v github.com/inconshreveable/mousetrap # for windows builds
+          - golint ./...
+          - go vet ./...
+          - go test -cover ./...
+          - |
+            for s in 1 2 3 4 5; do
+              go test -tags isize$s ./...
+            done
+          - |
+            if test "${BITBUCKET_BRANCH}" = "master"; then
+              upload_packages ${SEMIX_AUTH}
+            fi

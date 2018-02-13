@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 
 	"bitbucket.org/fflo/semix/pkg/index"
@@ -43,14 +45,18 @@ func doGet(client *rest.Client, query string) error {
 	if err != nil {
 		return errors.Wrapf(err, "[get] could not execute query %s", query)
 	}
-	printEntries(query, ts)
+	sort.Slice(ts, func(i, j int) bool {
+		return ts[i].Path < ts[j].Path
+	})
+	if jsonOutput {
+		_ = json.NewEncoder(os.Stdout).Encode(ts)
+	} else {
+		prettyPrintEntries(query, ts)
+	}
 	return nil
 }
 
-func printEntries(query string, es []index.Entry) {
-	sort.Slice(es, func(i, j int) bool {
-		return es[i].Path < es[j].Path
-	})
+func prettyPrintEntries(query string, es []index.Entry) {
 	for i, e := range es {
 		fmt.Printf("%s:%d:%d: %q %q %q %q\n",
 			query, getSkip+i+1, getSkip+len(es),

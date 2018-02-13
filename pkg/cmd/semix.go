@@ -9,6 +9,7 @@ import (
 
 var (
 	daemonHost string
+	jsonOutput bool
 )
 
 var semixCmd = &cobra.Command{
@@ -24,6 +25,13 @@ func init() {
 		"D",
 		"localhost:6606",
 		"set semix daemon host address",
+	)
+	semixCmd.PersistentFlags().BoolVarP(
+		&jsonOutput,
+		"json",
+		"J",
+		false,
+		"set JSON output",
 	)
 	semixCmd.AddCommand(putCmd)
 	semixCmd.AddCommand(getCmd)

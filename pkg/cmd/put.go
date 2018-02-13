@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -70,25 +71,31 @@ func putDir(client *rest.Client, path string) error {
 }
 
 func putFileOrURL(client *rest.Client, path string) error {
-	var es []index.Entry
-	var err error
-	if isURL(path) {
-		es, err = client.PutURL(path, nil, nil)
-	} else if putLocal {
-		es, err = client.PutLocalFile(path, nil, nil)
-	} else {
-		file, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer func() { _ = file.Close() }()
-		es, err = client.PutContent(file, path, "text/plain", nil, nil)
-	}
+	es, err := doPutFileOrURL(client, path)
 	if err != nil {
 		return errors.Wrapf(err, "[put] cannot index %s", path)
 	}
-	printEntries(path, es)
+	if jsonOutput {
+		_ = json.NewEncoder(os.Stdout).Encode(es)
+	} else {
+		prettyPrintEntries(path, es)
+	}
 	return nil
+}
+
+func doPutFileOrURL(client *rest.Client, path string) ([]index.Entry, error) {
+	if isURL(path) {
+		return client.PutURL(path, nil, nil)
+	}
+	if putLocal {
+		return client.PutLocalFile(path, nil, nil)
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = file.Close() }()
+	return client.PutContent(file, path, "text/plain", nil, nil)
 }
 
 func isURL(path string) bool {

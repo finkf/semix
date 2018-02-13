@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 
 	"bitbucket.org/fflo/semix/pkg/rest"
@@ -40,10 +42,17 @@ func doInfo(client *rest.Client, concept string) error {
 	if err != nil {
 		return err
 	}
-	printInfo(concept, info)
+	if jsonOutput {
+		_ = json.NewEncoder(os.Stdout).Encode(info)
+	} else {
+		prettyPrintInfo(concept, info)
+	}
 	return nil
 }
 
-func printInfo(concept string, info rest.ConceptInfo) {
-	fmt.Printf("%s: %v\n", concept, info)
+func prettyPrintInfo(concept string, info rest.ConceptInfo) {
+	prettyPrintConcept(concept, 0, 1, info.Concept)
+	for _, str := range info.Entries {
+		fmt.Printf("%s:%d:%d: %s\n", concept, 1, 1, str)
+	}
 }
