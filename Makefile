@@ -6,6 +6,21 @@ GOTAGS ?=
 GO ?= go
 REPO := bitbucket.org/$(OWNER)/$(SLUG)
 
+DEPS := $(shell find -type f -name '*.go')
+
+semix: $(DEPS) vet test lint
+	$S $(GO) build $(GOTAGS) -o $@ semix.go
+
+.PHONY: vet
+vet:
+		$S $(GO) vet $(GOTAGS) ./...
+.PHONY: lint
+lint:
+		$S $(GO)lint $(GOTAGS) ./...
+.PHONY: test
+test:
+		$S $(GO) test $(GOTAGS) -cover ./...
+
 # $(w n,$x) takes the nth word of a `-` separated name
 define w
 $(word $1,$(subst -, ,$2))
@@ -20,9 +35,9 @@ RELS += semix-windows-amd64.exe
 # default target is `semix`
 default: semix
 
-# build semix exectutable
-semix: semix.go
-	$S $(GO) build $(GOTAGS) $<
+# # build semix exectutable
+# semix: semix.go
+# 	$S $(GO) build $(GOTAGS) $<
 
 # clean target
 .PHONY: clean
@@ -36,10 +51,10 @@ go-get:
 	$S $(GO) get -v $(PKGS)
 	$S touch $@
 
-# test target
-.PHONY: test
-test: go-get
-	$S $(GO) test $(GOTAGS) -cover -race $(PKGS)
+# # test target
+# .PHONY: test
+# test: go-get
+# 	$S $(GO) test $(GOTAGS) -cover -race $(PKGS)
 
 # install target
 .PHONY: install
