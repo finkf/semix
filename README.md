@@ -1,6 +1,9 @@
 # Semix
 SEMantic IndeXing
 
+## Usage
+Usage: `semix [command] [--help]`
+
 ## Testing
 `[go get &&] go test [-cover] ./...`
 
@@ -9,6 +12,12 @@ SEMantic IndeXing
 
 ## Building
 `[go get &&] go build -o semix semix.go`
+
+## Downloads
+You can download the pre-compiled binaries from
+[the downloads page](https://bitbucket.org/fflo/semix/downloads/).
+If you want to use the (simplistic) httpd daemon,
+you should also download one of the supplied html package files.
 
 ## Build tags
 There a are 5 optional build tags, that control the size of the
@@ -24,9 +33,3 @@ directory storage entries:
 
 You can choose to compile or install this project using *one* of
 the five available build tags: `go <build|install> -tags isize1 semix.go`.
-
-## Downloads
-You can download the pre-compiled binaries from
-[https://bitbucket.org/fflo/semix/downloads/](https://bitbucket.org/fflo/semix/downloads/).
-If you want to use the (simplistic) httpd daemon,
-you should also download one of the supplied html package files.
