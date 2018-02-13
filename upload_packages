@@ -12,6 +12,12 @@ owner=fflo
 slug=semix
 url="https://api.bitbucket.org/2.0/repositories/$owner/$slug/downloads"
 
+tar czf semix-html.tar.gz html
+curl --user $auth --fail --form files="@semix-html.tar.gz" $url
+
+zip -r semix-html.zip html
+curl --user $auth --fail --form files="@semix-html.zip" $url
+
 for os in darwin linux windows; do
 		for arch in amd64 386; do
 				if test $os = windows; then
