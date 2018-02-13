@@ -188,7 +188,7 @@ func (c Client) get(url string, out interface{}) error {
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 		return fmt.Errorf("invalid status: %s", res.Status)
 	}
-	return decodeFromJson(res.Body, out)
+	return decodeFromJSON(res.Body, out)
 }
 
 func (c Client) post(url string, r io.Reader, ct string, out interface{}) error {
@@ -201,10 +201,10 @@ func (c Client) post(url string, r io.Reader, ct string, out interface{}) error 
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 		return fmt.Errorf("invalid status: %s", res.Status)
 	}
-	return decodeFromJson(res.Body, out)
+	return decodeFromJSON(res.Body, out)
 }
 
-func decodeFromJson(in io.Reader, out interface{}) error {
+func decodeFromJSON(in io.Reader, out interface{}) error {
 	// in = io.TeeReader(in, os.Stdout)
 	return json.NewDecoder(in).Decode(out)
 }
