@@ -29,4 +29,4 @@ the five available build tags: `go <build|install> -tags isize1 semix.go`.
 You can download the pre-compiled binaries from
 [https://bitbucket.org/fflo/semix/downloads/](https://bitbucket.org/fflo/semix/downloads/).
 If you want to use the (simplistic) httpd daemon,
-you should also download the html package file.
+you should also download one of the supplied html package files.
