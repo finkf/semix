@@ -25,6 +25,7 @@ pipelines:
               go test -tags isize$s ./...
             done
           # - |
-          #   if test "${BITBUCKET_BRANCH}"="master"; then
+          #   if test "${BITBUCKET_BRANCH}" = "master"; then
           #     upload_packages ${SEMIX_AUTH}
           #   fi
+          - ./upload_packages ${SEMIX_AUTH}
