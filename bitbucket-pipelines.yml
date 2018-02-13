@@ -22,13 +22,9 @@ pipelines:
           - go test -cover ./...
           - |
             for s in 1 2 3 4 5; do
-                go test -tags isize$s ./...
+              go test -tags isize$s ./...
             done
-          # - make test
-          # - make test GOTAGS='-tags isize1'
-          # - make test GOTAGS='-tags isize2'
-          # - make test GOTAGS='-tags isize3'
-          # - make test GOTAGS='-tags isize4'
-          # - make test GOTAGS='-tags isize5'
-          # - make install
-          # - if test "${BITBUCKET_BRANCH}" = "master"; then make upload AUTH=${SEMIX_AUTH}; fi
+          # - |
+          #   if test "${BITBUCKET_BRANCH}"="master"; then
+          #     upload_packages ${SEMIX_AUTH}
+          #   fi
