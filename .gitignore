@@ -3,3 +3,4 @@ semix-*
 cmd/tryout
 go-get
 Dockerfile
+*cover.out
