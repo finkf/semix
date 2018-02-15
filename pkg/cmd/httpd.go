@@ -56,7 +56,9 @@ func init() {
 		"localhost:8080",
 		"set host",
 	)
-	// templates
+}
+
+func initTemplates() {
 	infotmpl = template.Must(
 		template.ParseFiles(filepath.Join(dir, "info.html")))
 	puttmpl = template.Must(
@@ -72,7 +74,9 @@ func init() {
 			filepath.Join(dir, "get.html")))
 	dumptmpl = template.Must(
 		template.ParseFiles(filepath.Join(dir, "dump.html")))
-	// handlers
+}
+
+func initHandlers() {
 	http.HandleFunc("/",
 		rest.WithLogging(rest.WithGet(handle(home))))
 	http.HandleFunc("/index",
@@ -98,6 +102,8 @@ func init() {
 }
 
 func httpd(cmd *cobra.Command, args []string) error {
+	initTemplates()
+	initHandlers()
 	log.Printf("starting the server on %s", host)
 	log.Printf("semix daemon: %s", daemonHost)
 	return http.ListenAndServe(host, nil)
