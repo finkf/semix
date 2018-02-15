@@ -92,7 +92,7 @@ func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer is.Close()
+	defer func() { _ = is.Close() }()
 	parser, err := c.newParser(is)
 	if err != nil {
 		return nil, err
