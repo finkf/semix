@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -45,7 +46,7 @@ func init() {
 		&dir,
 		"dir",
 		"d",
-		"html",
+		os.Getenv("SEMIX_HTTPD_DIR"),
 		"set template directory",
 	)
 	httpdCmd.Flags().StringVarP(
