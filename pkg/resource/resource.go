@@ -81,6 +81,7 @@ func Read(file string) (*Config, error) {
 }
 
 // Parse parses the configuration and returns the graph and the dictionary.
+// If useCache is false, the cache is neither read nor written.
 func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 	if useCache && c.File.Cache != "" {
 		if r, err := c.readCache(); err == nil {
@@ -91,7 +92,7 @@ func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer is.Close()
+	defer func() { _ = is.Close() }()
 	parser, err := c.newParser(is)
 	if err != nil {
 		return nil, err
@@ -100,9 +101,8 @@ func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	if c.File.Cache != "" {
-		err := c.writeCache(r)
-		if err != nil {
+	if useCache && c.File.Cache != "" {
+		if err := c.writeCache(r); err != nil {
 			log.Printf("error: %s", err)
 		}
 	}
