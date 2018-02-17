@@ -50,8 +50,9 @@ func httpd(cmd *cobra.Command, args []string) error {
 		httpd.WithDirectory(dir),
 	)
 	if err != nil {
-		return errors.Wrapf(err, "could not start httpd: dir: %s, host: % daemon: %s",
-			dir, host daemonHost);
+		return errors.Wrapf(err, "could not start httpd: dir: %s: host: %s: daemon: %s",
+			dir, host, daemonHost
+		);
 	}
 	return s.Start()
 }
