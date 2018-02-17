@@ -1,29 +1,25 @@
 package cmd
 
 import (
-	"bytes"
-	"fmt"
-	"html/template"
-	"log"
-	"net/http"
-	"net/url"
 	"os"
-	"path/filepath"
-	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/index"
-	"bitbucket.org/fflo/semix/pkg/rest"
-	x "bitbucket.org/fflo/semix/pkg/semix"
+	"bitbucket.org/fflo/semix/pkg/httpd"
+
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-var httpdCmd = &cobra.Command{
-	Use:          "httpd",
-	Short:        "Start an http server",
-	Long:         "The httpd command starts an http server.",
-	RunE:         httpd,
-	SilenceUsage: true,
-}
+var (
+	dir      string
+	host     string
+	httpdCmd = &cobra.Command{
+		Use:          "httpd",
+		Short:        "Start an http server",
+		Long:         "The httpd command starts an http server.",
+		RunE:         doHttpd,
+		SilenceUsage: true,
+	}
+)
 
 func init() {
 	httpdCmd.Flags().StringVarP(
@@ -42,8 +38,7 @@ func init() {
 	)
 }
 
-
-func httpd(cmd *cobra.Command, args []string) error {
+func doHttpd(cmd *cobra.Command, args []string) error {
 	s, err := httpd.New(
 		httpd.WithHost(host),
 		httpd.WithDaemon(daemonHost),
@@ -51,8 +46,7 @@ func httpd(cmd *cobra.Command, args []string) error {
 	)
 	if err != nil {
 		return errors.Wrapf(err, "could not start httpd: dir: %s: host: %s: daemon: %s",
-			dir, host, daemonHost
-		);
+			dir, host, daemonHost)
 	}
 	return s.Start()
 }
