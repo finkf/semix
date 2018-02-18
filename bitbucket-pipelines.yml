@@ -29,5 +29,5 @@ pipelines:
             done
           - |
             if test "${BITBUCKET_BRANCH}" = "master"; then
-              ./upload_packages ${SEMIX_AUTH}
+              ./upload_packages.sh ${SEMIX_AUTH}
             fi
