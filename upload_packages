@@ -7,11 +7,17 @@ if test -z $1; then
 		exit 1
 fi
 
+function cleanup {
+		rm -rf html semix-html.zip semix-html.tar.gz
+}
+trap cleanup EXIT
+
 auth=$1
 owner=fflo
 slug=semix
 url="https://api.bitbucket.org/2.0/repositories/$owner/$slug/downloads"
 
+cp -r pkg/httpd/html ./
 tar czf semix-html.tar.gz html
 curl --user $auth --fail --form files="@semix-html.tar.gz" $url
 
