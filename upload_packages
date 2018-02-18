@@ -7,7 +7,7 @@ if test -z $1; then
 		exit 1
 fi
 
-function cleanup {
+cleanup () {
 		rm -rf html semix-html.zip semix-html.tar.gz
 }
 trap cleanup EXIT
