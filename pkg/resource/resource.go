@@ -7,7 +7,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -104,7 +103,7 @@ func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 	}
 	if useCache && c.File.Cache != "" {
 		if err := c.writeCache(r); err != nil {
-			log.Printf("error: %s", err)
+			say.Info("error: %s", err)
 		}
 	}
 	return r, nil
@@ -160,26 +159,26 @@ func (c *Config) newParser(r io.Reader) (semix.Parser, error) {
 }
 
 func (c *Config) readCache() (*semix.Resource, error) {
-	log.Printf("readCache(): %s", c.File.Cache)
+	say.Info("readCache(): %s", c.File.Cache)
 	file, err := os.Open(c.File.Cache)
 	if err != nil {
-		log.Printf("error: %s", err)
+		say.Info("error: %s", err)
 		return nil, err
 	}
 	defer func() { _ = file.Close() }()
 	r := new(semix.Resource)
 	if err := gob.NewDecoder(file).Decode(r); err != nil {
-		log.Printf("error: %s", err)
+		say.Info("error: %s", err)
 		return nil, err
 	}
 	return r, nil
 }
 
 func (c *Config) writeCache(r *semix.Resource) error {
-	log.Printf("writeCache(): %s", c.File.Cache)
+	say.Info("writeCache(): %s", c.File.Cache)
 	file, err := os.Create(c.File.Cache)
 	if err != nil {
-		log.Printf("error: %s", err)
+		say.Info("error: %s", err)
 		return err
 	}
 	defer func() { _ = file.Close() }()

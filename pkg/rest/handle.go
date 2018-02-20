@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/query"
 	"bitbucket.org/fflo/semix/pkg/rule"
+	"bitbucket.org/fflo/semix/pkg/say"
 	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
@@ -45,13 +45,13 @@ func requestFunc(h func(*http.Request) (interface{}, int, error)) http.HandlerFu
 		w.WriteHeader(status)
 		w.Header()["Content-Type"] = []string{"application/json; charset=utf-8"}
 		if _, err := w.Write(buffer.Bytes()); err != nil {
-			log.Printf("could not write response: %v", err)
+			say.Info("could not write response: %v", err)
 		}
 	}
 }
 
 func writeError(w http.ResponseWriter, status int, err error) {
-	log.Printf("error: %v [%d]", err, status)
+	say.Info("error: %v [%d]", err, status)
 	w.Header()["Content-Type"] = []string{"text/plain; charset=utf-8"}
 	http.Error(w, err.Error(), status)
 }

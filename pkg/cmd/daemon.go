@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -52,12 +51,12 @@ func daemon(cmd *cobra.Command, args []string) error {
 	signal.Notify(sigch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		sig := <-sigch
-		log.Printf("got signal: %d", sig)
+		say.Info("got signal: %s", sig)
 		if err := s.Close(); err != nil {
-			log.Printf("error closing server: %s", err)
+			say.Info("error closing server: %s", err)
 		}
 	}()
-	log.Printf("starting daemon on %s", daemonHost)
+	say.Info("starting daemon on %s", daemonHost)
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}

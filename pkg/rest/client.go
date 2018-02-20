@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"path/filepath"
 
 	"bitbucket.org/fflo/semix/pkg/index"
+	"bitbucket.org/fflo/semix/pkg/say"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -179,7 +179,7 @@ func (c Client) DumpFile(u string) (DumpFileContent, error) {
 }
 
 func (c Client) get(url string, out interface{}) error {
-	log.Printf("sending request [%s] %s", http.MethodGet, url)
+	say.Info("sending request [%s] %s", http.MethodGet, url)
 	res, err := c.client.Get(url)
 	if err != nil {
 		return err
@@ -192,7 +192,7 @@ func (c Client) get(url string, out interface{}) error {
 }
 
 func (c Client) post(url string, r io.Reader, ct string, out interface{}) error {
-	log.Printf("sending request [%s] %s", http.MethodPost, url)
+	say.Info("sending request [%s] %s", http.MethodPost, url)
 	res, err := c.client.Post(url, ct, r)
 	if err != nil {
 		return err

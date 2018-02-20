@@ -2,16 +2,17 @@ package rest
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+
+	"bitbucket.org/fflo/semix/pkg/say"
 )
 
 // WithLogging wraps a HandlerFunc and logs the handling of the request.
 func WithLogging(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("handling request for [%s] %s", r.Method, r.RequestURI)
+		say.Info("handling request for [%s] %s", r.Method, r.RequestURI)
 		f(w, r)
-		log.Printf("handled  request for [%s] %s", r.Method, r.RequestURI)
+		say.Info("handled  request for [%s] %s", r.Method, r.RequestURI)
 	}
 }
 
@@ -20,7 +21,7 @@ func WithLogging(f http.HandlerFunc) http.HandlerFunc {
 func WithPost(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			log.Printf("invalid request method: %v", r.Method)
+			say.Info("invalid request method: %v", r.Method)
 			http.Error(w, fmt.Sprintf("invalid request method: %s", r.Method), http.StatusBadRequest)
 			return
 		}
@@ -33,7 +34,7 @@ func WithPost(f http.HandlerFunc) http.HandlerFunc {
 func WithGet(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			log.Printf("invalid request method: %v", r.Method)
+			say.Info("invalid request method: %v", r.Method)
 			http.Error(w, fmt.Sprintf("invalid request method: %s", r.Method), http.StatusBadRequest)
 			return
 		}
@@ -46,7 +47,7 @@ func WithGet(f http.HandlerFunc) http.HandlerFunc {
 func WithGetOrPost(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodPost {
-			log.Printf("invalid request method: %v", r.Method)
+			say.Info("invalid request method: %v", r.Method)
 			http.Error(w, fmt.Sprintf("invalid request method: %s", r.Method), http.StatusBadRequest)
 			return
 		}
