@@ -20,7 +20,7 @@ var (
 )
 
 const (
-	dmsg = "[DEBG]"
+	dmsg = "[DBUG]"
 	imsg = "[INFO]"
 )
 
