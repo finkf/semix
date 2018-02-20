@@ -217,7 +217,7 @@ func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 			say.Debug("min=%d,%d<%d: splitting", min, o, t)
 			return semix.HandleAmbigsWithSplit(g, urls...)
 		}
-		say.Debug("min=%d,%d>=%d: splitting", min, o, t)
+		say.Debug("min=%d,%d>=%d: merging", min, o, t)
 		return semix.HandleAmbigsWithMerge(g, urls...)
 	}
 }
