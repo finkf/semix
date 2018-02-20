@@ -13,6 +13,7 @@ func Test(t *testing.T) {
 		test, re string
 	}{
 		{"hello", ".* hello"},
+		{"this is my message", ".* this is my message"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
