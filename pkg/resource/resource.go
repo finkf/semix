@@ -189,7 +189,7 @@ func (c *Config) writeCache(r *semix.Resource) error {
 func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 	return func(g *semix.Graph, urls ...string) *semix.Concept {
 		min := -1
-		say.Info("handling ambiguity: %v", urls)
+		say.Debug("handling ambiguity: %s", urls)
 		for _, url := range urls {
 			c, ok := g.FindByURL(url)
 			if !ok {
@@ -209,15 +209,15 @@ func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 			n += len(os)
 		}
 		if n == 0 {
-			say.Debug("min=%d,n=0: splitting", min)
+			say.Debug("min=%d,n=%d: splitting", min, n)
 			return semix.HandleAmbigsWithSplit(g, urls...)
 		}
 		o := float64(n) / float64(min)
 		if o < t {
-			say.Debug("min=%d,%d<%d: splitting", min, o, t)
+			say.Debug("min=%d,n=%d,%f<%f: splitting", min, n, o, t)
 			return semix.HandleAmbigsWithSplit(g, urls...)
 		}
-		say.Debug("min=%d,%d>=%d: merging", min, o, t)
+		say.Debug("min=%d,n=%d,%f>=%f: merging", min, n, o, t)
 		return semix.HandleAmbigsWithMerge(g, urls...)
 	}
 }
