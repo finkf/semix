@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"bitbucket.org/fflo/semix/pkg/httpd"
+	"bitbucket.org/fflo/semix/pkg/say"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -39,6 +40,7 @@ func init() {
 }
 
 func doHttpd(cmd *cobra.Command, args []string) error {
+	say.SetDebug(debug)
 	s, err := httpd.New(
 		httpd.WithHost(host),
 		httpd.WithDaemon(daemonHost),

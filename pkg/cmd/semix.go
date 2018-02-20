@@ -10,6 +10,7 @@ import (
 var (
 	daemonHost string
 	jsonOutput bool
+	debug      bool
 )
 
 var semixCmd = &cobra.Command{
@@ -32,6 +33,13 @@ func init() {
 		"J",
 		false,
 		"set JSON output",
+	)
+	semixCmd.PersistentFlags().BoolVarP(
+		&debug,
+		"verbose",
+		"V",
+		false,
+		"enable debugging output",
 	)
 	semixCmd.AddCommand(putCmd)
 	semixCmd.AddCommand(getCmd)
