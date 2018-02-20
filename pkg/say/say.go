@@ -40,7 +40,7 @@ func SetOutput(w io.Writer) {
 
 // Info logs an info message.
 func Info(msg string, args ...interface{}) {
-	log.Printf("%s %s", imsg, fmt.Sprintf(msg, args))
+	log.Printf("%s %s", imsg, fmt.Sprintf(msg, args...))
 }
 
 // Debug logs an debug message if debugging is enabled
@@ -48,5 +48,5 @@ func Debug(msg string, args ...interface{}) {
 	if atomic.LoadInt32(&debug) == 0 {
 		return
 	}
-	log.Printf("%s %s", dmsg, fmt.Sprintf(msg, args))
+	log.Printf("%s %s", dmsg, fmt.Sprintf(msg, args...))
 }
