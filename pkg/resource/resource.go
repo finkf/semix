@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
+	"bitbucket.org/fflo/semix/pkg/say"
 	"bitbucket.org/fflo/semix/pkg/semix"
 	"bitbucket.org/fflo/semix/pkg/traits"
 	"bitbucket.org/fflo/semix/pkg/turtle"
@@ -188,6 +189,7 @@ func (c *Config) writeCache(r *semix.Resource) error {
 func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 	return func(g *semix.Graph, urls ...string) *semix.Concept {
 		min := -1
+		say.Info("handling ambiguity: %v", urls)
 		for _, url := range urls {
 			c, ok := g.FindByURL(url)
 			if !ok {
@@ -198,6 +200,7 @@ func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 			}
 		}
 		if min == 0 {
+			say.Debug("min=%d: splitting", min)
 			return semix.HandleAmbigsWithSplit(g, urls...)
 		}
 		edges := semix.IntersectEdges(g, urls...)
@@ -206,12 +209,15 @@ func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 			n += len(os)
 		}
 		if n == 0 {
+			say.Debug("min=%d,n=0: splitting", min)
 			return semix.HandleAmbigsWithSplit(g, urls...)
 		}
 		o := float64(n) / float64(min)
 		if o < t {
+			say.Debug("min=%d,%d<%d: splitting", min, o, t)
 			return semix.HandleAmbigsWithSplit(g, urls...)
 		}
+		say.Debug("min=%d,%d>=%d: splitting", min, o, t)
 		return semix.HandleAmbigsWithMerge(g, urls...)
 	}
 }
