@@ -13,9 +13,9 @@ import (
 // These constants are automatically updated.
 // DO NOT EDIT BY HAND.
 const (
-	major = 0
-	minor = 1
-	patch = 2
+	major = 1
+	minor = 0
+	patch = 0
 )
 
 var (
