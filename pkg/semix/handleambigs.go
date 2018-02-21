@@ -8,23 +8,23 @@ import (
 // in the parsing of the knowledge base.
 // If the function is successfull, it must return a non nil concept,
 // otherwise the according dictionary entry is discarded.
-type HandleAmbigsFunc func(*Graph, ...string) *Concept
+type HandleAmbigsFunc func(*Graph, ...string) (*Concept, error)
 
 // HandleAmbigsWithSplit handles an ambiguity
 // by creating a new ambig split concept.
-func HandleAmbigsWithSplit(g *Graph, urls ...string) *Concept {
+func HandleAmbigsWithSplit(g *Graph, urls ...string) (*Concept, error) {
 	urls = sortUnique(urls)
 	newURL := CombineURLs(urls...)
 	c := g.Register(newURL)
 	for _, url := range urls {
 		g.Add(newURL, SplitURL, url)
 	}
-	return c
+	return c, nil
 }
 
 // HandleAmbigsWithMerge handles ambiguities
 // by creating a new distinct concept.
-func HandleAmbigsWithMerge(g *Graph, urls ...string) *Concept {
+func HandleAmbigsWithMerge(g *Graph, urls ...string) (*Concept, error) {
 	urls = sortUnique(urls)
 	newURL := CombineURLs(urls...)
 	edges := IntersectEdges(g, urls...)
@@ -34,7 +34,7 @@ func HandleAmbigsWithMerge(g *Graph, urls ...string) *Concept {
 			g.Add(newURL, p, o)
 		}
 	}
-	return c
+	return c, nil
 }
 
 // EdgeSet represents a set of relations

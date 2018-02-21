@@ -43,7 +43,10 @@ func newParser(traits Traits) *parser {
 
 func (parser *parser) parse() (*Resource, error) {
 	g := parser.buildGraph()
-	d := parser.buildDictionary(g)
+	d, err := parser.buildDictionary(g)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not build dictionary")
+	}
 	return NewResource(g, d, parser.rules), nil
 }
 
@@ -73,7 +76,7 @@ func (parser *parser) buildGraph() *Graph {
 	return g
 }
 
-func (parser *parser) buildDictionary(g *Graph) Dictionary {
+func (parser *parser) buildDictionary(g *Graph) (Dictionary, error) {
 	d := make(Dictionary)
 	// simple entries
 	for entry, label := range parser.labels {
@@ -87,7 +90,10 @@ func (parser *parser) buildDictionary(g *Graph) Dictionary {
 	}
 	for e, urls := range parser.ambigs {
 		h := parser.traits.HandleAmbigs()
-		c := h(g, urls...)
+		c, err := h(g, urls...)
+		if err != nil {
+			return nil, errors.Wrapf(err, "could not handle internal ambiguity")
+		}
 		if c == nil {
 			continue
 		}
@@ -96,7 +102,7 @@ func (parser *parser) buildDictionary(g *Graph) Dictionary {
 		}
 		d[e] = c.ID()
 	}
-	return d
+	return d, nil
 }
 
 func (parser *parser) add(s, p, o string) error {

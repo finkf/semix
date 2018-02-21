@@ -40,7 +40,7 @@ func TestConfig(t *testing.T) {
 	if !traits.IsRule("http://example.org/rule") {
 		t.Fatalf("missing rule predicate")
 	}
-	if traits.HandleAmbigs()(nil) != nil {
+	if h, _ := traits.HandleAmbigs()(nil); h != nil {
 		t.Fatalf("invalid handle ambigs function returned")
 	}
 }

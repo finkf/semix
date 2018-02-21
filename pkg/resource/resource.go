@@ -31,6 +31,8 @@ const (
 	Merge = "merge"
 	// Split sets the ambig handler to split ambiguities to an ambigiuous concept.
 	Split = "split"
+	// Fail sets the ambig handle to fail on any internal ambiguity.
+	Fail = "fail"
 )
 
 type file struct {
@@ -132,8 +134,12 @@ func (c *Config) newHandle() (semix.HandleAmbigsFunc, error) {
 	case Split:
 		return semix.HandleAmbigsWithSplit, nil
 	case Discard:
-		return func(*semix.Graph, ...string) *semix.Concept {
-			return nil
+		return func(*semix.Graph, ...string) (*semix.Concept, error) {
+			return nil, nil
+		}, nil
+	case Fail:
+		return func(g *semix.Graph, urls ...string) (*semix.Concept, error) {
+			return nil, fmt.Errorf("internal ambiguity detected for: %s", urls)
 		}, nil
 	default:
 		t, err := strconv.ParseFloat(c.File.Ambigs, 64)
@@ -186,7 +192,7 @@ func (c *Config) writeCache(r *semix.Resource) error {
 }
 
 func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
-	return func(g *semix.Graph, urls ...string) *semix.Concept {
+	return func(g *semix.Graph, urls ...string) (*semix.Concept, error) {
 		min := -1
 		say.Debug("handling ambiguity: %s", urls)
 		for _, url := range urls {
