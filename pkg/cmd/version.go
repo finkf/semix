@@ -14,7 +14,7 @@ import (
 // DO NOT EDIT BY HAND.
 const (
 	major = 0
-	minor = 0
+	minor = 1
 	patch = 0
 )
 
