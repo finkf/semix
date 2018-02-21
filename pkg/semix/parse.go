@@ -1,8 +1,6 @@
 package semix
 
-import (
-	"fmt"
-)
+import "github.com/pkg/errors"
 
 // Parser defines a parser that parses (Subject, Predicate, Object) triples.
 type Parser interface {
@@ -123,7 +121,7 @@ func (parser *parser) add(s, p, o string) error {
 		return parser.addLabels(o, s, false)
 	}
 	// If p is a name we are done.
-	// We checked for lexicon entries,
+	// We checked for lexicon entries with IsAmbig and IsDistinct.
 	// but it will never be a normal predicate.
 	if parser.traits.IsName(p) {
 		return nil
@@ -143,7 +141,7 @@ func (parser *parser) addTriple(s, p, o string) error {
 func (parser *parser) addLabels(entry, url string, ambig bool) error {
 	labels, err := ExpandBraces(entry)
 	if err != nil {
-		return fmt.Errorf("could not expand: %v", err)
+		return errors.Wrapf(err, "could not expand %s", entry)
 	}
 	for _, expanded := range labels {
 		normalized := NormalizeString(expanded, false)
