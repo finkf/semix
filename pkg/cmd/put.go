@@ -44,20 +44,23 @@ func init() {
 	putCmd.Flags().BoolVarP(&putLocal, "local", "l", false,
 		"do not upload files; use local files")
 	putCmd.Flags().StringSliceVarP(&resolvers, "resolver", "r", []string{},
-		"use resolvers in given order. Allowed values are thematic,ruled,simple")
+		"use resolvers in given order; allowed values are thematic,ruled,simple")
 	putCmd.Flags().IntSliceVarP(&levs, "ks", "k", []int{},
-		"add approximate searches with the given error limits (order does not matter)")
+		"add approximate searches with the given error limits")
 }
 
 func put(cmd *cobra.Command, args []string) error {
 	say.SetDebug(debug)
+	if err := fixResolvers(resolvers); err != nil {
+		return errors.Wrapf(err, "put")
+	}
 	sort.Ints(levs)
 	say.Debug("Resolvers: %v", resolvers)
 	say.Debug("Levs:      %v", levs)
 	client := newClient()
 	for _, arg := range args {
 		if err := putPath(client, arg); err != nil {
-			return err
+			return errors.Wrapf(err, "put")
 		}
 	}
 	return nil
@@ -69,7 +72,7 @@ func putPath(client *rest.Client, path string) error {
 	}
 	info, err := os.Stat(path)
 	if err != nil {
-		return errors.Wrapf(err, "[put] cannot index %s", path)
+		return errors.Wrapf(err, "cannot index %s", path)
 	}
 	if info.IsDir() {
 		return putDir(client, path)
@@ -80,7 +83,7 @@ func putPath(client *rest.Client, path string) error {
 func putDir(client *rest.Client, path string) error {
 	return filepath.Walk(path, func(p string, i os.FileInfo, err error) error {
 		if err != nil {
-			return errors.Wrapf(err, "[put] cannot index %s", p)
+			return errors.Wrapf(err, "cannot index %s", p)
 		}
 		if i.IsDir() {
 			return putDir(client, p)
@@ -92,7 +95,7 @@ func putDir(client *rest.Client, path string) error {
 func putFileOrURL(client *rest.Client, path string) error {
 	es, err := doPutFileOrURL(client, path)
 	if err != nil {
-		return errors.Wrapf(err, "[put] cannot index %s", path)
+		return errors.Wrapf(err, "cannot index %s", path)
 	}
 	if jsonOutput {
 		_ = json.NewEncoder(os.Stdout).Encode(es)
@@ -120,4 +123,16 @@ func doPutFileOrURL(client *rest.Client, path string) ([]index.Entry, error) {
 func isURL(path string) bool {
 	return strings.HasPrefix(path, "http://") ||
 		strings.HasPrefix(path, "https://")
+}
+
+func fixResolvers(rs []string) error {
+	for i, r := range rs {
+		switch rr := strings.ToLower(r); rr {
+		case "thematic", "ruled", "simple":
+			rs[i] = rr
+		default:
+			return errors.Errorf("invalid resolver: %s", rr)
+		}
+	}
+	return nil
 }
