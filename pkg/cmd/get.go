@@ -8,6 +8,7 @@ import (
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
+	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -31,6 +32,7 @@ func init() {
 }
 
 func get(cmd *cobra.Command, args []string) error {
+	say.SetDebug(debug)
 	client := newClient()
 	for _, query := range args {
 		if err := doGet(client, query); err != nil {

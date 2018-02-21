@@ -96,7 +96,7 @@ func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
 	}
 	rest := t.Token
 	ofs := t.Begin
-	// log.Printf("### MATCHING TOKEN %v", t)
+	// say.Info("### MATCHING TOKEN %v", t)
 	for len(rest) > 0 {
 		// // check for cancel
 		// select {
@@ -105,7 +105,7 @@ func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
 		// default:
 		// }
 		match := m.Match(rest)
-		// log.Printf("match: %v", match)
+		// say.Info("match: %v", match)
 		if match.Concept == nil {
 			putMatches(ctx, s, Token{
 				Token:   rest,
@@ -116,7 +116,7 @@ func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
 			})
 			rest = ""
 		} else if match.Begin == 0 {
-			// log.Printf("DO_MATCH: %v", match)
+			// say.Info("DO_MATCH: %v", match)
 			putMatches(ctx, s, Token{
 				Token:   rest[0:match.End],
 				Path:    t.Path,
@@ -127,7 +127,7 @@ func doMatch(ctx context.Context, s chan StreamToken, t Token, m Matcher) {
 			rest = rest[match.End:]
 			ofs += match.End
 		} else {
-			// log.Printf("DO_MATCH: %v", match)
+			// say.Info("DO_MATCH: %v", match)
 			putMatches(ctx, s, Token{
 				Token:   rest[0:match.Begin],
 				Path:    t.Path,
@@ -154,7 +154,7 @@ func putMatches(ctx context.Context, out chan StreamToken, ts ...Token) {
 		case <-ctx.Done():
 			return
 		case out <- StreamToken{Token: t}:
-			// log.Printf("put token: %v", t)
+			// say.Info("put token: %v", t)
 		}
 	}
 }

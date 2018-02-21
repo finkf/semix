@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"bitbucket.org/fflo/semix/pkg/rest"
+	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -21,6 +22,7 @@ The concept can be specified either with an ID or and URL.`,
 }
 
 func info(cmd *cobra.Command, args []string) error {
+	say.SetDebug(debug)
 	client := newClient()
 	for _, concept := range args {
 		if err := doInfo(client, concept); err != nil {

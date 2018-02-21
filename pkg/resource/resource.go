@@ -7,12 +7,12 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/rdfxml"
+	"bitbucket.org/fflo/semix/pkg/say"
 	"bitbucket.org/fflo/semix/pkg/semix"
 	"bitbucket.org/fflo/semix/pkg/traits"
 	"bitbucket.org/fflo/semix/pkg/turtle"
@@ -103,7 +103,7 @@ func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 	}
 	if useCache && c.File.Cache != "" {
 		if err := c.writeCache(r); err != nil {
-			log.Printf("error: %s", err)
+			say.Info("error: %s", err)
 		}
 	}
 	return r, nil
@@ -159,26 +159,26 @@ func (c *Config) newParser(r io.Reader) (semix.Parser, error) {
 }
 
 func (c *Config) readCache() (*semix.Resource, error) {
-	log.Printf("readCache(): %s", c.File.Cache)
+	say.Info("readCache(): %s", c.File.Cache)
 	file, err := os.Open(c.File.Cache)
 	if err != nil {
-		log.Printf("error: %s", err)
+		say.Info("error: %s", err)
 		return nil, err
 	}
 	defer func() { _ = file.Close() }()
 	r := new(semix.Resource)
 	if err := gob.NewDecoder(file).Decode(r); err != nil {
-		log.Printf("error: %s", err)
+		say.Info("error: %s", err)
 		return nil, err
 	}
 	return r, nil
 }
 
 func (c *Config) writeCache(r *semix.Resource) error {
-	log.Printf("writeCache(): %s", c.File.Cache)
+	say.Info("writeCache(): %s", c.File.Cache)
 	file, err := os.Create(c.File.Cache)
 	if err != nil {
-		log.Printf("error: %s", err)
+		say.Info("error: %s", err)
 		return err
 	}
 	defer func() { _ = file.Close() }()
@@ -188,6 +188,7 @@ func (c *Config) writeCache(r *semix.Resource) error {
 func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 	return func(g *semix.Graph, urls ...string) *semix.Concept {
 		min := -1
+		say.Debug("handling ambiguity: %s", urls)
 		for _, url := range urls {
 			c, ok := g.FindByURL(url)
 			if !ok {
@@ -198,6 +199,7 @@ func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 			}
 		}
 		if min == 0 {
+			say.Debug("min=%d: splitting", min)
 			return semix.HandleAmbigsWithSplit(g, urls...)
 		}
 		edges := semix.IntersectEdges(g, urls...)
@@ -206,12 +208,15 @@ func automaticHandleAmbigsFunc(t float64) semix.HandleAmbigsFunc {
 			n += len(os)
 		}
 		if n == 0 {
+			say.Debug("min=%d,n=%d: splitting", min, n)
 			return semix.HandleAmbigsWithSplit(g, urls...)
 		}
 		o := float64(n) / float64(min)
 		if o < t {
+			say.Debug("min=%d,n=%d,%f<%f: splitting", min, n, o, t)
 			return semix.HandleAmbigsWithSplit(g, urls...)
 		}
+		say.Debug("min=%d,n=%d,%f>=%f: merging", min, n, o, t)
 		return semix.HandleAmbigsWithMerge(g, urls...)
 	}
 }

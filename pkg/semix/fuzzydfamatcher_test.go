@@ -37,7 +37,7 @@ func TestFuzzyDFAMatcher(t *testing.T) {
 				t.Errorf("expected k=%d; got %d", tc.k, k)
 			}
 			match := m.Match(string(tc.test))
-			// log.Printf("match: %v", match)
+			// say.Info("match: %v", match)
 			if str := fuzzyConceptToString(t, match, tc.ambiguous); str != tc.want {
 				t.Errorf("expeceted pos = %q; got %q", tc.want, str)
 			}

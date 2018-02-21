@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
+	"bitbucket.org/fflo/semix/pkg/say"
 	x "bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -26,20 +26,20 @@ func handle(f httpdHandle) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		t, x, s := f(r)
 		if s.err != nil {
-			log.Printf("could not handle request: %v", s.err)
+			say.Info("could not handle request: %v", s.err)
 			http.Error(w, s.err.Error(), s.status)
 			return
 		}
 		buffer := new(bytes.Buffer)
 		if err := t.Execute(buffer, x); err != nil {
-			log.Printf("could not execute template: %v", err)
+			say.Info("could not execute template: %v", err)
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(s.status)
 		w.Header()["Content-Type"] = []string{"text/html; charset=utf-8"}
 		if _, err := w.Write(buffer.Bytes()); err != nil {
-			log.Printf("could not write html: %v", err)
+			say.Info("could not write html: %v", err)
 		}
 	}
 }
@@ -103,7 +103,7 @@ func (s *Server) home(r *http.Request) (*template.Template, interface{}, status)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
-		log.Printf("r.URL.RequestURI(): %q", url)
+		say.Info("r.URL.RequestURI(): %q", url)
 		content, err := s.newClient().DumpFile(url)
 		if err != nil {
 			return nil, nil, internalError(err)
