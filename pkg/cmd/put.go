@@ -18,15 +18,19 @@ var putCmd = &cobra.Command{
 	Use:   "put [paths...]",
 	Short: "Put a file into the semantic index",
 	Long: `The put command puts files into the semantic index.
-If a path is directory all files and directories are put recursively.
+If a given path denotes a directory all files and
+directories are indexed recrusively.
 
 Files can either be uploaded to the daemon or used locally. In the first
-case, the daemon indexes the file's content and stores it in a local file.
-In the latter case the daemon reads the file itself and no local copy is made.
+case, put uploads the file's contents to the daemon and the daemon indexes
+the file's content and stores it in a local file.
+In the latter case the daemon reads the file itself from the given path
+and no local copy of the file is made.
 
 If a path looks like an URL (starts with either http:// or https://)
 the URL is given to the semix daemon, which downloads the file and puts
-its contents into the semantic index.`,
+its contents into the semantic index. The contents of the URL
+are not stored locally`,
 	RunE:         put,
 	SilenceUsage: true,
 }
