@@ -45,7 +45,7 @@ func init() {
 		"do not upload files; use local files")
 	putCmd.Flags().StringSliceVarP(&resolvers, "resolver", "r", []string{},
 		"use resolvers in given order. Allowed values are thematic,ruled,simple")
-	putCmd.Flags().IntSliceVarP(&levs, "lev", "d", []int{},
+	putCmd.Flags().IntSliceVarP(&levs, "ks", "k", []int{},
 		"add approximate searches with the given error limits (order does not matter)")
 }
 
