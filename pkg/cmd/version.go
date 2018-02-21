@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/spf13/cobra"
@@ -36,6 +38,9 @@ var versionCmd = &cobra.Command{
 
 func version(cmd *cobra.Command, args []string) error {
 	say.SetDebug(debug)
+	if jsonOutput {
+		return printJSONVersion()
+	}
 	if pmajor {
 		fmt.Printf("%d\n", major)
 		return nil
@@ -48,6 +53,18 @@ func version(cmd *cobra.Command, args []string) error {
 		fmt.Printf("%d\n", patch)
 		return nil
 	}
-	fmt.Printf("v%d.%d.%d\n", major, minor, patch)
+	fmt.Printf("%s\n", versionString())
 	return nil
+}
+
+func printJSONVersion() error {
+	return json.NewEncoder(os.Stdout).Encode(
+		struct {
+			Major, Minor, Patch int
+			Version             string
+		}{major, minor, patch, versionString()})
+}
+
+func versionString() string {
+	return fmt.Sprintf("v%d.%d.%d", major, minor, patch)
 }
