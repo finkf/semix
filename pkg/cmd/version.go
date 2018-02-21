@@ -48,6 +48,6 @@ func version(cmd *cobra.Command, args []string) error {
 		fmt.Printf("%d\n", patch)
 		return nil
 	}
-	fmt.Printf("v%d.%d.%d", major, minor, patch)
+	fmt.Printf("v%d.%d.%d\n", major, minor, patch)
 	return nil
 }
