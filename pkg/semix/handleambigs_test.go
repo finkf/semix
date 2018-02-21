@@ -17,7 +17,10 @@ func TestHandleAmbigsWithSplit(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
 			g := NewGraph()
-			c := HandleAmbigsWithSplit(g, tc.urls...)
+			c, err := HandleAmbigsWithSplit(g, tc.urls...)
+			if err != nil {
+				t.Fatalf("got %s", err)
+			}
 			if c.URL() != tc.test {
 				t.Fatalf("expected %s; got %s", tc.test, c.URL())
 			}
@@ -60,7 +63,10 @@ func TestHandleAmbigsWithMerge(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
 			g := ng()
-			c := HandleAmbigsWithMerge(g, tc.urls...)
+			c, err := HandleAmbigsWithMerge(g, tc.urls...)
+			if err != nil {
+				t.Fatalf("got %s", err)
+			}
 			if c.URL() != tc.test {
 				t.Fatalf("expected %s; got %s", tc.test, c.URL())
 			}
