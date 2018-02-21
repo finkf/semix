@@ -41,6 +41,7 @@ func init() {
 		false,
 		"enable debugging output",
 	)
+	semixCmd.AddCommand(versionCmd)
 	semixCmd.AddCommand(putCmd)
 	semixCmd.AddCommand(getCmd)
 	semixCmd.AddCommand(searchCmd)
