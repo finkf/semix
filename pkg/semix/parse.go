@@ -121,7 +121,7 @@ func (parser *parser) add(s, p, o string) error {
 		return parser.addLabels(o, s, false)
 	}
 	// If p is a name we are done.
-	// We checked for lexicon entries,
+	// We checked for lexicon entries with IsAmbig and IsDistinct.
 	// but it will never be a normal predicate.
 	if parser.traits.IsName(p) {
 		return nil
