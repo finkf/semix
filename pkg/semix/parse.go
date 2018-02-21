@@ -92,7 +92,7 @@ func (parser *parser) buildDictionary(g *Graph) (Dictionary, error) {
 		h := parser.traits.HandleAmbigs()
 		c, err := h(g, urls...)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not handle internal ambiguity")
+			return nil, errors.Wrapf(err, "could not handle internal ambiguity %s", e)
 		}
 		if c == nil {
 			continue
