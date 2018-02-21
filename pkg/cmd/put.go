@@ -18,6 +18,7 @@ var (
 	putLocal  bool
 	resolvers []string
 	levs      []int
+	memsize   int
 	putCmd    = &cobra.Command{
 		Use:   "put [paths...]",
 		Short: "Put a file into the semantic index",
@@ -47,6 +48,8 @@ func init() {
 		"use resolvers in given order; allowed values are thematic,ruled,simple")
 	putCmd.Flags().IntSliceVarP(&levs, "ks", "k", []int{},
 		"add approximate searches with the given error limits")
+	putCmd.Flags().IntVarP(&memsize, "memory-size", "m", 10,
+		"set the memory size used by the resolvers")
 }
 
 func put(cmd *cobra.Command, args []string) error {
