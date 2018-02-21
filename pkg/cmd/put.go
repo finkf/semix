@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/index"
@@ -13,11 +14,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var putLocal bool
-var putCmd = &cobra.Command{
-	Use:   "put [paths...]",
-	Short: "Put a file into the semantic index",
-	Long: `The put command puts files into the semantic index.
+var (
+	putLocal  bool
+	resolvers []string
+	levs      []int
+	putCmd    = &cobra.Command{
+		Use:   "put [paths...]",
+		Short: "Put a file into the semantic index",
+		Long: `The put command puts files into the semantic index.
 If a given path denotes a directory all files and
 directories are indexed recrusively.
 
@@ -31,16 +35,25 @@ If a path looks like an URL (starts with either http:// or https://)
 the URL is given to the semix daemon, which downloads the file and puts
 its contents into the semantic index. The contents of the URL
 are not stored locally`,
-	RunE:         put,
-	SilenceUsage: true,
-}
+		RunE:         put,
+		SilenceUsage: true,
+	}
+)
 
 func init() {
-	putCmd.Flags().BoolVarP(&putLocal, "local", "l", false, "do not upload files")
+	putCmd.Flags().BoolVarP(&putLocal, "local", "l", false,
+		"do not upload files; use local files")
+	putCmd.Flags().StringSliceVarP(&resolvers, "resolver", "r", []string{},
+		"use resolvers in given order. Allowed values are thematic,ruled,simple")
+	putCmd.Flags().IntSliceVarP(&levs, "lev", "d", []int{},
+		"add approximate searches with the given error limits (order does not matter)")
 }
 
 func put(cmd *cobra.Command, args []string) error {
 	say.SetDebug(debug)
+	sort.Ints(levs)
+	say.Debug("Resolvers: %v", resolvers)
+	say.Debug("Levs:      %v", levs)
 	client := newClient()
 	for _, arg := range args {
 		if err := putPath(client, arg); err != nil {
