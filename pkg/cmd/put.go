@@ -17,8 +17,10 @@ import (
 var (
 	putLocal  bool
 	resolvers []string
+	rs        []rest.Resolver
 	levs      []int
 	memsize   int
+	threshold float64
 	putCmd    = &cobra.Command{
 		Use:   "put [paths...]",
 		Short: "Put a file into the semantic index",
@@ -50,11 +52,15 @@ func init() {
 		"add approximate searches with the given error limits")
 	putCmd.Flags().IntVarP(&memsize, "memory-size", "m", 10,
 		"set the memory size used by the resolvers")
+	putCmd.Flags().Float64VarP(&threshold, "threshold", "t", 0.5,
+		"set the threshold for the thematic resolver")
 }
 
 func put(cmd *cobra.Command, args []string) error {
 	say.SetDebug(debug)
-	if err := fixResolvers(resolvers); err != nil {
+	var err error
+	rs, err = makeResolvers(resolvers)
+	if err != nil {
 		return errors.Wrapf(err, "put")
 	}
 	sort.Ints(levs)
@@ -110,10 +116,10 @@ func putFileOrURL(client *rest.Client, path string) error {
 
 func doPutFileOrURL(client *rest.Client, path string) ([]index.Entry, error) {
 	if isURL(path) {
-		return client.PutURL(path, nil, nil)
+		return client.PutURL(path, levs, rs)
 	}
 	if putLocal {
-		return client.PutLocalFile(path, nil, nil)
+		return client.PutLocalFile(path, levs, rs)
 	}
 	file, err := os.Open(path)
 	if err != nil {
@@ -128,14 +134,19 @@ func isURL(path string) bool {
 		strings.HasPrefix(path, "https://")
 }
 
-func fixResolvers(rs []string) error {
+func makeResolvers(rs []string) ([]rest.Resolver, error) {
+	res := make([]rest.Resolver, len(rs))
 	for i, r := range rs {
-		switch rr := strings.ToLower(r); rr {
-		case "thematic", "ruled", "simple":
-			rs[i] = rr
+		switch strings.ToLower(r) {
+		case "thematic":
+			res[i] = rest.NewThematicResolver(memsize, threshold)
+		case "ruled":
+			res[i] = rest.NewRuledResolver(memsize)
+		case "simple":
+			res[i] = rest.NewSimpleResolver(memsize)
 		default:
-			return errors.Errorf("invalid resolver: %s", rr)
+			return nil, errors.Errorf("invalid resolver: %s", r)
 		}
 	}
-	return nil
+	return res, nil
 }

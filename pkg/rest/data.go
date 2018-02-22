@@ -98,6 +98,21 @@ type Resolver struct {
 	MemorySize int
 }
 
+// NewThematicResolver creates a new thematic resolver.
+func NewThematicResolver(m int, t float64) Resolver {
+	return Resolver{Name: "automatic", Threshold: t, MemorySize: m}
+}
+
+// NewRuledResolver creates a new ruled resolver.
+func NewRuledResolver(m int) Resolver {
+	return Resolver{Name: "ruled", MemorySize: m}
+}
+
+// NewSimpleResolver create a new simple resolver.
+func NewSimpleResolver(m int) Resolver {
+	return Resolver{Name: "simple", MemorySize: m}
+}
+
 func (r Resolver) resolver(rules rule.Map) (resolve.Interface, error) {
 	switch strings.ToLower(r.Name) {
 	case "automatic":
