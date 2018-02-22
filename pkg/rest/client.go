@@ -10,75 +10,55 @@ import (
 	"net/url"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/say"
 	"bitbucket.org/fflo/semix/pkg/semix"
-
-	"github.com/pkg/errors"
 )
 
 // ClientOption is a functional configuration option for the client.
-type ClientOption func(*Client) error
+type ClientOption func(*Client)
 
 // WithResolvers sets the resolvers for the client to use.
-func WithResolvers(rs ...string) ClientOption {
-	return func(c *Client) error {
-		for _, r := range rs {
-			switch strings.ToLower(r) {
-			case ThematicResolver:
-				c.rs = append(c.rs, Resolver{Name: ThematicResolver})
-			case SimpleResolver:
-				c.rs = append(c.rs, Resolver{Name: SimpleResolver})
-			case RuledResolver:
-				c.rs = append(c.rs, Resolver{Name: RuledResolver})
-			default:
-				return errors.Errorf("invalid resolver: %s", r)
-			}
-		}
-		return nil
+func WithResolvers(rs ...Resolver) ClientOption {
+	return func(c *Client) {
+		c.rs = rs
 	}
 }
 
 // WithErrorLimits sets the errorlimits for the client to use.
 func WithErrorLimits(ks ...int) ClientOption {
-	return func(c *Client) error {
+	return func(c *Client) {
 		c.ks = ks
 		sort.Ints(c.ks)
-		return nil
 	}
 }
 
 // WithThematicThreshold sets the thematic resolver's threshold.
 func WithThematicThreshold(t float64) ClientOption {
-	return func(c *Client) error {
+	return func(c *Client) {
 		c.threshold = t
-		return nil
 	}
 }
 
 // WithMemorySize sets the resolver's memory size.
 func WithMemorySize(m int) ClientOption {
-	return func(c *Client) error {
+	return func(c *Client) {
 		c.memsize = m
-		return nil
 	}
 }
 
 // WithSkip sets the query skip value.
 func WithSkip(s int) ClientOption {
-	return func(c *Client) error {
+	return func(c *Client) {
 		c.skip = s
-		return nil
 	}
 }
 
 // WithMax sets the query max value.
 func WithMax(m int) ClientOption {
-	return func(c *Client) error {
+	return func(c *Client) {
 		c.max = m
-		return nil
 	}
 }
 
@@ -94,17 +74,15 @@ type Client struct {
 
 // NewClient create a new client that connects to the rest at
 // a given host address.
-func NewClient(host string, opts ...ClientOption) (*Client, error) {
+func NewClient(host string, opts ...ClientOption) *Client {
 	c := &Client{
 		client: new(http.Client),
 		host:   host,
 	}
 	for _, opt := range opts {
-		if err := opt(c); err != nil {
-			return nil, errors.Wrapf(err, "could not configure client")
-		}
+		opt(c)
 	}
-	return c, nil
+	return c
 }
 
 // Predicates searches for concepts that are connected via the given predicate.
