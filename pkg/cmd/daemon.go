@@ -20,6 +20,7 @@ var daemonCmd = &cobra.Command{
 	Short:        "Starts the daemon",
 	Long:         `The daemon command starts the semix daemon.`,
 	RunE:         daemon,
+	Args:         cobra.ExactArgs(1),
 	SilenceUsage: true,
 }
 

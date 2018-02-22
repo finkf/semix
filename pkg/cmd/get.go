@@ -18,6 +18,7 @@ var getCmd = &cobra.Command{
 	Short:        "Query the semantic index",
 	Long:         `The get command sends queries to the daemon.`,
 	RunE:         get,
+	Args:         cobra.MinimumNArgs(1),
 	SilenceUsage: true,
 }
 

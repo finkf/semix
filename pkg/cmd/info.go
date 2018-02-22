@@ -19,6 +19,7 @@ var infoCmd = &cobra.Command{
 or predicates. The concept can be specified either with an ID
 or and URL.`,
 	RunE:         info,
+	Args:         cobra.MinimumNArgs(1),
 	SilenceUsage: true,
 }
 

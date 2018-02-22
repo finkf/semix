@@ -38,6 +38,7 @@ the URL is given to the semix daemon, which downloads the file and puts
 its contents into the semantic index. The contents of the URL
 are not stored locally`,
 		RunE:         put,
+		Args:         cobra.MinimumNArgs(1),
 		SilenceUsage: true,
 	}
 )

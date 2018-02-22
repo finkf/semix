@@ -21,6 +21,7 @@ The search command searches for concepts or predicates that match
 a given pattern. A pattern matches either a normalized dictionary
 entry of a concept or any part of a concept's URL or name.`,
 	RunE:         search,
+	Args:         cobra.MinimumNArgs(1),
 	SilenceUsage: true,
 }
 
