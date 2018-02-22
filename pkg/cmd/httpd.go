@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"bitbucket.org/fflo/semix/pkg/httpd"
 	"bitbucket.org/fflo/semix/pkg/say"
 
@@ -11,36 +9,30 @@ import (
 )
 
 var (
-	dir      string
 	host     string
 	httpdCmd = &cobra.Command{
-		Use:          "httpd",
+		Use:          "httpd directory",
 		Short:        "Start an http server",
 		Long:         "The httpd command starts an http server.",
 		RunE:         doHttpd,
+		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 	}
 )
 
 func init() {
 	httpdCmd.Flags().StringVarP(
-		&dir,
-		"dir",
-		"d",
-		os.Getenv("SEMIX_HTTPD_DIR"),
-		"set template directory",
-	)
-	httpdCmd.Flags().StringVarP(
 		&host,
 		"host",
 		"H",
-		"localhost:8080",
+		"localhost:80",
 		"set host",
 	)
 }
 
 func doHttpd(cmd *cobra.Command, args []string) error {
 	say.SetDebug(debug)
+	dir := args[0]
 	s, err := httpd.New(
 		httpd.WithHost(host),
 		httpd.WithDaemon(daemonHost),
