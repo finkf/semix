@@ -8,6 +8,7 @@ import (
 	"bitbucket.org/fflo/semix/pkg/rule"
 	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
+	"github.com/pkg/errors"
 )
 
 // Server represents a server instance.
@@ -62,13 +63,7 @@ func (s *Server) ListenAndServe() error {
 
 // Close closes the server and its enclosed index.
 func (s *Server) Close() error {
-	err1 := s.handle.index.Close()
-	err2 := s.server.Shutdown(context.TODO())
-	if err1 != nil {
-		return err1
-	}
-	if err2 != nil {
-		return err2
-	}
-	return nil
+	err := errors.Wrapf(s.handle.index.Close(), "could not close index")
+	err = errors.Wrapf(s.server.Shutdown(context.TODO()), "could not shutdown server")
+	return err
 }
