@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/say"
@@ -121,7 +122,7 @@ func (s *Server) httpdGet(r *http.Request) (*template.Template, interface{}, sta
 	if err := rest.DecodeQuery(r.URL.Query(), &data); err != nil {
 		return nil, nil, internalError(err)
 	}
-	es, err := s.newClient(rest.WithMax(data.N), rest.WithSkip(data.S)).Get(data.Q)
+	es, err := s.newClient(client.WithMax(data.N), client.WithSkip(data.S)).Get(data.Q)
 	if err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -152,7 +153,7 @@ func (s *Server) httpdPut(r *http.Request) (*template.Template, interface{}, sta
 	switch r.Method {
 	case http.MethodPost:
 		ct := "text/plain"
-		ts, err := s.newClient().PutContent(r.Body, "", ct, nil, nil)
+		ts, err := s.newClient().PutContent(r.Body, "", ct)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
@@ -173,8 +174,8 @@ func (s *Server) httpdPut(r *http.Request) (*template.Template, interface{}, sta
 			return nil, nil, internalError(err)
 		}
 		ts, err := s.newClient(
-			rest.WithErrorLimits(ps.Ls...),
-			rest.WithResolvers(rs...),
+			client.WithErrorLimits(ps.Ls...),
+			client.WithResolvers(rs...),
 		).PutURL(ps.URL)
 		if err != nil {
 			return nil, nil, internalError(err)

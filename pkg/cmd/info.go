@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/pkg/errors"
@@ -34,7 +35,7 @@ func info(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func doInfo(client *rest.Client, concept string) error {
+func doInfo(client *client.Client, concept string) error {
 	var info rest.ConceptInfo
 	var err error
 	id, err := strconv.Atoi(concept)

@@ -1,4 +1,4 @@
-package rest
+package client
 
 import (
 	"bytes"
@@ -12,22 +12,23 @@ import (
 	"sort"
 
 	"bitbucket.org/fflo/semix/pkg/index"
+	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/say"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
-// ClientOption is a functional configuration option for the client.
-type ClientOption func(*Client)
+// Option is a functional configuration option for the client.
+type Option func(*Client)
 
 // WithResolvers sets the resolvers for the client to use.
-func WithResolvers(rs ...Resolver) ClientOption {
+func WithResolvers(rs ...rest.Resolver) Option {
 	return func(c *Client) {
 		c.rs = rs
 	}
 }
 
 // WithErrorLimits sets the errorlimits for the client to use.
-func WithErrorLimits(ks ...int) ClientOption {
+func WithErrorLimits(ks ...int) Option {
 	return func(c *Client) {
 		c.ks = ks
 		sort.Ints(c.ks)
@@ -35,14 +36,14 @@ func WithErrorLimits(ks ...int) ClientOption {
 }
 
 // WithSkip sets the query skip value.
-func WithSkip(s int) ClientOption {
+func WithSkip(s int) Option {
 	return func(c *Client) {
 		c.skip = s
 	}
 }
 
 // WithMax sets the query max value.
-func WithMax(m int) ClientOption {
+func WithMax(m int) Option {
 	return func(c *Client) {
 		c.max = m
 	}
@@ -52,14 +53,14 @@ func WithMax(m int) ClientOption {
 type Client struct {
 	client    *http.Client
 	host      string
-	rs        []Resolver
+	rs        []rest.Resolver
 	ks        []int
 	skip, max int
 }
 
-// NewClient create a new client that connects to the rest at
+// New create a new client that connects to the rest at
 // a given host address.
-func NewClient(host string, opts ...ClientOption) *Client {
+func New(host string, opts ...Option) *Client {
 	c := &Client{
 		client: new(http.Client),
 		host:   host,
@@ -103,17 +104,17 @@ func (c *Client) ParentsID(id int) ([]*semix.Concept, error) {
 }
 
 // InfoURL gets the concept info searching by URL.
-func (c *Client) InfoURL(u string) (ConceptInfo, error) {
+func (c *Client) InfoURL(u string) (rest.ConceptInfo, error) {
 	url := c.host + fmt.Sprintf("/info?url=%s", url.QueryEscape(u))
-	var info ConceptInfo
+	var info rest.ConceptInfo
 	err := c.get(url, &info)
 	return info, err
 }
 
 // InfoID gets the concept info searching by ID.
-func (c *Client) InfoID(id int) (ConceptInfo, error) {
+func (c *Client) InfoID(id int) (rest.ConceptInfo, error) {
 	url := c.host + fmt.Sprintf("/info?id=%d", id)
-	var info ConceptInfo
+	var info rest.ConceptInfo
 	err := c.get(url, &info)
 	return info, err
 }
@@ -140,7 +141,7 @@ func (c *Client) Get(q string) ([]index.Entry, error) {
 		Q    string
 		N, S int
 	}{q, c.max, c.skip}
-	query, err := EncodeQuery(data)
+	query, err := rest.EncodeQuery(data)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +153,7 @@ func (c *Client) Get(q string) ([]index.Entry, error) {
 
 // PutURL puts the given url into the index.
 func (c *Client) PutURL(url string) ([]index.Entry, error) {
-	return c.doPut(PutData{
+	return c.doPut(rest.PutData{
 		URL:       url,
 		Errors:    c.ks,
 		Resolvers: c.rs,
@@ -167,7 +168,7 @@ func (c *Client) PutLocalFile(path string) ([]index.Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.doPut(PutData{
+	return c.doPut(rest.PutData{
 		URL:       abs,
 		Local:     true,
 		Errors:    c.ks,
@@ -176,21 +177,21 @@ func (c *Client) PutLocalFile(path string) ([]index.Entry, error) {
 }
 
 // PutContent puts the given content into the index.
-func (c *Client) PutContent(r io.Reader, url, ct string, ls []int, rs []Resolver) ([]index.Entry, error) {
+func (c *Client) PutContent(r io.Reader, url, ct string) ([]index.Entry, error) {
 	content, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
-	return c.doPut(PutData{
+	return c.doPut(rest.PutData{
 		URL:         url,
-		Errors:      ls,
-		Resolvers:   rs,
+		Errors:      c.ks,
+		Resolvers:   c.rs,
 		Content:     string(content),
 		ContentType: ct,
 	})
 }
 
-func (c *Client) doPut(data PutData) ([]index.Entry, error) {
+func (c *Client) doPut(data rest.PutData) ([]index.Entry, error) {
 	b := new(bytes.Buffer)
 	if err := json.NewEncoder(b).Encode(data); err != nil {
 		return nil, err
@@ -202,18 +203,18 @@ func (c *Client) doPut(data PutData) ([]index.Entry, error) {
 }
 
 // Ctx returns the context of a given citation.
-func (c *Client) Ctx(u string, b, e, n int) (Context, error) {
+func (c *Client) Ctx(u string, b, e, n int) (rest.Context, error) {
 	url := fmt.Sprintf("%s/ctx?url=%s&b=%d&e=%d&n=%d",
 		c.host, url.QueryEscape(u), b, e, n)
-	var ctx Context
+	var ctx rest.Context
 	err := c.get(url, &ctx)
 	return ctx, err
 }
 
 // DumpFile returns the dump file of the requested url.
-func (c *Client) DumpFile(u string) (DumpFileContent, error) {
+func (c *Client) DumpFile(u string) (rest.DumpFileContent, error) {
 	url := fmt.Sprintf("%s/dump?url=%s", c.host, url.QueryEscape(u))
-	var data DumpFileContent
+	var data rest.DumpFileContent
 	err := c.get(url, &data)
 	return data, err
 }

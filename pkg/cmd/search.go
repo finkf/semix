@@ -6,7 +6,7 @@ import (
 	"os"
 	"sort"
 
-	"bitbucket.org/fflo/semix/pkg/rest"
+	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/say"
 	x "bitbucket.org/fflo/semix/pkg/semix"
 	"github.com/pkg/errors"
@@ -49,7 +49,7 @@ func search(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func doConcepts(client *rest.Client, pattern string) error {
+func doConcepts(client *client.Client, pattern string) error {
 	cs, err := client.Search(pattern)
 	if err != nil {
 		return err
@@ -58,7 +58,7 @@ func doConcepts(client *rest.Client, pattern string) error {
 	return nil
 }
 
-func doPredicates(client *rest.Client, pattern string) error {
+func doPredicates(client *client.Client, pattern string) error {
 	cs, err := client.Predicates(pattern)
 	if err != nil {
 		return err

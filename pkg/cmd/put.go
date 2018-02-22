@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/say"
@@ -64,8 +65,8 @@ func put(cmd *cobra.Command, args []string) error {
 	}
 	sort.Ints(levs)
 	client := newClient(
-		rest.WithErrorLimits(levs...),
-		rest.WithResolvers(rs...),
+		client.WithErrorLimits(levs...),
+		client.WithResolvers(rs...),
 	)
 	for _, arg := range args {
 		if err := putPath(client, arg); err != nil {
@@ -75,7 +76,7 @@ func put(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func putPath(client *rest.Client, path string) error {
+func putPath(client *client.Client, path string) error {
 	if isURL(path) {
 		return putFileOrURL(client, path)
 	}
@@ -89,7 +90,7 @@ func putPath(client *rest.Client, path string) error {
 	return putFileOrURL(client, path)
 }
 
-func putDir(client *rest.Client, path string) error {
+func putDir(client *client.Client, path string) error {
 	return filepath.Walk(path, func(p string, i os.FileInfo, err error) error {
 		if err != nil {
 			return errors.Wrapf(err, "cannot index %s", p)
@@ -101,7 +102,7 @@ func putDir(client *rest.Client, path string) error {
 	})
 }
 
-func putFileOrURL(client *rest.Client, path string) error {
+func putFileOrURL(client *client.Client, path string) error {
 	es, err := doPutFileOrURL(client, path)
 	if err != nil {
 		return errors.Wrapf(err, "cannot index %s", path)
@@ -114,7 +115,7 @@ func putFileOrURL(client *rest.Client, path string) error {
 	return nil
 }
 
-func doPutFileOrURL(client *rest.Client, path string) ([]index.Entry, error) {
+func doPutFileOrURL(client *client.Client, path string) ([]index.Entry, error) {
 	if isURL(path) {
 		return client.PutURL(path)
 	}
@@ -126,7 +127,7 @@ func doPutFileOrURL(client *rest.Client, path string) ([]index.Entry, error) {
 		return nil, err
 	}
 	defer func() { _ = file.Close() }()
-	return client.PutContent(file, path, "text/plain", nil, nil)
+	return client.PutContent(file, path, "text/plain")
 }
 
 func isURL(path string) bool {
