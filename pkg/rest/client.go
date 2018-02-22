@@ -34,20 +34,6 @@ func WithErrorLimits(ks ...int) ClientOption {
 	}
 }
 
-// WithThematicThreshold sets the thematic resolver's threshold.
-func WithThematicThreshold(t float64) ClientOption {
-	return func(c *Client) {
-		c.threshold = t
-	}
-}
-
-// WithMemorySize sets the resolver's memory size.
-func WithMemorySize(m int) ClientOption {
-	return func(c *Client) {
-		c.memsize = m
-	}
-}
-
 // WithSkip sets the query skip value.
 func WithSkip(s int) ClientOption {
 	return func(c *Client) {
@@ -64,12 +50,11 @@ func WithMax(m int) ClientOption {
 
 // Client represents a connection to the rest service.
 type Client struct {
-	client             *http.Client
-	host               string
-	rs                 []Resolver
-	ks                 []int
-	threshold          float64
-	memsize, skip, max int
+	client    *http.Client
+	host      string
+	rs        []Resolver
+	ks        []int
+	skip, max int
 }
 
 // NewClient create a new client that connects to the rest at
