@@ -102,6 +102,6 @@ func newMux(s *Server) *http.Server {
 	}
 }
 
-func (s *Server) newClient() rest.Client {
-	return rest.NewClient(s.daemon)
+func (s *Server) newClient(opts ...rest.ClientOption) *rest.Client {
+	return rest.NewClient(s.daemon, opts...)
 }

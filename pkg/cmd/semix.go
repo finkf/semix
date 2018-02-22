@@ -50,14 +50,14 @@ func init() {
 	semixCmd.AddCommand(httpdCmd)
 }
 
-func newClient() *rest.Client {
+func newClient(opts ...rest.ClientOption) *rest.Client {
 	host := daemonHost
 	if !strings.HasPrefix(host, "http://") ||
 		!strings.HasPrefix(host, "https://") {
 		host = "http://" + host
 	}
-	client := rest.NewClient(host)
-	return &client
+	client := rest.NewClient(host, opts...)
+	return client
 }
 
 // Execute runs the main semix command.

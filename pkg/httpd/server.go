@@ -121,7 +121,7 @@ func (s *Server) httpdGet(r *http.Request) (*template.Template, interface{}, sta
 	if err := rest.DecodeQuery(r.URL.Query(), &data); err != nil {
 		return nil, nil, internalError(err)
 	}
-	es, err := s.newClient().Get(data.Q, data.N, data.S)
+	es, err := s.newClient(rest.WithMax(data.N), rest.WithSkip(data.S)).Get(data.Q)
 	if err != nil {
 		return nil, nil, internalError(err)
 	}
@@ -162,11 +162,20 @@ func (s *Server) httpdPut(r *http.Request) (*template.Template, interface{}, sta
 			URL string
 			Ls  []int
 			Rs  []string
+			M   int
+			T   float64
 		}
 		if err := rest.DecodeQuery(r.URL.Query(), &ps); err != nil {
 			return nil, nil, internalError(err)
 		}
-		ts, err := s.newClient().PutURL(ps.URL, ps.Ls, nil)
+		rs, err := rest.MakeResolvers(ps.T, ps.M, ps.Rs)
+		if err != nil {
+			return nil, nil, internalError(err)
+		}
+		ts, err := s.newClient(
+			rest.WithErrorLimits(ps.Ls...),
+			rest.WithResolvers(rs...),
+		).PutURL(ps.URL)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}

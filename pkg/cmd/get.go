@@ -33,7 +33,7 @@ func init() {
 
 func get(cmd *cobra.Command, args []string) error {
 	say.SetDebug(debug)
-	client := newClient()
+	client := newClient(rest.WithSkip(getSkip), rest.WithMax(getMax))
 	for _, query := range args {
 		if err := doGet(client, query); err != nil {
 			return err
@@ -43,7 +43,7 @@ func get(cmd *cobra.Command, args []string) error {
 }
 
 func doGet(client *rest.Client, query string) error {
-	ts, err := client.Get(query, getMax, getSkip)
+	ts, err := client.Get(query)
 	if err != nil {
 		return errors.Wrapf(err, "[get] could not execute query %s", query)
 	}

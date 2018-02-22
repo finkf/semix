@@ -17,7 +17,6 @@ import (
 var (
 	putLocal  bool
 	resolvers []string
-	rs        []rest.Resolver
 	levs      []int
 	memsize   int
 	threshold float64
@@ -58,15 +57,15 @@ func init() {
 
 func put(cmd *cobra.Command, args []string) error {
 	say.SetDebug(debug)
-	var err error
-	rs, err = makeResolvers(resolvers)
+	rs, err := rest.MakeResolvers(threshold, memsize, resolvers)
 	if err != nil {
 		return errors.Wrapf(err, "put")
 	}
 	sort.Ints(levs)
-	say.Debug("Resolvers: %v", resolvers)
-	say.Debug("Levs:      %v", levs)
-	client := newClient()
+	client := newClient(
+		rest.WithErrorLimits(levs...),
+		rest.WithResolvers(rs...),
+	)
 	for _, arg := range args {
 		if err := putPath(client, arg); err != nil {
 			return errors.Wrapf(err, "put")
@@ -116,10 +115,10 @@ func putFileOrURL(client *rest.Client, path string) error {
 
 func doPutFileOrURL(client *rest.Client, path string) ([]index.Entry, error) {
 	if isURL(path) {
-		return client.PutURL(path, levs, rs)
+		return client.PutURL(path)
 	}
 	if putLocal {
-		return client.PutLocalFile(path, levs, rs)
+		return client.PutLocalFile(path)
 	}
 	file, err := os.Open(path)
 	if err != nil {
@@ -132,21 +131,4 @@ func doPutFileOrURL(client *rest.Client, path string) ([]index.Entry, error) {
 func isURL(path string) bool {
 	return strings.HasPrefix(path, "http://") ||
 		strings.HasPrefix(path, "https://")
-}
-
-func makeResolvers(rs []string) ([]rest.Resolver, error) {
-	res := make([]rest.Resolver, len(rs))
-	for i, r := range rs {
-		switch strings.ToLower(r) {
-		case "thematic":
-			res[i] = rest.NewThematicResolver(memsize, threshold)
-		case "ruled":
-			res[i] = rest.NewRuledResolver(memsize)
-		case "simple":
-			res[i] = rest.NewSimpleResolver(memsize)
-		default:
-			return nil, errors.Errorf("invalid resolver: %s", r)
-		}
-	}
-	return res, nil
 }
