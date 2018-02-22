@@ -98,6 +98,13 @@ type Resolver struct {
 	MemorySize int
 }
 
+// Names for the different resolver types.
+const (
+	ThematicResolver = "thematic"
+	RuledResolver    = "ruled"
+	SimpleResolver   = "simple"
+)
+
 // NewThematicResolver creates a new thematic resolver.
 func NewThematicResolver(m int, t float64) Resolver {
 	return Resolver{Name: "automatic", Threshold: t, MemorySize: m}
@@ -115,11 +122,11 @@ func NewSimpleResolver(m int) Resolver {
 
 func (r Resolver) resolver(rules rule.Map) (resolve.Interface, error) {
 	switch strings.ToLower(r.Name) {
-	case "automatic":
+	case ThematicResolver:
 		return resolve.Automatic{Threshold: r.Threshold}, nil
-	case "simple":
+	case SimpleResolver:
 		return resolve.Simple{}, nil
-	case "ruled":
+	case RuledResolver:
 		return resolve.Ruled{Rules: rules}, nil
 	}
 	return nil, fmt.Errorf("invalid resolver name: %s", r.Name)
