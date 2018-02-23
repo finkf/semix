@@ -30,9 +30,17 @@ var (
 	indexBufferSize int
 )
 
+func semixDir() string {
+	res := os.Getenv("SEMIXPATH")
+	if res == "" {
+		res = filepath.Join(os.Getenv("HOME"), "semix")
+	}
+	return res
+}
+
 func init() {
 	daemonCmd.Flags().StringVarP(&daemonDir, "dir", "d",
-		filepath.Join(os.Getenv("HOME"), "semix"), "set semix index directory")
+		semixDir(), "set semix index directory")
 	daemonCmd.Flags().BoolVar(&daemonNoCache, "no-cache",
 		false, "do not load cached resources")
 	daemonCmd.Flags().IntVar(&indexBufferSize, "index-size",
