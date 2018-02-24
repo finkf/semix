@@ -31,7 +31,7 @@ for os in darwin linux windows; do
 				else
 						out=semix-$os-$arch
 				fi
-				GOARCH=$arch GOOS=$os go build -o $out semix.go
+				GOARCH=$arch GOOS=$os go build -o $out main.go
 				curl --user $auth --fail --form files="@$out" $url
 
 				sha256file=$out.sha256
