@@ -1,13 +1,24 @@
 #!/bin/sh
 
+pid=0
+cleanup () {
+		kill $pid
+}
+trap cleanup EXIT
+
+if test $# -lt 2 -o ! -d "$1" ; then
+		echo "error: usage $0 dir command...";
+		exit 1;
+fi
+
 dir=$1
 shift;
 
 while true; do
-		echo "$@"
+		echo $(date): "starting: $@"
 		$@ &
 		pid=$!
-		# echo "waiting $dir"
 		inotifywait -e modify -r $dir
 		kill $pid
+		wait $pid
 done
