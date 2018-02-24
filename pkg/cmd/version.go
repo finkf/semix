@@ -14,8 +14,8 @@ import (
 // DO NOT EDIT BY HAND.
 const (
 	major = 1
-	minor = 1
-	patch = 1
+	minor = 2
+	patch = 0
 )
 
 var (
