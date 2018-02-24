@@ -22,7 +22,8 @@ func WithPost(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			say.Info("invalid request method: %v", r.Method)
-			http.Error(w, fmt.Sprintf("invalid request method: %s", r.Method), http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf("invalid request method: %s", r.Method),
+				http.StatusBadRequest)
 			return
 		}
 		f(w, r)
@@ -35,7 +36,8 @@ func WithGet(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			say.Info("invalid request method: %v", r.Method)
-			http.Error(w, fmt.Sprintf("invalid request method: %s", r.Method), http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf("invalid request method: %s", r.Method),
+				http.StatusBadRequest)
 			return
 		}
 		f(w, r)
@@ -48,7 +50,8 @@ func WithGetOrPost(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodPost {
 			say.Info("invalid request method: %v", r.Method)
-			http.Error(w, fmt.Sprintf("invalid request method: %s", r.Method), http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf("invalid request method: %s", r.Method),
+				http.StatusBadRequest)
 			return
 		}
 		f(w, r)
