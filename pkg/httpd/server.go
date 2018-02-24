@@ -14,6 +14,7 @@ import (
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/say"
 	x "bitbucket.org/fflo/semix/pkg/semix"
+	"github.com/pkg/errors"
 )
 
 type status struct {
@@ -154,33 +155,34 @@ func (s *Server) ctx(r *http.Request) (*template.Template, interface{}, status) 
 }
 
 func (s *Server) httpdPut(r *http.Request) (*template.Template, interface{}, status) {
+	var ps struct {
+		URL string
+		Ls  []int
+		Rs  []string
+		M   int
+		T   float64
+	}
+	if err := rest.DecodeQuery(r.URL.Query(), &ps); err != nil {
+		return nil, nil, internalError(errors.Wrapf(err, "could not decode query"))
+	}
+	rs, err := rest.MakeResolvers(ps.T, ps.M, ps.Rs)
+	if err != nil {
+		return nil, nil, internalError(errors.Wrapf(err, "could not decode resolvers"))
+	}
+	client := s.newClient(
+		client.WithErrorLimits(ps.Ls...),
+		client.WithResolvers(rs...),
+	)
 	switch r.Method {
 	case http.MethodPost:
 		ct := "text/plain"
-		ts, err := s.newClient().PutContent(r.Body, "", ct)
+		ts, err := client.PutContent(r.Body, "", ct)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
 		return s.puttmpl, ts, ok()
 	case http.MethodGet:
-		var ps struct {
-			URL string
-			Ls  []int
-			Rs  []string
-			M   int
-			T   float64
-		}
-		if err := rest.DecodeQuery(r.URL.Query(), &ps); err != nil {
-			return nil, nil, internalError(err)
-		}
-		rs, err := rest.MakeResolvers(ps.T, ps.M, ps.Rs)
-		if err != nil {
-			return nil, nil, internalError(err)
-		}
-		ts, err := s.newClient(
-			client.WithErrorLimits(ps.Ls...),
-			client.WithResolvers(rs...),
-		).PutURL(ps.URL)
+		ts, err := client.PutURL(ps.URL)
 		if err != nil {
 			return nil, nil, internalError(err)
 		}
