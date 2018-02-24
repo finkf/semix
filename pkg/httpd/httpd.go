@@ -5,6 +5,7 @@ import (
 	"context"
 	"html/template"
 	"net/http"
+	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/rest"
@@ -30,7 +31,12 @@ func WithHost(host string) Option {
 // WithDaemon sets the address of the semix rest daemon.
 func WithDaemon(daemon string) Option {
 	return func(s *Server) {
-		s.daemon = daemon
+		host := daemon
+		if !strings.HasPrefix(host, "http://") ||
+			!strings.HasPrefix(host, "https://") {
+			host = "http://" + host
+		}
+		s.daemon = host
 	}
 }
 
