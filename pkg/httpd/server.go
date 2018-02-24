@@ -188,6 +188,10 @@ func (s *Server) httpdPut(r *http.Request) (*template.Template, interface{}, sta
 	}
 }
 
+func (s *Server) setup(r *http.Request) (*template.Template, interface{}, status) {
+	return s.setuptmpl, struct{}{}, ok()
+}
+
 func internalError(err error) status {
 	return status{err, http.StatusInternalServerError}
 }

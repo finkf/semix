@@ -3,6 +3,8 @@ package httpd
 import (
 	"html/template"
 	"path/filepath"
+
+	"bitbucket.org/fflo/semix/pkg/say"
 )
 
 var (
@@ -24,6 +26,7 @@ func (s *setuper) setup(server *Server) error {
 	server.searchtmpl = s.setupTemplate(filepath.Join(server.dir, "search.html"))
 	server.gettmpl = s.setupTemplate(filepath.Join(server.dir, "get.html"))
 	server.dumptmpl = s.setupTemplate(filepath.Join(server.dir, "dump.html"))
+	server.setuptmpl = s.setupTemplate(filepath.Join(server.dir, "setup.html"))
 	return s.err
 }
 
@@ -31,7 +34,8 @@ func (s *setuper) setupTemplate(tmpl string) *template.Template {
 	if s.err != nil {
 		return nil
 	}
-	t, err := template.New(tmpl).Funcs(funcs).ParseFiles(tmpl)
+	say.Debug("setting up template %s", tmpl)
+	t, err := template.New(filepath.Base(tmpl)).Funcs(funcs).ParseFiles(tmpl)
 	if err != nil {
 		s.err = err
 		return nil
