@@ -17,6 +17,7 @@ func Test(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.test, func(t *testing.T) {
+			say.SetColor(false)
 			say.SetDebug(false)
 			output := new(bytes.Buffer)
 			say.SetOutput(output)
@@ -31,6 +32,13 @@ func Test(t *testing.T) {
 				t.Fatalf("got %s", got)
 			}
 			say.SetDebug(true)
+			output = new(bytes.Buffer)
+			say.SetOutput(output)
+			say.Debug(tc.test)
+			if got := output.String(); !regexp.MustCompile(tc.re).MatchString(got) {
+				t.Fatalf("expected %s; got %s", tc.re, got)
+			}
+			say.SetColor(true)
 			output = new(bytes.Buffer)
 			say.SetOutput(output)
 			say.Debug(tc.test)
