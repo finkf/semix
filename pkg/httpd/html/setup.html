@@ -12,19 +12,23 @@
 		<div id='configuration'>
 			<div class='block'>
 				<label for='error-limits'>Error limits</label>
-				<input id='error-limits' type='text' placeholder='error limits' name='ks'>
+				<input title='comma separated list of error limits'
+							 id='error-limits' type='text' placeholder='error limits' name='ks'>
 			</div>
 			<div class='block'>
 				<label for='resolvers'>Resolvers</label>
-				<input id='resolvers' type='text' placeholder='resolvers' name='rs'>
+				<input title='comma separated list of resolver types'
+							 id='resolvers' type='text' placeholder='resolvers' name='rs'>
 			</div>
 			<div class='block'>
 				<label for='threshold'>Threshold</label>
-				<input id='threshold' type='text' placeholder='threshold' name='t'>
+				<input title='value of threshold for thematic resolver (between 0 and 1)'
+							 id='threshold' type='text' placeholder='threshold' name='t'>
 			</div>
 			<div class='block'>
 				<label for='memory-size'>Memory size</label>
-				<input id='memory-size' type='text' placeholder='memory size' name='ms'>
+				<input title='size of the memory used for the resolvers'
+							 id='memory-size' type='text' placeholder='memory size' name='ms'>
 			</div>
 			<input id='save-configuration-button' type='button'
 						 onclick='semix.SaveConfiguration()' value='Save'>
