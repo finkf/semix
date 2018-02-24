@@ -157,7 +157,7 @@ func (s *Server) ctx(r *http.Request) (*template.Template, interface{}, status) 
 func (s *Server) httpdPut(r *http.Request) (*template.Template, interface{}, status) {
 	var ps struct {
 		URL string
-		Ls  []int
+		Ks  []int
 		Rs  []string
 		M   int
 		T   float64
@@ -170,7 +170,7 @@ func (s *Server) httpdPut(r *http.Request) (*template.Template, interface{}, sta
 		return nil, nil, internalError(errors.Wrapf(err, "could not decode resolvers"))
 	}
 	client := s.newClient(
-		client.WithErrorLimits(ps.Ls...),
+		client.WithErrorLimits(ps.Ks...),
 		client.WithResolvers(rs...),
 	)
 	switch r.Method {
