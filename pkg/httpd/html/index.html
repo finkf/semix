@@ -7,11 +7,14 @@
 	</head>
 	<body>
 		<h1>Semix</h1>
+		<div id='setup' align='right'>
+			<a href='setup'>Setup</a>
+		</div>
 		<h2>Query index</h2>
 		<form id='query-index-form' method='get' action='/get'>
-			<input id='query-index-input-predicates' type='text' placeholder='Predicates' name='q' oninput='SetQueryButtonText();'>
-			<input id='query-index-input-concepts' type='text' placeholder='Concepts' name='q' oninput='SetQueryButtonText();'>
-			<input id='query-index-input-button' type='button' value='query' onclick='ExecuteQuery();'>
+			<input id='query-index-input-predicates' type='text' placeholder='Predicates' name='q' oninput='semix.SetQueryButtonText();'>
+			<input id='query-index-input-concepts' type='text' placeholder='Concepts' name='q' oninput='semix.SetQueryButtonText();'>
+			<input id='query-index-input-button' type='button' value='query' onclick='semix.ExecuteQuery();'>
 		</form>
 		<h2>Search predicates</h2>
 		<div id='search-predicates'>

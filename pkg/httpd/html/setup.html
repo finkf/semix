@@ -5,7 +5,16 @@
 		<title>Semix setup</title>
 		<script type="text/javascript" src="/js/semix.js"></script>
 	</head>
-	<body>
+	<body onload='semix.LoadConfiguration()'>
 		<h1>Semix setup</h1>
+		<a href="/">Home</a>
+		<div id='configuration'>
+			<input id='error-limits' type='text' placeholder='error limits' name='ks'>
+			<br/>
+			<input id='resolvers' type='text' placeholder='resolvers' name='rs'>
+			<br/>
+			<input id='save-configuration-button' type='button'
+						 onclick='semix.SaveConfiguration()' value='Save'>
+		</div>
 	</body>
 </html>
