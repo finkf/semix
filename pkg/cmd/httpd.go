@@ -25,7 +25,7 @@ func init() {
 		&host,
 		"host",
 		"H",
-		"localhost:80",
+		"localhost:8080",
 		"set host",
 	)
 }

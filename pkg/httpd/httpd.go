@@ -46,6 +46,7 @@ type Server struct {
 	searchtmpl *template.Template
 	dumptmpl   *template.Template
 	gettmpl    *template.Template
+	setuptmpl  *template.Template
 }
 
 // New returns a new server with a default configuration.
@@ -91,6 +92,8 @@ func newMux(s *Server) *http.Server {
 		rest.WithLogging(rest.WithGet(handle(s.ctx))))
 	mux.HandleFunc("/put",
 		rest.WithLogging(rest.WithGetOrPost(handle(s.httpdPut))))
+	mux.HandleFunc("/setup",
+		rest.WithLogging(rest.WithGet(handle(s.setup))))
 	mux.HandleFunc("/parents",
 		rest.WithLogging(rest.WithGet(handle(s.parents))))
 	mux.HandleFunc("/favicon.ico",
