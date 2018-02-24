@@ -6,8 +6,8 @@ import (
 	"os"
 	"sort"
 
+	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/index"
-	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -18,6 +18,7 @@ var getCmd = &cobra.Command{
 	Short:        "Query the semantic index",
 	Long:         `The get command sends queries to the daemon.`,
 	RunE:         get,
+	Args:         cobra.MinimumNArgs(1),
 	SilenceUsage: true,
 }
 
@@ -33,7 +34,7 @@ func init() {
 
 func get(cmd *cobra.Command, args []string) error {
 	say.SetDebug(debug)
-	client := newClient()
+	client := newClient(client.WithSkip(getSkip), client.WithMax(getMax))
 	for _, query := range args {
 		if err := doGet(client, query); err != nil {
 			return err
@@ -42,8 +43,8 @@ func get(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func doGet(client *rest.Client, query string) error {
-	ts, err := client.Get(query, getMax, getSkip)
+func doGet(client *client.Client, query string) error {
+	ts, err := client.Get(query)
 	if err != nil {
 		return errors.Wrapf(err, "[get] could not execute query %s", query)
 	}

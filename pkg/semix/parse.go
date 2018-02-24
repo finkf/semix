@@ -1,6 +1,9 @@
 package semix
 
-import "github.com/pkg/errors"
+import (
+	"bitbucket.org/fflo/semix/pkg/say"
+	"github.com/pkg/errors"
+)
 
 // Parser defines a parser that parses (Subject, Predicate, Object) triples.
 type Parser interface {
@@ -89,6 +92,7 @@ func (parser *parser) buildDictionary(g *Graph) (Dictionary, error) {
 		}
 	}
 	for e, urls := range parser.ambigs {
+		say.Debug("handling ambiguity for %q", e)
 		h := parser.traits.HandleAmbigs()
 		c, err := h(g, urls...)
 		if err != nil {
@@ -100,6 +104,7 @@ func (parser *parser) buildDictionary(g *Graph) (Dictionary, error) {
 		if c.Name == "" {
 			c.Name = e
 		}
+		say.Debug("handled ambiguity %q -> %s", e, c)
 		d[e] = c.ID()
 	}
 	return d, nil

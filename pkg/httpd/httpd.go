@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 
+	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/rest"
 )
 
@@ -102,6 +103,6 @@ func newMux(s *Server) *http.Server {
 	}
 }
 
-func (s *Server) newClient() rest.Client {
-	return rest.NewClient(s.daemon)
+func (s *Server) newClient(opts ...client.Option) *client.Client {
+	return client.New(s.daemon, opts...)
 }

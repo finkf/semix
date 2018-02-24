@@ -9,6 +9,7 @@ import (
 	"bitbucket.org/fflo/semix/pkg/resolve"
 	"bitbucket.org/fflo/semix/pkg/rule"
 	"bitbucket.org/fflo/semix/pkg/semix"
+	"upspin.io/errors"
 )
 
 // DumpFileContent defines the content and the content type of a dump file.
@@ -98,13 +99,48 @@ type Resolver struct {
 	MemorySize int
 }
 
+// Names for the different resolver types.
+const (
+	ThematicResolver = "thematic"
+	RuledResolver    = "ruled"
+	SimpleResolver   = "simple"
+)
+
+// MakeResolvers is a simple helper function to build resolvers from a list of strings.
+func MakeResolvers(t float64, m int, rs []string) ([]Resolver, error) {
+	res := make([]Resolver, len(rs))
+	for i, r := range rs {
+		switch strings.ToLower(r) {
+		case ThematicResolver:
+			res[i] = Resolver{
+				Name:       ThematicResolver,
+				MemorySize: m,
+				Threshold:  t,
+			}
+		case RuledResolver:
+			res[i] = Resolver{
+				Name:       RuledResolver,
+				MemorySize: m,
+			}
+		case SimpleResolver:
+			res[i] = Resolver{
+				Name:       SimpleResolver,
+				MemorySize: m,
+			}
+		default:
+			return nil, errors.Errorf("invalid resolver name: %s", r)
+		}
+	}
+	return res, nil
+}
+
 func (r Resolver) resolver(rules rule.Map) (resolve.Interface, error) {
 	switch strings.ToLower(r.Name) {
-	case "automatic":
+	case ThematicResolver:
 		return resolve.Automatic{Threshold: r.Threshold}, nil
-	case "simple":
+	case SimpleResolver:
 		return resolve.Simple{}, nil
-	case "ruled":
+	case RuledResolver:
 		return resolve.Ruled{Rules: rules}, nil
 	}
 	return nil, fmt.Errorf("invalid resolver name: %s", r.Name)

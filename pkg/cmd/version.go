@@ -33,6 +33,7 @@ var versionCmd = &cobra.Command{
 	Short:        "Get semantic version of semix",
 	Long:         "Get semantic version of semix",
 	RunE:         version,
+	Args:         cobra.MinimumNArgs(0),
 	SilenceUsage: true,
 }
 

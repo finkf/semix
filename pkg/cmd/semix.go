@@ -3,7 +3,7 @@ package cmd
 import (
 	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/rest"
+	"bitbucket.org/fflo/semix/pkg/client"
 	"github.com/spf13/cobra"
 )
 
@@ -50,14 +50,14 @@ func init() {
 	semixCmd.AddCommand(httpdCmd)
 }
 
-func newClient() *rest.Client {
+func newClient(opts ...client.Option) *client.Client {
 	host := daemonHost
 	if !strings.HasPrefix(host, "http://") ||
 		!strings.HasPrefix(host, "https://") {
 		host = "http://" + host
 	}
-	client := rest.NewClient(host)
-	return &client
+	client := client.New(host, opts...)
+	return client
 }
 
 // Execute runs the main semix command.

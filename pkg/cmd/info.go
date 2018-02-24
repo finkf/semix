@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/pkg/errors"
@@ -15,9 +16,11 @@ import (
 var infoCmd = &cobra.Command{
 	Use:   "info [URL|ID ...]",
 	Short: "Print information about a concept",
-	Long: `The info command prints out info about a concept.
-The concept can be specified either with an ID or and URL.`,
+	Long: `The info command prints information about a concepts
+or predicates. The concept can be specified either with an ID
+or and URL.`,
 	RunE:         info,
+	Args:         cobra.MinimumNArgs(1),
 	SilenceUsage: true,
 }
 
@@ -32,7 +35,7 @@ func info(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func doInfo(client *rest.Client, concept string) error {
+func doInfo(client *client.Client, concept string) error {
 	var info rest.ConceptInfo
 	var err error
 	id, err := strconv.Atoi(concept)
@@ -55,6 +58,6 @@ func doInfo(client *rest.Client, concept string) error {
 func prettyPrintInfo(concept string, info rest.ConceptInfo) {
 	prettyPrintConcept(concept, 0, 1, info.Concept)
 	for _, str := range info.Entries {
-		fmt.Printf("%s:%d:%d: %s\n", concept, 1, 1, str)
+		fmt.Printf("%s:%d:%d: - %s\n", concept, 1, 1, str)
 	}
 }
