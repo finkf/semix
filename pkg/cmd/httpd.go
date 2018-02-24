@@ -31,7 +31,7 @@ func init() {
 }
 
 func doHttpd(cmd *cobra.Command, args []string) error {
-	say.SetDebug(debug)
+	setupSay()
 	dir := args[0]
 	s, err := httpd.New(
 		httpd.WithHost(host),

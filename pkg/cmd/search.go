@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	"bitbucket.org/fflo/semix/pkg/client"
-	"bitbucket.org/fflo/semix/pkg/say"
 	x "bitbucket.org/fflo/semix/pkg/semix"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -35,7 +34,7 @@ func init() {
 }
 
 func search(cmd *cobra.Command, args []string) error {
-	say.SetDebug(debug)
+	setupSay()
 	client := newClient()
 	doSearch := doConcepts
 	if searchPredicates {

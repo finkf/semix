@@ -10,7 +10,6 @@ import (
 	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
-	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -58,7 +57,7 @@ func init() {
 }
 
 func put(cmd *cobra.Command, args []string) error {
-	say.SetDebug(debug)
+	setupSay()
 	rs, err := rest.MakeResolvers(threshold, memsize, resolvers)
 	if err != nil {
 		return errors.Wrapf(err, "put")

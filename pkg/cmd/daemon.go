@@ -11,7 +11,6 @@ import (
 	"bitbucket.org/fflo/semix/pkg/resource"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/say"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -48,10 +47,7 @@ func init() {
 }
 
 func daemon(cmd *cobra.Command, args []string) error {
-	if len(args) != 1 {
-		return errors.New("[daemon] missing ressource file")
-	}
-	say.SetDebug(debug)
+	setupSay()
 	s, err := newServer(args[0])
 	if err != nil {
 		return err

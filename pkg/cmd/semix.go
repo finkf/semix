@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/client"
+	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/spf13/cobra"
 )
 
@@ -11,6 +12,7 @@ var (
 	daemonHost string
 	jsonOutput bool
 	debug      bool
+	nocolor    bool
 )
 
 var semixCmd = &cobra.Command{
@@ -41,6 +43,13 @@ func init() {
 		false,
 		"enable debugging output",
 	)
+	semixCmd.PersistentFlags().BoolVarP(
+		&nocolor,
+		"no-colors",
+		"N",
+		false,
+		"disable colors in log messages",
+	)
 	semixCmd.AddCommand(versionCmd)
 	semixCmd.AddCommand(putCmd)
 	semixCmd.AddCommand(getCmd)
@@ -58,6 +67,11 @@ func newClient(opts ...client.Option) *client.Client {
 	}
 	client := client.New(host, opts...)
 	return client
+}
+
+func setupSay() {
+	say.SetDebug(debug)
+	say.SetColor(!nocolor)
 }
 
 // Execute runs the main semix command.
