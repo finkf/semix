@@ -53,6 +53,10 @@ func (s *Server) semixJS(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(s.dir, "js", "semix.js"))
 }
 
+func (s *Server) semixCSS(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(s.dir, "css", "semix.css"))
+}
+
 func (s *Server) httpdSearch(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("q")
 	cs, err := s.newClient().Search(q)

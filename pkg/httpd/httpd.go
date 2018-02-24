@@ -106,6 +106,8 @@ func newMux(s *Server) *http.Server {
 		rest.WithLogging(rest.WithGet(s.favicon)))
 	mux.HandleFunc("/js/semix.js",
 		rest.WithLogging(rest.WithGet(s.semixJS)))
+	mux.HandleFunc("/css/semix.css",
+		rest.WithLogging(rest.WithGet(s.semixCSS)))
 	return &http.Server{
 		Addr:    s.host,
 		Handler: mux,
