@@ -184,15 +184,15 @@ semix.makeResolver = function(name, config) {
 
 semix.PutContent = function() {
 		var e = document.getElementById('input-content');
-		if (e === null) {
-				return;
+		if (e === null || e.value === "") {
+						return;
 		}
 		semix.put(e.value, false);
 };
 
 semix.PutURL = function() {
 		var e = document.getElementById('input-url')
-		if (e === null) {
+		if (e === null || e.value === "") {
 				return;
 		}
 		semix.put(e.value, true)
