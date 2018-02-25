@@ -1,16 +1,24 @@
 // semix.js
 var semix={};
+semix.config = {
+		'limits': [],
+		'resolvers': [],
+		'threshold': 0.5,
+		'memorySize': 10
+};
 
+// setObject stores JSON object as string.
 Storage.prototype.setObject = function(key, value) {
 		this.setItem(key, JSON.stringify(value));
 }
 
+// getObject returns a JSON encoded object.
 Storage.prototype.getObject = function(key) {
     var value = this.getItem(key);
     return value && JSON.parse(value);
 }
 
-function toQuotedArgs(arg) {
+function toQuotedArgs(arg) {eor
 		if (arg.length === 0) {
 				return arg;
 		}
@@ -103,11 +111,11 @@ semix.getResolversFromElement = function() {
 semix.getThresholdFromElement = function() {
 		var e = document.getElementById('threshold');
 		if (e === null) {
-				return 0.5;
+				semix.config.threshold;
 		}
 		var n = parseFloat(e.value);
 		if (isNaN(n) || n < 0 || n > 1) {
-				return 0.5;
+				semix.config.threshold;
 		}
 		return n;
 };
@@ -115,11 +123,11 @@ semix.getThresholdFromElement = function() {
 semix.getMemorySizeFromElement = function() {
 		var e = document.getElementById('memory-size');
 		if (e === null) {
-				return 10;
+				return semix.config.memorySize;
 		}
 		var n = parseFloat(e.value);
 		if (isNaN(n) || n < 0) {
-				return 10;
+				return semix.config.memorySize;
 		}
 		return n;
 };
@@ -144,19 +152,91 @@ semix.SaveConfiguration = function() {
 				'memorySize': semix.getMemorySizeFromElement(),
 		};
 		localStorage.setObject('semix', config);
-		// reload Configuration on page
+		// Reload Configuration on page.
+		// This way a valid configuration is inserted
+		// in all input fields.
 		semix.LoadConfiguration();
 };
 
 semix.getConfiguration = function() {
 		var config = localStorage.getObject('semix');
 		if (config === null) {
-				config = {
-						'limits': [],
-						'resolvers': [],
-						'threshold': 0.5,
-						'memorySize': 10
-				};
-		};
+				return semix.config;
+ 		}
 		return config;
 };
+
+semix.makeResolvers = function(config) {
+		res = [];
+		config.resolvers.forEach(function(e, i) {
+				res.push(semix.makeResolver(e, config));
+		});
+		return res;
+};
+
+semix.makeResolver = function(name, config) {
+		return {
+				'Name': name,
+				'MemorySize': config.memorySize,
+				'Threshold': config.Threshold
+		};
+};
+
+semix.PutContent = function() {
+		var e = document.getElementById('input-content');
+		if (e === null) {
+				return;
+		}
+		semix.put(e.value, false);
+};
+
+semix.put = function(content, isURL) {
+		var config = semix.getConfiguration();
+		var data = {
+				"Errors": config.limits,
+				"Resolvers": semix.makeResolvers(config)
+		};
+		if (isURL === true) {
+				data.ContentType = "text/html";
+				data.URL = content;
+		} else {
+				data.ContentType = "text/plain";
+				data.Content = content;
+		}
+		console.log("[POST] " + JSON.stringify(data));
+		// At this point the post data is complete
+		var post = new XMLHttpRequest();
+		post.open("POST", "/put", true);
+		post.onreadystatechange = function() {
+				if (this.readyState === 4) {
+						if (this.status !== 200) {
+								semix.alertError(this.responseText, this.status);
+								return;
+						}
+						document.write(this.responseText);
+				}
+		};
+		post.setRequestHeader(
+				"Content-type",
+				"application/json; charset=UTF-8");
+		post.send(JSON.stringify(data));
+};
+
+semix.alertError = function(msg, status) {
+		window.alert("error:\n" + msg + "\nstatus: " + status);
+};
+
+// semix.getPutURL = function(base, url) {
+// 		var config = semix.getConfiguration();
+// 		var uri = base + '?m=' + config.memorySize;
+// 		uri += '&t=' + config.threshold;
+// 		if (url !== undefined) {
+// 				base += '&url=' + url;
+// 		}
+// 		config.limits.forEach(function(e, i) {
+// 				uri += '&ks=' + e;
+// 		});
+// 		config.resolvers.forEach(function(e, i) {
+// 				uri += '&rs=' + e;
+// 		});
+// }
