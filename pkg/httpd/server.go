@@ -51,15 +51,15 @@ func (s *Server) favicon(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(s.dir, "favicon.ico"))
 }
 
-func (s *Server) semixJS(w http.ResponseWriter, r *http.Request) {
+func (s *Server) js(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(s.dir, "js", "semix.js"))
 }
 
-func (s *Server) semixCSS(w http.ResponseWriter, r *http.Request) {
+func (s *Server) css(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(s.dir, "css", "semix.css"))
 }
 
-func (s *Server) httpdSearch(r *http.Request) (*template.Template, interface{}, status) {
+func (s *Server) search(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("q")
 	cs, err := s.newClient().Search(q)
 	if err != nil {
@@ -95,7 +95,7 @@ func (s *Server) parents(r *http.Request) (*template.Template, interface{}, stat
 	}{fmt.Sprintf("parents of %q", q), cs}, ok()
 }
 
-func (s *Server) httpdInfo(r *http.Request) (*template.Template, interface{}, status) {
+func (s *Server) info(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("url")
 	info, err := s.newClient().InfoURL(q)
 	if err != nil {
@@ -120,7 +120,7 @@ func (s *Server) home(r *http.Request) (*template.Template, interface{}, status)
 	return s.indextmpl, nil, ok()
 }
 
-func (s *Server) httpdGet(r *http.Request) (*template.Template, interface{}, status) {
+func (s *Server) get(r *http.Request) (*template.Template, interface{}, status) {
 	var data struct {
 		Q    string
 		N, S int
@@ -155,7 +155,7 @@ func (s *Server) ctx(r *http.Request) (*template.Template, interface{}, status) 
 	return s.ctxtmpl, ctx, ok()
 }
 
-func (s *Server) httpdPut(r *http.Request) (*template.Template, interface{}, status) {
+func (s *Server) put(r *http.Request) (*template.Template, interface{}, status) {
 	var data rest.PutData
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		return nil, nil, internalError(errors.Wrapf(err, "could not decode post data"))
