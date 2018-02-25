@@ -14,29 +14,6 @@ type StreamToken struct {
 // Stream repsents a stream to read tokens.
 type Stream <-chan StreamToken
 
-// Filter discards all tokens that do not match a concept.
-func Filter(ctx context.Context, s Stream) Stream {
-	fstream := make(chan StreamToken)
-	go func() {
-		defer close(fstream)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case t, ok := <-s:
-				if !ok {
-					return
-				}
-				if t.Err == nil && t.Token.Concept == nil {
-					continue
-				}
-				fstream <- t
-			}
-		}
-	}()
-	return fstream
-}
-
 // Normalize normalizes the token input.
 // It prepends and appends one ' ' character to the token.
 // All sequences of one or more unicode punctuation or unicode whitespaces

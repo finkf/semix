@@ -70,24 +70,6 @@ func TestMatcherStream(t *testing.T) {
 	}
 }
 
-func TestFilterStream(t *testing.T) {
-	tests := []struct {
-		test, want string
-		iserr      bool
-	}{
-		{"AmatchB", "match", false},
-		{"Amatch,error", "match", true},
-		{"error,A match", "match", true},
-	}
-	for _, tc := range tests {
-		t.Run(tc.test, func(t *testing.T) {
-			ds := makeTestDocuments(tc.test)
-			ctx, cancel := context.WithCancel(context.Background())
-			checkStream(t, tc, cancel, Filter(ctx, Match(ctx, testm{}, Read(ctx, ds...))))
-		})
-	}
-}
-
 func TestStreamCancel(t *testing.T) {
 	ds := makeTestDocuments("A,B,C,D")
 	ctx, cancel := context.WithCancel(context.Background())
@@ -95,7 +77,7 @@ func TestStreamCancel(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		wg.Wait()
-		s := Filter(ctx, Match(ctx, testm{}, Normalize(ctx, Read(ctx, ds...))))
+		s := Match(ctx, testm{}, Normalize(ctx, Read(ctx, ds...)))
 		for token := range s {
 			t.Fatalf("sould not read token %v", token)
 		}
