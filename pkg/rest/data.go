@@ -9,7 +9,7 @@ import (
 	"bitbucket.org/fflo/semix/pkg/resolve"
 	"bitbucket.org/fflo/semix/pkg/rule"
 	"bitbucket.org/fflo/semix/pkg/semix"
-	"upspin.io/errors"
+	"github.com/pkg/errors"
 )
 
 // DumpFileContent defines the content and the content type of a dump file.
@@ -78,6 +78,9 @@ func (p PutData) resolveStream(
 }
 
 func (p PutData) document(dir string) (semix.Document, error) {
+	if p.URL == "" && p.Content == "" {
+		return nil, errors.Errorf("no content and no URL")
+	}
 	if p.Content == "" {
 		if p.Local {
 			return semix.NewFileDocument(p.URL), nil
@@ -86,7 +89,7 @@ func (p PutData) document(dir string) (semix.Document, error) {
 	}
 	doc, err := newDumpFile(strings.NewReader(p.Content), dir, p.URL, p.ContentType)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "could not create dump file")
 	}
 	return doc, nil
 }
