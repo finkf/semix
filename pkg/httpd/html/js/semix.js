@@ -222,6 +222,7 @@ semix.put = function(content, isURL) {
 								return;
 						}
 						document.write(this.responseText);
+						document.close();
 				}
 		};
 		post.setRequestHeader(
