@@ -64,17 +64,6 @@ func combineTwoURLs(a, b string) string {
 	return a + "-" + url.PathEscape(b[bi+1:])
 }
 
-func commonPrefix(a, b string) int {
-	var pref int
-	for i := 0; i < len(a) && i < len(b); i++ {
-		if a[i] != b[i] {
-			break
-		}
-		pref++
-	}
-	return pref
-}
-
 // WithID returns a configuration function that sets the concept's ID.
 func WithID(id int) func(*Concept) {
 	return func(c *Concept) {
