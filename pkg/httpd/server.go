@@ -160,11 +160,20 @@ func (s *Server) put(r *http.Request) (*template.Template, interface{}, status) 
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		return nil, nil, internalError(errors.Wrapf(err, "could not decode post data"))
 	}
-	say.Debug("got request for %v", data)
-	ts, err := s.newClient(
+	if data.URL == "" && data.Content == "" {
+		return nil, nil, badRequest(errors.New("URL and content missing"))
+	}
+	client := s.newClient(
 		client.WithErrorLimits(data.Errors...),
 		client.WithResolvers(data.Resolvers...),
-	).PutContent(strings.NewReader(data.Content), data.URL, data.ContentType)
+	)
+	var ts []index.Entry
+	var err error
+	if data.URL != "" {
+		ts, err = client.PutURL(data.URL)
+	} else {
+		ts, err = client.PutContent(strings.NewReader(data.Content), data.URL, data.ContentType)
+	}
 	if err != nil {
 		return nil, nil, internalError(errors.Wrapf(err, "could not put content"))
 	}
@@ -177,6 +186,10 @@ func (s *Server) setup(r *http.Request) (*template.Template, interface{}, status
 
 func internalError(err error) status {
 	return status{err, http.StatusInternalServerError}
+}
+
+func badRequest(err error) status {
+	return status{err, http.StatusBadRequest}
 }
 
 func ok() status {
