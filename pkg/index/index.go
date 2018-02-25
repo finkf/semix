@@ -3,6 +3,7 @@ package index
 import (
 	"context"
 
+	"bitbucket.org/fflo/semix/pkg/say"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -55,6 +56,7 @@ func Put(ctx context.Context, putter Putter, s semix.Stream) semix.Stream {
 					continue
 				}
 				// Only put associated tokens.
+				say.Debug("putting %q into index", t.Token.Token)
 				err := putter.Put(t.Token)
 				if err != nil {
 					istream <- semix.StreamToken{Err: err}
