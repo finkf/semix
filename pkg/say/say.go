@@ -19,12 +19,12 @@ func init() {
 }
 
 var (
-	debug int32
-	mutex sync.Mutex
-	dmsg  = "[DBUG]"
-	imsg  = "[INFO]"
-	red   = color.New(color.FgRed).SprintFunc()
-	green = color.New(color.FgGreen).SprintFunc()
+	debug   int32
+	mutex   sync.Mutex
+	dmsg    = "[DBUG]"
+	imsg    = "[INFO]"
+	red     = color.New(color.FgRed).SprintFunc()
+	magenta = color.New(color.FgMagenta).SprintFunc()
 )
 
 // SetDebug sets debugging output.
@@ -42,7 +42,7 @@ func SetColor(f bool) {
 	defer mutex.Unlock()
 	if f {
 		dmsg = "[" + red("DBUG") + "]"
-		imsg = "[" + green("INFO") + "]"
+		imsg = "[" + magenta("INFO") + "]"
 	} else {
 		dmsg = "[DBUG]"
 		imsg = "[INFO]"
