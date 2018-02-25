@@ -37,21 +37,16 @@
 		</div>
 		<h2>Put into index</h2>
 		<div id='put-url'>
-			<form id='put-url-form' method='get' action='/put'>
-				<input id='put-url-input-text' type='text' placeholder='put url'
-							 name='url' required>
-				<input id='put-url-input-button' type='submit' value='put url'>
-			</form>
+			<input id='input-url' type='text' placeholder='put url' name='url' required>
+			<input title='put url' id='put-url-button'
+						 type='button' onclick='semix.PutURL()' value='Put URL'>
 		</div>
 		<h2>Input plain text</h2>
-		<!-- <form name="put" method="post" action="/put"> -->
 		<div>
 			<textarea id='input-content' name="text" rows="10" cols="160">
 			</textarea><br/>
 			<input title='put content' id='put-content-button'
 						 type='button' onclick='semix.PutContent()' value='Put Content'>
-			<!-- <input type="submit" value="put plain text"> -->
 		</div>
-		<!-- </form> -->
 	</body>
 </html>

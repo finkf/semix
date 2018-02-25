@@ -190,6 +190,14 @@ semix.PutContent = function() {
 		semix.put(e.value, false);
 };
 
+semix.PutURL = function() {
+		var e = document.getElementById('input-url')
+		if (e === null) {
+				return;
+		}
+		semix.put(e.value, true)
+}
+
 semix.put = function(content, isURL) {
 		var config = semix.getConfiguration();
 		var data = {
