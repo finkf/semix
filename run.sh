@@ -6,8 +6,8 @@ cleanup () {
 }
 trap cleanup EXIT
 
-if test $# -lt 2 -o ! -d "$1" ; then
-		echo "error: usage $0 dir command...";
+if test $# -lt 2 -o ! -e "$1" ; then
+		echo "error: usage $0 [dir|file] command...";
 		exit 1;
 fi
 
