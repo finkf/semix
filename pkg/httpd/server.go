@@ -2,6 +2,7 @@ package httpd
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -155,43 +156,19 @@ func (s *Server) ctx(r *http.Request) (*template.Template, interface{}, status) 
 }
 
 func (s *Server) httpdPut(r *http.Request) (*template.Template, interface{}, status) {
-	var ps struct {
-		URL string
-		Ks  []int
-		Rs  []string
-		M   int
-		T   float64
+	var data rest.PutData
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		return nil, nil, internalError(errors.Wrapf(err, "could not decode post data"))
 	}
-	if err := rest.DecodeQuery(r.URL.Query(), &ps); err != nil {
-		return nil, nil, internalError(errors.Wrapf(err, "could not decode query"))
-	}
-	rs, err := rest.MakeResolvers(ps.T, ps.M, ps.Rs)
+	say.Debug("got request for %v", data)
+	ts, err := s.newClient(
+		client.WithErrorLimits(data.Errors...),
+		client.WithResolvers(data.Resolvers...),
+	).PutContent(strings.NewReader(data.Content), data.URL, data.ContentType)
 	if err != nil {
-		return nil, nil, internalError(errors.Wrapf(err, "could not decode resolvers"))
+		return nil, nil, internalError(errors.Wrapf(err, "could not put content"))
 	}
-	client := s.newClient(
-		client.WithErrorLimits(ps.Ks...),
-		client.WithResolvers(rs...),
-	)
-	switch r.Method {
-	case http.MethodPost:
-		ct := "text/plain"
-		ts, err := client.PutContent(r.Body, "", ct)
-		if err != nil {
-			return nil, nil, internalError(err)
-		}
-		return s.puttmpl, ts, ok()
-	case http.MethodGet:
-		ts, err := client.PutURL(ps.URL)
-		if err != nil {
-			return nil, nil, internalError(err)
-		}
-		return s.puttmpl, ts, ok()
-	}
-	return nil, nil, status{
-		fmt.Errorf("invalid request method: %s", r.Method),
-		http.StatusBadRequest,
-	}
+	return s.puttmpl, ts, ok()
 }
 
 func (s *Server) setup(r *http.Request) (*template.Template, interface{}, status) {
