@@ -31,7 +31,7 @@ func (p PutData) stream(
 	ctx context.Context,
 	dfa semix.DFA,
 	rules rule.Map,
-	idx index.Interface,
+	idx index.Putter,
 	dir string,
 ) (semix.Stream, error) {
 	doc, err := p.document(dir)
@@ -43,7 +43,7 @@ func (p PutData) stream(
 	if err != nil {
 		return nil, err
 	}
-	return index.Put(ctx, idx, semix.Filter(ctx, s)), nil
+	return index.Put(ctx, idx, s), nil
 }
 
 func (p PutData) matchStream(
