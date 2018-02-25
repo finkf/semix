@@ -31,6 +31,7 @@ type Interface interface {
 }
 
 // Put reads all tokens from a given stream into an index.
+// Put does only insert Tokens into the index that have an associated concept.
 func Put(ctx context.Context, putter Putter, s semix.Stream) semix.Stream {
 	istream := make(chan semix.StreamToken)
 	go func() {
@@ -43,6 +44,17 @@ func Put(ctx context.Context, putter Putter, s semix.Stream) semix.Stream {
 				if !ok {
 					return
 				}
+				// If there is an error,
+				// let it be handled upstream.
+				if t.Err != nil {
+					istream <- t
+					continue
+				}
+				// If the token is not associated, discard it.
+				if t.Token.Concept == nil {
+					continue
+				}
+				// Only put associated tokens.
 				err := putter.Put(t.Token)
 				if err != nil {
 					istream <- semix.StreamToken{Err: err}
