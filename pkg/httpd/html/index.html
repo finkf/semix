@@ -6,7 +6,7 @@
 		<script type="text/javascript" src="/js/semix.js"></script>
 		<link rel="stylesheet" type="text/css" href="/css/semix.css">
 	</head>
-	<body>
+	<body onload='semix.SetQueryButtonText();'>
 		<h1>Semix</h1>
 		<div id='setup' align='right'>
 			<a href='setup'>Setup</a>
@@ -19,6 +19,10 @@
 						 name='q' oninput='semix.SetQueryButtonText();'>
 			<input id='query-index-input-button' type='button' value='query'
 						 onclick='semix.ExecuteQuery();'>
+			<br/><input id='query-index-tolerant-checkbox' type='checkbox'
+									onchange='semix.SetQueryButtonText();'>tolerant query
+
+
 		</form>
 		<h2>Search predicates</h2>
 		<div id='search-predicates'>

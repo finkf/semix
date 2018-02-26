@@ -40,16 +40,21 @@ function toQuotedArgs(arg) {
 		return res.join(",");
 }
 
-function getQuery() {
+semix.getQuery = function() {
 		var p = document.getElementById('query-index-input-predicates').value;
 		p = toQuotedArgs(p);
 		var c = document.getElementById('query-index-input-concepts').value;
 		c = toQuotedArgs(c);
-		if (p.length === 0) {
-				return '?(' + c + ')';
+		var t = document.getElementById('query-index-tolerant-checkbox').checked;
+		var q = '?';
+		if (t) {
+				q = '?*';
 		}
-		return '?(' + p + '(' + c + '))';
-}
+		if (p.length === 0) {
+				return q +'(' + c + ')';
+		}
+		return q + '(' + p + '(' + c + '))';
+};
 
 function sleep(millis) {
 		var date = new Date();
@@ -58,12 +63,12 @@ function sleep(millis) {
 }
 
 semix.SetQueryButtonText = function() {
-		var q = getQuery();
+		var q = semix.getQuery();
 		document.getElementById('query-index-input-button').value = 'query: ' + q;
-}
+};
 
 semix.ExecuteQuery = function() {
-		var q = getQuery();
+		var q = semix.getQuery();
 		q = '/get?q=' + encodeURIComponent(q) + '&n=50&s=0';
 		document.location = q;
 };
