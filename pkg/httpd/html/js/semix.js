@@ -211,7 +211,6 @@ semix.put = function(content, isURL) {
 				data.ContentType = "text/plain";
 				data.Content = content;
 		}
-		console.log("[POST] " + JSON.stringify(data));
 		// At this point the post data is complete
 		var post = new XMLHttpRequest();
 		post.open("POST", "/put", true);
@@ -221,6 +220,7 @@ semix.put = function(content, isURL) {
 								semix.alertError(this.responseText, this.status);
 								return;
 						}
+						document.open();
 						document.write(this.responseText);
 						document.close();
 				}
