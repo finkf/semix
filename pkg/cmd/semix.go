@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"os"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/say"
+	isatty "github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
@@ -71,7 +73,12 @@ func newClient(opts ...client.Option) *client.Client {
 
 func setupSay() {
 	say.SetDebug(debug)
-	say.SetColor(!nocolor)
+	// set color mode true if connected to a terminal
+	say.SetColor(isatty.IsTerminal(os.Stdout.Fd()))
+	// if nocolor isgiven disable colors no matter what
+	if nocolor {
+		say.SetColor(false)
+	}
 }
 
 // Execute runs the main semix command.
