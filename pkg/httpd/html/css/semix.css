@@ -5,3 +5,11 @@ label {
 		width: 120px;
 		text-align: left;
 }
+
+th, td {
+		padding: 5px;
+}
+
+.grey{
+		background: lightgrey;
+}
