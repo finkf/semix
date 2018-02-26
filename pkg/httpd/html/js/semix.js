@@ -18,7 +18,7 @@ Storage.prototype.getObject = function(key) {
     return value && JSON.parse(value);
 }
 
-function toQuotedArgs(arg) {eor
+function toQuotedArgs(arg) {
 		if (arg.length === 0) {
 				return arg;
 		}
