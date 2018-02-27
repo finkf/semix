@@ -10,6 +10,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	// DaemonHost specifies the default  host for the semix daemon.
+	DaemonHost = "localhost:6060"
+	// HTTPDHost specifies the default host for the HTTP server.
+	HTTPDHost = "localhost:8080"
+)
+
 var (
 	daemonHost string
 	jsonOutput bool
@@ -28,7 +35,7 @@ func init() {
 		&daemonHost,
 		"daemon",
 		"D",
-		"localhost:6606",
+		DaemonHost,
 		"set semix daemon host address",
 	)
 	semixCmd.PersistentFlags().BoolVarP(
