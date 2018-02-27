@@ -129,7 +129,7 @@ func (p *Parser) parseString() string {
 	if tok == scanner.String {
 		s, err := strconv.Unquote(str)
 		if err != nil {
-			p.fatalf("could not parse string: %s", err)
+			p.fatalf("cannot parse string: %s", err)
 		}
 		str = s
 	}

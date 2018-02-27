@@ -195,12 +195,12 @@ func (c *Client) PutContent(r io.Reader, url, ct string) ([]index.Entry, error) 
 func (c *Client) doPut(data rest.PutData) ([]index.Entry, error) {
 	b := new(bytes.Buffer)
 	if err := json.NewEncoder(b).Encode(data); err != nil {
-		return nil, errors.Wrapf(err, "could not encode JSON")
+		return nil, errors.Wrapf(err, "cannot encode JSON")
 	}
 	var es []index.Entry
 	var err error
 	err = c.post(c.host+"/put", b, "application/json", &es)
-	return es, errors.Wrapf(err, "could not send post request")
+	return es, errors.Wrapf(err, "cannot send post request")
 }
 
 // Ctx returns the context of a given citation.
@@ -217,7 +217,7 @@ func (c *Client) DumpFile(u string) (rest.DumpFileContent, error) {
 	url := fmt.Sprintf("%s/dump?url=%s", c.host, url.QueryEscape(u))
 	var data rest.DumpFileContent
 	err := c.get(url, &data)
-	return data, errors.Wrapf(err, "could not dump file: %s", u)
+	return data, errors.Wrapf(err, "cannot dump file: %s", u)
 }
 
 func (c *Client) get(url string, out interface{}) error {
@@ -237,7 +237,7 @@ func (c *Client) post(url string, r io.Reader, ct string, out interface{}) error
 	say.Debug("sending request [%s] %s", http.MethodPost, url)
 	res, err := c.client.Post(url, ct, r)
 	if err != nil {
-		return errors.Wrapf(err, "could not send post request")
+		return errors.Wrapf(err, "cannot send post request")
 	}
 	defer func() { _ = res.Body.Close() }()
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {

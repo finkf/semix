@@ -29,20 +29,20 @@ func handle(f httpdHandle) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		t, x, s := f(r)
 		if s.err != nil {
-			say.Info("could not handle request: %v", s.err)
+			say.Info("cannot handle request: %v", s.err)
 			http.Error(w, s.err.Error(), s.status)
 			return
 		}
 		buffer := new(bytes.Buffer)
 		if err := t.Execute(buffer, x); err != nil {
-			say.Info("could not execute template: %v", err)
+			say.Info("cannot execute template: %v", err)
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(s.status)
 		w.Header()["Content-Type"] = []string{"text/html; charset=utf-8"}
 		if _, err := w.Write(buffer.Bytes()); err != nil {
-			say.Info("could not write html: %v", err)
+			say.Info("cannot write html: %v", err)
 		}
 	}
 }
@@ -158,7 +158,7 @@ func (s *Server) ctx(r *http.Request) (*template.Template, interface{}, status) 
 func (s *Server) put(r *http.Request) (*template.Template, interface{}, status) {
 	var data rest.PutData
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		return nil, nil, internalError(errors.Wrapf(err, "could not decode post data"))
+		return nil, nil, internalError(errors.Wrapf(err, "cannot decode post data"))
 	}
 	if data.URL == "" && data.Content == "" {
 		return nil, nil, badRequest(errors.New("URL and content missing"))
@@ -175,7 +175,7 @@ func (s *Server) put(r *http.Request) (*template.Template, interface{}, status) 
 		ts, err = client.PutContent(strings.NewReader(data.Content), data.URL, data.ContentType)
 	}
 	if err != nil {
-		return nil, nil, internalError(errors.Wrapf(err, "could not put content"))
+		return nil, nil, internalError(errors.Wrapf(err, "cannot put content"))
 	}
 	return s.puttmpl, ts, ok()
 }

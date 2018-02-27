@@ -45,7 +45,7 @@ func get(cmd *cobra.Command, args []string) error {
 func doGet(client *client.Client, query string) error {
 	ts, err := client.Get(query)
 	if err != nil {
-		return errors.Wrapf(err, "[get] could not execute query %s", query)
+		return errors.Wrapf(err, "[get] cannot execute query %s", query)
 	}
 	sort.Slice(ts, func(i, j int) bool {
 		return ts[i].Path < ts[j].Path

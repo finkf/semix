@@ -40,13 +40,13 @@ func requestFunc(h func(*http.Request) (interface{}, int, error)) http.HandlerFu
 		}
 		buffer := new(bytes.Buffer)
 		if err := json.NewEncoder(buffer).Encode(data); err != nil {
-			writeError(w, http.StatusInternalServerError, fmt.Errorf("could not encode: %v", err))
+			writeError(w, http.StatusInternalServerError, fmt.Errorf("cannot encode: %v", err))
 			return
 		}
 		w.WriteHeader(status)
 		w.Header()["Content-Type"] = []string{"application/json; charset=utf-8"}
 		if _, err := w.Write(buffer.Bytes()); err != nil {
-			say.Info("could not write response: %v", err)
+			say.Info("cannot write response: %v", err)
 		}
 	}
 }
@@ -174,7 +174,7 @@ func (h handle) get(r *http.Request) (interface{}, int, error) {
 	})
 	if err != nil {
 		return nil, http.StatusInternalServerError,
-			fmt.Errorf("could not execute query %q: %v", q, err)
+			fmt.Errorf("cannot execute query %q: %v", q, err)
 	}
 	return es, http.StatusOK, nil
 }

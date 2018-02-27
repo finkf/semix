@@ -49,7 +49,7 @@ func (p *Parser) Parse(f func(string, string, string) error) error {
 	d := xml.NewDecoder(p.r)
 	var concepts Concepts
 	if err := d.Decode(&concepts); err != nil {
-		return fmt.Errorf("could not decode xml file: %v", err)
+		return fmt.Errorf("cannot decode xml file: %v", err)
 	}
 	for _, c := range concepts.Concepts {
 		if err := f(c.PrefLabel.triple(c.About)); err != nil {

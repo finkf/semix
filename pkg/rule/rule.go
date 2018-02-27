@@ -45,7 +45,7 @@ func (r Rule) String() string {
 
 // Compile compiles a rule from an expression.
 // The lookup function is used to map strings to concept ids.
-// If lookup returns a number <= 0, the concept could not be found and an
+// If lookup returns a number <= 0, the concept cannot be found and an
 // error will be returned from Compile.
 func Compile(expr string, lookup func(string) int) (r Rule, err error) {
 	defer func() {

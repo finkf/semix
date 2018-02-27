@@ -170,7 +170,7 @@ func (p *parser) parseNum() ast {
 	_, str := p.eat(scanner.Float, scanner.Int)
 	n, err := strconv.ParseFloat(str, 64)
 	if err != nil {
-		p.fatalf("could not parse number %q: %s", str, err)
+		p.fatalf("cannot parse number %q: %s", str, err)
 	}
 	return num(n)
 }

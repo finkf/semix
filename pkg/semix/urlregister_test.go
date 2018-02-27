@@ -85,12 +85,12 @@ func TestGob(t *testing.T) {
 	b := &bytes.Buffer{}
 	e := gob.NewEncoder(b)
 	if err := e.Encode(r); err != nil {
-		t.Fatalf("could not encode register: %v", err)
+		t.Fatalf("cannot encode register: %v", err)
 	}
 	r2 := new(URLRegister)
 	d := gob.NewDecoder(b)
 	if err := d.Decode(r2); err != nil {
-		t.Fatalf("could not decode register: %v", err)
+		t.Fatalf("cannot decode register: %v", err)
 	}
 	for _, tc := range tests {
 		t.Run("lookup-id-"+tc.url, func(t *testing.T) {
@@ -128,7 +128,7 @@ func TestGobErrors(t *testing.T) {
 			b := &bytes.Buffer{}
 			e := gob.NewEncoder(b)
 			if err := e.Encode(tc.test); err != nil {
-				t.Fatalf("could not encode %v: %v", tc.test, err)
+				t.Fatalf("cannot encode %v: %v", tc.test, err)
 			}
 			r := new(URLRegister)
 			d := gob.NewDecoder(b)

@@ -48,7 +48,7 @@ func (parser *parser) parse() (*Resource, error) {
 	g := parser.buildGraph()
 	d, err := parser.buildDictionary(g)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not build dictionary")
+		return nil, errors.Wrapf(err, "cannot build dictionary")
 	}
 	return NewResource(g, d, parser.rules), nil
 }
@@ -96,7 +96,7 @@ func (parser *parser) buildDictionary(g *Graph) (Dictionary, error) {
 		h := parser.traits.HandleAmbigs()
 		c, err := h(g, urls...)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not handle internal ambiguity %s", e)
+			return nil, errors.Wrapf(err, "cannot handle internal ambiguity %s", e)
 		}
 		if c == nil {
 			continue
@@ -152,7 +152,7 @@ func (parser *parser) addTriple(s, p, o string) error {
 func (parser *parser) addLabels(entry, url string, ambig bool) error {
 	labels, err := ExpandBraces(entry)
 	if err != nil {
-		return errors.Wrapf(err, "could not expand %s", entry)
+		return errors.Wrapf(err, "cannot expand %s", entry)
 	}
 	for _, expanded := range labels {
 		normalized := NormalizeString(expanded, false)

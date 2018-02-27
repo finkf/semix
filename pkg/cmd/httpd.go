@@ -39,7 +39,7 @@ func doHttpd(cmd *cobra.Command, args []string) error {
 		httpd.WithDirectory(dir),
 	)
 	if err != nil {
-		return errors.Wrapf(err, "could not start httpd: dir: %s: host: %s: daemon: %s",
+		return errors.Wrapf(err, "cannot start httpd: dir: %s: host: %s: daemon: %s",
 			dir, host, daemonHost)
 	}
 	say.Info("starting httpd on %s", host)

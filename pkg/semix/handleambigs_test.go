@@ -29,7 +29,7 @@ func TestHandleAmbigsWithSplit(t *testing.T) {
 			}
 			for _, url := range tc.urls {
 				if _, ok := c.FindEdge(SplitURL, url); !ok {
-					t.Fatalf("could not find Edge{%s,%s}", SplitURL, url)
+					t.Fatalf("cannot find Edge{%s,%s}", SplitURL, url)
 				}
 			}
 		})
@@ -79,7 +79,7 @@ func TestHandleAmbigsWithMerge(t *testing.T) {
 			}
 			for i := 1; i < len(tc.edges); i += 2 {
 				if _, ok := c.FindEdge(tc.edges[i-1], tc.edges[i]); !ok {
-					t.Fatalf("could not find Edge{%s,%s}",
+					t.Fatalf("cannot find Edge{%s,%s}",
 						tc.edges[i-1], tc.edges[i])
 				}
 			}

@@ -56,7 +56,7 @@ func TestRdfXMLParser(t *testing.T) {
 	}
 	for _, w := range want {
 		if !got[w] {
-			t.Fatalf("could not find %s", w)
+			t.Fatalf("cannot find %s", w)
 		}
 	}
 	parser = NewParser(strings.NewReader("<invalid>xml</"))

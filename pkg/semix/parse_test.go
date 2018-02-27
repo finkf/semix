@@ -14,7 +14,7 @@ func TestParse(t *testing.T) {
 	for _, name := range []string{"name", "distinct", "ambiguous", "abd", "acd",
 		"split name", "second split name"} {
 		if _, ok := r.Dictionary[name]; !ok {
-			t.Fatalf("could not find %q in dictionary", name)
+			t.Fatalf("cannot find %q in dictionary", name)
 		}
 	}
 	// test `normal` concepts
@@ -23,7 +23,7 @@ func TestParse(t *testing.T) {
 	} {
 		c, ok := r.Graph.FindByURL(url)
 		if !ok {
-			t.Fatalf("could not find concept %s", url)
+			t.Fatalf("cannot find concept %s", url)
 		}
 		if tmp := c.URL(); tmp != url {
 			t.Fatalf("expected url=%s; got %s", url, tmp)
@@ -36,7 +36,7 @@ func TestParse(t *testing.T) {
 	for _, url := range []string{"A-B", "http://example.org/A-B-C"} {
 		c, ok := r.Graph.FindByURL(url)
 		if !ok {
-			t.Fatalf("could not find concept %s", url)
+			t.Fatalf("cannot find concept %s", url)
 		}
 		if tmp := c.URL(); tmp != url {
 			t.Fatalf("expected url=%s; got %s", url, tmp)
@@ -80,7 +80,7 @@ func edgesExist(t *testing.T, c *Concept, urls ...string) {
 			}
 		}
 		if !found {
-			t.Fatalf("could not find edge {%s %s}", urls[i], urls[i+1])
+			t.Fatalf("cannot find edge {%s %s}", urls[i], urls[i+1])
 		}
 	}
 }

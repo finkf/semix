@@ -89,7 +89,7 @@ func (p PutData) document(dir string) (semix.Document, error) {
 	}
 	doc, err := newDumpFile(strings.NewReader(p.Content), dir, p.URL, p.ContentType)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not create dump file")
+		return nil, errors.Wrapf(err, "cannot create dump file")
 	}
 	return doc, nil
 }

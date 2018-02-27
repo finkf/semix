@@ -55,11 +55,11 @@ func (s dirStorage) write(url string, ds []dse) error {
 	// say.Info("wrting %d entries to %s", len(ds), path)
 	os, err := os.OpenFile(path, flags, 0600)
 	if err != nil {
-		return fmt.Errorf("could not open %q: %v", path, err)
+		return fmt.Errorf("cannot open %q: %v", path, err)
 	}
 	defer os.Close()
 	if err := writeBlock(os, ds); err != nil {
-		return fmt.Errorf("could not encode %q: %v", path, err)
+		return fmt.Errorf("cannot encode %q: %v", path, err)
 	}
 	return nil
 }
@@ -71,14 +71,14 @@ func (s dirStorage) Get(url string, f func(Entry) bool) error {
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("could not open %q: %v", path, err)
+		return fmt.Errorf("cannot open %q: %v", path, err)
 	}
 	defer is.Close()
 	// say.Info("reading path %s", path)
 	for {
 		ds, err := readBlock(is)
 		if err != nil {
-			return fmt.Errorf("could not decode %q: %v", path, err)
+			return fmt.Errorf("cannot decode %q: %v", path, err)
 		}
 		if len(ds) == 0 {
 			return nil

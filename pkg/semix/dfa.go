@@ -61,7 +61,7 @@ func newSparseTableDFA(d Dictionary) *sparsetable.DFA {
 	b := sparsetable.NewBuilder()
 	for _, p := range pairs {
 		if err := b.Add(p.str, p.id); err != nil {
-			log.Fatalf("could not add %v: %v", p, err)
+			log.Fatalf("cannot add %v: %v", p, err)
 		}
 	}
 	return b.Build()

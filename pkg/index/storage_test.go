@@ -46,20 +46,20 @@ func TestStorage(t *testing.T) {
 	defer dir.Close()
 	storage, err := OpenDirStorage(dir.dir)
 	if err != nil {
-		t.Fatalf("could not open storage: %v", err)
+		t.Fatalf("cannot open storage: %v", err)
 	}
 	for _, tc := range tests {
 		if err := storage.Put(tc.url, tc.es); err != nil {
-			t.Fatalf("could not put %v into storage: %v", tc.es, err)
+			t.Fatalf("cannot put %v into storage: %v", tc.es, err)
 		}
 	}
 	if err := storage.Close(); err != nil {
-		t.Fatalf("could not close storage: %v", err)
+		t.Fatalf("cannot close storage: %v", err)
 	}
 	storage, err = OpenDirStorage(dir.dir)
 	defer storage.Close()
 	if err != nil {
-		t.Fatalf("could not open storage: %v", err)
+		t.Fatalf("cannot open storage: %v", err)
 	}
 	for _, tc := range tests {
 		var es []Entry

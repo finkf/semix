@@ -63,7 +63,7 @@ func (s *Server) ListenAndServe() error {
 
 // Close closes the server and its enclosed index.
 func (s *Server) Close() error {
-	err := errors.Wrapf(s.handle.index.Close(), "could not close index")
-	err = errors.Wrapf(s.server.Shutdown(context.TODO()), "could not shutdown server")
+	err := errors.Wrapf(s.handle.index.Close(), "cannot close index")
+	err = errors.Wrapf(s.server.Shutdown(context.TODO()), "cannot shutdown server")
 	return err
 }

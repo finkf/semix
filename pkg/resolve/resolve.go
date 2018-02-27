@@ -10,7 +10,7 @@ import (
 // Interface defines the interface for the disambiguation.
 type Interface interface {
 	// Resolve returns the disambiguated concept or nil if the
-	// concept could not be disambiguated. It is an error
+	// concept cannot be disambiguated. It is an error
 	// to call Resolve with a non-ambigiuous concept.
 	Resolve(*semix.Concept, *memory.Memory) *semix.Concept
 }
