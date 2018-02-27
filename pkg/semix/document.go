@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/pkg/errors"
 	"golang.org/x/net/html"
 )
 
@@ -91,7 +92,7 @@ func (d *HTTPDocument) Read(b []byte) (int, error) {
 	if d.r == nil {
 		resp, err := http.Get(d.url)
 		if err != nil {
-			return 0, err
+			return 0, errors.Wrapf(err, "could not download url: %s", d.url)
 		}
 		if strings.Contains(resp.Header.Get("Content-Type"), "text/html") {
 			htmlReader := NewHTMLDocument(d.url, resp.Body)

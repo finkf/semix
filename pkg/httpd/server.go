@@ -2,6 +2,7 @@ package httpd
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/say"
 	x "bitbucket.org/fflo/semix/pkg/semix"
+	"github.com/pkg/errors"
 )
 
 type status struct {
@@ -49,11 +51,15 @@ func (s *Server) favicon(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(s.dir, "favicon.ico"))
 }
 
-func (s *Server) semixJS(w http.ResponseWriter, r *http.Request) {
+func (s *Server) js(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(s.dir, "js", "semix.js"))
 }
 
-func (s *Server) httpdSearch(r *http.Request) (*template.Template, interface{}, status) {
+func (s *Server) css(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(s.dir, "css", "semix.css"))
+}
+
+func (s *Server) search(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("q")
 	cs, err := s.newClient().Search(q)
 	if err != nil {
@@ -89,7 +95,7 @@ func (s *Server) parents(r *http.Request) (*template.Template, interface{}, stat
 	}{fmt.Sprintf("parents of %q", q), cs}, ok()
 }
 
-func (s *Server) httpdInfo(r *http.Request) (*template.Template, interface{}, status) {
+func (s *Server) info(r *http.Request) (*template.Template, interface{}, status) {
 	q := r.URL.Query().Get("url")
 	info, err := s.newClient().InfoURL(q)
 	if err != nil {
@@ -114,7 +120,7 @@ func (s *Server) home(r *http.Request) (*template.Template, interface{}, status)
 	return s.indextmpl, nil, ok()
 }
 
-func (s *Server) httpdGet(r *http.Request) (*template.Template, interface{}, status) {
+func (s *Server) get(r *http.Request) (*template.Template, interface{}, status) {
 	var data struct {
 		Q    string
 		N, S int
@@ -149,43 +155,29 @@ func (s *Server) ctx(r *http.Request) (*template.Template, interface{}, status) 
 	return s.ctxtmpl, ctx, ok()
 }
 
-func (s *Server) httpdPut(r *http.Request) (*template.Template, interface{}, status) {
-	switch r.Method {
-	case http.MethodPost:
-		ct := "text/plain"
-		ts, err := s.newClient().PutContent(r.Body, "", ct)
-		if err != nil {
-			return nil, nil, internalError(err)
-		}
-		return s.puttmpl, ts, ok()
-	case http.MethodGet:
-		var ps struct {
-			URL string
-			Ls  []int
-			Rs  []string
-			M   int
-			T   float64
-		}
-		if err := rest.DecodeQuery(r.URL.Query(), &ps); err != nil {
-			return nil, nil, internalError(err)
-		}
-		rs, err := rest.MakeResolvers(ps.T, ps.M, ps.Rs)
-		if err != nil {
-			return nil, nil, internalError(err)
-		}
-		ts, err := s.newClient(
-			client.WithErrorLimits(ps.Ls...),
-			client.WithResolvers(rs...),
-		).PutURL(ps.URL)
-		if err != nil {
-			return nil, nil, internalError(err)
-		}
-		return s.puttmpl, ts, ok()
+func (s *Server) put(r *http.Request) (*template.Template, interface{}, status) {
+	var data rest.PutData
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		return nil, nil, internalError(errors.Wrapf(err, "could not decode post data"))
 	}
-	return nil, nil, status{
-		fmt.Errorf("invalid request method: %s", r.Method),
-		http.StatusBadRequest,
+	if data.URL == "" && data.Content == "" {
+		return nil, nil, badRequest(errors.New("URL and content missing"))
 	}
+	client := s.newClient(
+		client.WithErrorLimits(data.Errors...),
+		client.WithResolvers(data.Resolvers...),
+	)
+	var ts []index.Entry
+	var err error
+	if data.URL != "" {
+		ts, err = client.PutURL(data.URL)
+	} else {
+		ts, err = client.PutContent(strings.NewReader(data.Content), data.URL, data.ContentType)
+	}
+	if err != nil {
+		return nil, nil, internalError(errors.Wrapf(err, "could not put content"))
+	}
+	return s.puttmpl, ts, ok()
 }
 
 func (s *Server) setup(r *http.Request) (*template.Template, interface{}, status) {
@@ -194,6 +186,10 @@ func (s *Server) setup(r *http.Request) (*template.Template, interface{}, status
 
 func internalError(err error) status {
 	return status{err, http.StatusInternalServerError}
+}
+
+func badRequest(err error) status {
+	return status{err, http.StatusBadRequest}
 }
 
 func ok() status {

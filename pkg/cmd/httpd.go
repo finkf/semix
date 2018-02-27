@@ -25,13 +25,13 @@ func init() {
 		&host,
 		"host",
 		"H",
-		"localhost:8080",
+		HTTPDHost,
 		"set host",
 	)
 }
 
 func doHttpd(cmd *cobra.Command, args []string) error {
-	say.SetDebug(debug)
+	setupSay()
 	dir := args[0]
 	s, err := httpd.New(
 		httpd.WithHost(host),

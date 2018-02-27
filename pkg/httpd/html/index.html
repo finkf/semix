@@ -4,14 +4,25 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<title>Semix</title>
 		<script type="text/javascript" src="/js/semix.js"></script>
+		<link rel="stylesheet" type="text/css" href="/css/semix.css">
 	</head>
-	<body>
+	<body onload='semix.SetQueryButtonText();'>
 		<h1>Semix</h1>
+		<div id='setup' align='right'>
+			<a href='setup'>Setup</a>
+		</div>
 		<h2>Query index</h2>
 		<form id='query-index-form' method='get' action='/get'>
-			<input id='query-index-input-predicates' type='text' placeholder='Predicates' name='q' oninput='SetQueryButtonText();'>
-			<input id='query-index-input-concepts' type='text' placeholder='Concepts' name='q' oninput='SetQueryButtonText();'>
-			<input id='query-index-input-button' type='button' value='query' onclick='ExecuteQuery();'>
+			<input id='query-index-input-predicates' type='text' placeholder='Predicates'
+						 name='q' oninput='semix.SetQueryButtonText();'>
+			<input id='query-index-input-concepts' type='text' placeholder='Concepts'
+						 name='q' oninput='semix.SetQueryButtonText();'>
+			<input id='query-index-input-button' type='button' value='query'
+						 onclick='semix.ExecuteQuery();'>
+			<br/><input id='query-index-tolerant-checkbox' type='checkbox'
+									onchange='semix.SetQueryButtonText();'>tolerant query
+
+
 		</form>
 		<h2>Search predicates</h2>
 		<div id='search-predicates'>
@@ -24,22 +35,21 @@
 		<div id='search'>
 			<form id='search-info-form' method='get' action='/search'>
 				<input id='search-info-input-text' type='text' placeholder='search concepts'
-								 name='q' required>
+							 name='q' required>
 				<input id='search-info-input-button' type='submit' value='search'>
 			</form>
 		</div>
 		<h2>Put into index</h2>
 		<div id='put-url'>
-			<form id='put-url-form' method='get' action='/put'>
-				<input id='put-url-input-text' type='text' placeholder='put url'
-								 name='url' required>
-				<input id='put-url-input-button' type='submit' value='put url'>
-			</form>
+			<input id='input-url' type='text' placeholder='put url' name='url' required>
+			<input title='put url' id='put-url-button'
+						 type='button' onclick='semix.PutURL()' value='Put URL'>
 		</div>
 		<h2>Input plain text</h2>
-		<form name="put" method="post" action="/put">
-			<textarea name="text" rows="10" cols="160"></textarea><br/>
-			<input type="submit" value="put plain text">
-		</form>
+		<div>
+			<textarea id='input-content' name="text" rows="10" cols="160"></textarea><br/>
+			<input title='put content' id='put-content-button'
+						 type='button' onclick='semix.PutContent()' value='Put Content'>
+		</div>
 	</body>
 </html>

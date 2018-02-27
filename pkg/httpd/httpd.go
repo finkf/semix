@@ -87,17 +87,17 @@ func newMux(s *Server) *http.Server {
 	mux.HandleFunc("/index",
 		rest.WithLogging(rest.WithGet(handle(s.home))))
 	mux.HandleFunc("/info",
-		rest.WithLogging(rest.WithGet(handle(s.httpdInfo))))
+		rest.WithLogging(rest.WithGet(handle(s.info))))
 	mux.HandleFunc("/get",
-		rest.WithLogging(rest.WithGet(handle(s.httpdGet))))
+		rest.WithLogging(rest.WithGet(handle(s.get))))
 	mux.HandleFunc("/search",
-		rest.WithLogging(rest.WithGet(handle(s.httpdSearch))))
+		rest.WithLogging(rest.WithGet(handle(s.search))))
 	mux.HandleFunc("/predicates",
 		rest.WithLogging(rest.WithGet(handle(s.predicates))))
 	mux.HandleFunc("/ctx",
 		rest.WithLogging(rest.WithGet(handle(s.ctx))))
 	mux.HandleFunc("/put",
-		rest.WithLogging(rest.WithGetOrPost(handle(s.httpdPut))))
+		rest.WithLogging(rest.WithGetOrPost(handle(s.put))))
 	mux.HandleFunc("/setup",
 		rest.WithLogging(rest.WithGet(handle(s.setup))))
 	mux.HandleFunc("/parents",
@@ -105,7 +105,9 @@ func newMux(s *Server) *http.Server {
 	mux.HandleFunc("/favicon.ico",
 		rest.WithLogging(rest.WithGet(s.favicon)))
 	mux.HandleFunc("/js/semix.js",
-		rest.WithLogging(rest.WithGet(s.semixJS)))
+		rest.WithLogging(rest.WithGet(s.js)))
+	mux.HandleFunc("/css/semix.css",
+		rest.WithLogging(rest.WithGet(s.css)))
 	return &http.Server{
 		Addr:    s.host,
 		Handler: mux,

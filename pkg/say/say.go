@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sync"
 	"sync/atomic"
+
+	"github.com/fatih/color"
 )
 
 func init() {
@@ -16,12 +19,12 @@ func init() {
 }
 
 var (
-	debug int32
-)
-
-const (
-	dmsg = "[DBUG]"
-	imsg = "[INFO]"
+	debug     int32
+	mutex     sync.Mutex
+	dmsg      = "[DBUG]"
+	imsg      = "[INFO]"
+	dmsgcolor = color.New(color.FgCyan).SprintFunc()
+	imsgcolor = color.New(color.FgMagenta).SprintFunc()
 )
 
 // SetDebug sets debugging output.
@@ -30,6 +33,19 @@ func SetDebug(f bool) {
 		atomic.StoreInt32(&debug, 1)
 	} else {
 		atomic.StoreInt32(&debug, 0)
+	}
+}
+
+// SetColor sets debugging output.
+func SetColor(f bool) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if f {
+		dmsg = "[" + dmsgcolor("DBUG") + "]"
+		imsg = "[" + imsgcolor("INFO") + "]"
+	} else {
+		dmsg = "[DBUG]"
+		imsg = "[INFO]"
 	}
 }
 

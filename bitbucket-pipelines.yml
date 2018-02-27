@@ -3,7 +3,7 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: golang:1.9
+image: golang:1.10
 
 pipelines:
   default:
@@ -29,5 +29,5 @@ pipelines:
             done
           - |
             if test "${BITBUCKET_BRANCH}" = "master"; then
-              ./upload_packages.sh ${SEMIX_AUTH}
+              testdata/sh/upload_packages.sh ${SEMIX_AUTH}
             fi

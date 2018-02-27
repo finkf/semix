@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +14,7 @@ import (
 const (
 	major = 1
 	minor = 2
-	patch = 0
+	patch = 1
 )
 
 var (
@@ -38,7 +37,7 @@ var versionCmd = &cobra.Command{
 }
 
 func version(cmd *cobra.Command, args []string) error {
-	say.SetDebug(debug)
+	setupSay()
 	if jsonOutput {
 		return printJSONVersion()
 	}

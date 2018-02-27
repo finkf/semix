@@ -15,6 +15,7 @@ import (
 	"bitbucket.org/fflo/semix/pkg/say"
 	"bitbucket.org/fflo/semix/pkg/searcher"
 	"bitbucket.org/fflo/semix/pkg/semix"
+	"github.com/pkg/errors"
 )
 
 type lookupData struct {
@@ -134,7 +135,7 @@ func (h handle) put(r *http.Request) (interface{}, int, error) {
 	for t := range stream {
 		if t.Err != nil {
 			return nil, http.StatusInternalServerError,
-				fmt.Errorf("cannot index document: %s", t.Err)
+				errors.Wrapf(t.Err, "cannot index document")
 		}
 		es = append(es, index.Entry{
 			Path:       t.Token.Path,

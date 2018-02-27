@@ -1,16 +1,27 @@
 package cmd
 
 import (
+	"os"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/client"
+	"bitbucket.org/fflo/semix/pkg/say"
+	isatty "github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+)
+
+const (
+	// DaemonHost specifies the default  host for the semix daemon.
+	DaemonHost = "localhost:6060"
+	// HTTPDHost specifies the default host for the HTTP server.
+	HTTPDHost = "localhost:8080"
 )
 
 var (
 	daemonHost string
 	jsonOutput bool
 	debug      bool
+	nocolor    bool
 )
 
 var semixCmd = &cobra.Command{
@@ -24,7 +35,7 @@ func init() {
 		&daemonHost,
 		"daemon",
 		"D",
-		"localhost:6606",
+		DaemonHost,
 		"set semix daemon host address",
 	)
 	semixCmd.PersistentFlags().BoolVarP(
@@ -40,6 +51,13 @@ func init() {
 		"V",
 		false,
 		"enable debugging output",
+	)
+	semixCmd.PersistentFlags().BoolVarP(
+		&nocolor,
+		"no-colors",
+		"N",
+		false,
+		"disable colors in log messages",
 	)
 	semixCmd.AddCommand(versionCmd)
 	semixCmd.AddCommand(putCmd)
@@ -58,6 +76,16 @@ func newClient(opts ...client.Option) *client.Client {
 	}
 	client := client.New(host, opts...)
 	return client
+}
+
+func setupSay() {
+	say.SetDebug(debug)
+	// set color mode true if connected to a terminal
+	say.SetColor(isatty.IsTerminal(os.Stdout.Fd()))
+	// if nocolor isgiven disable colors no matter what
+	if nocolor {
+		say.SetColor(false)
+	}
 }
 
 // Execute runs the main semix command.

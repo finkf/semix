@@ -29,10 +29,9 @@ func TestIndex(t *testing.T) {
 			i := NewMemoryMap()
 			d := semix.NewStringDocument(tc.test, tc.test)
 			s := Put(ctx, i,
-				semix.Filter(ctx,
-					semix.Match(ctx, m,
-						semix.Normalize(ctx,
-							semix.Read(ctx, d)))))
+				semix.Match(ctx, m,
+					semix.Normalize(ctx,
+						semix.Read(ctx, d))))
 			for token := range s {
 				if token.Err != nil {
 					t.Fatalf("got error: %v", token.Err)

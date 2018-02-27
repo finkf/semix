@@ -8,7 +8,6 @@ import (
 
 	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/rest"
-	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +24,7 @@ or and URL.`,
 }
 
 func info(cmd *cobra.Command, args []string) error {
-	say.SetDebug(debug)
+	setupSay()
 	client := newClient()
 	for _, concept := range args {
 		if err := doInfo(client, concept); err != nil {
