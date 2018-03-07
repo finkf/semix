@@ -177,6 +177,16 @@ func (c *Client) PutLocalFile(path string) ([]index.Entry, error) {
 	})
 }
 
+// PutString puts the given string into the index.
+func (c *Client) PutString(content, ct string) ([]index.Entry, error) {
+	return c.doPut(rest.PutData{
+		Errors:      c.ks,
+		Resolvers:   c.rs,
+		Content:     content,
+		ContentType: ct,
+	})
+}
+
 // PutContent puts the given content into the index.
 func (c *Client) PutContent(r io.Reader, url, ct string) ([]index.Entry, error) {
 	content, err := ioutil.ReadAll(r)
