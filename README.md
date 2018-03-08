@@ -16,10 +16,10 @@ Usage: `semix [command] [--help]`
 `[go get &&] go test [-cover] ./...`
 
 ## Installing
-`[go get &&] go install semix.go`
+`[go get &&] go install main.go`
 
 ## Building
-`[go get &&] go build -o semix semix.go`
+`[go get &&] go build -o semix main.go`
 
 ## Downloads
 You can download the pre-compiled binaries from
