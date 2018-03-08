@@ -1,7 +1,7 @@
 [file]
 path = "testdata/topiczoom.skos.rdf.xml"
 type = "RDFXML"
-cache = "/tmp/topiczoom.gob"
+cache = "$HOME/.cache/semix/topiczoom.gob"
 # "merge", "split", "fail", "discard"
 ambigs = "0.5"
 

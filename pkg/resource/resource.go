@@ -68,12 +68,15 @@ func Parse(file string, useCache bool) (*semix.Resource, error) {
 }
 
 // Read reads a configuration from a file.
+// $VAR and ${VAR} in file.path and file.cache
+// are automatically expanded using the environment.
 func Read(file string) (*Config, error) {
 	var c Config
-	// c := new(Config)
 	if _, err := toml.DecodeFile(file, &c); err != nil {
 		return nil, err
 	}
+	c.File.Cache = os.ExpandEnv(c.File.Cache)
+	c.File.Path = os.ExpandEnv(c.File.Path)
 	handle, err := c.newHandle()
 	if err != nil {
 		return nil, err
