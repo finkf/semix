@@ -208,9 +208,8 @@ func (c *Client) doPut(data rest.PutData) ([]index.Entry, error) {
 		return nil, errors.Wrapf(err, "cannot encode JSON")
 	}
 	var es []index.Entry
-	var err error
-	err = c.post(c.host+"/put", b, "application/json", &es)
-	return es, errors.Wrapf(err, "cannot send post request")
+	err := c.post(c.host+"/put", b, "application/json", &es)
+	return es, errors.Wrapf(err, "cannot put data")
 }
 
 // Ctx returns the context of a given citation.
