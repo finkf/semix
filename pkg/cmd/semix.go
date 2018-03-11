@@ -11,14 +11,17 @@ import (
 )
 
 const (
-	// DaemonHost specifies the default  host for the semix daemon.
-	DaemonHost = "localhost:6060"
-	// HTTPDHost specifies the default host for the HTTP server.
-	HTTPDHost = "localhost:8080"
+	// defaultDaemonHost specifies the default
+	// host for the semix daemon.
+	defaultDaemonHost = "localhost:6060"
+	// defaultHTTPDHost specifies the default
+	// host for the HTTP server.
+	defaultHTTPDHost = "localhost:8080"
 )
 
 var (
 	daemonHost string
+	httpdHost  string
 	jsonOutput bool
 	debug      bool
 	nocolor    bool
@@ -35,7 +38,7 @@ func init() {
 		&daemonHost,
 		"daemon",
 		"D",
-		DaemonHost,
+		defaultDaemonHost,
 		"set semix daemon host address",
 	)
 	semixCmd.PersistentFlags().BoolVarP(
@@ -86,6 +89,16 @@ func setupSay() {
 	if nocolor {
 		say.SetColor(false)
 	}
+}
+
+// DaemonHost returns the configured address for the daemon
+func DaemonHost() string {
+	return "http://" + daemonHost
+}
+
+// HTTPDHost returns the configured address for the HTTP-daemon
+func HTTPDHost() string {
+	return "http://" + httpdHost
 }
 
 // Execute runs the main semix command.

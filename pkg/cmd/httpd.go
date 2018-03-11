@@ -9,7 +9,6 @@ import (
 )
 
 var (
-	host     string
 	httpdCmd = &cobra.Command{
 		Use:          "httpd directory",
 		Short:        "Start an http server",
@@ -22,10 +21,10 @@ var (
 
 func init() {
 	httpdCmd.Flags().StringVarP(
-		&host,
+		&httpdHost,
 		"host",
 		"H",
-		HTTPDHost,
+		defaultHTTPDHost,
 		"set host",
 	)
 }
@@ -34,14 +33,14 @@ func doHttpd(cmd *cobra.Command, args []string) error {
 	setupSay()
 	dir := args[0]
 	s, err := httpd.New(
-		httpd.WithHost(host),
+		httpd.WithHost(httpdHost),
 		httpd.WithDaemon(daemonHost),
 		httpd.WithDirectory(dir),
 	)
 	if err != nil {
 		return errors.Wrapf(err, "cannot start httpd: dir: %s: host: %s: daemon: %s",
-			dir, host, daemonHost)
+			dir, httpdHost, daemonHost)
 	}
-	say.Info("starting httpd on %s", host)
+	say.Info("starting httpd on %s", httpdHost)
 	return s.Start()
 }
