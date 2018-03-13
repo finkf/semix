@@ -27,7 +27,7 @@ func compareWithGold(t *testing.T, gold string, r io.Reader) {
 	}
 }
 
-func TestNewFromURI(t *testing.T) {
+func TestFileDocuments(t *testing.T) {
 	tests := []struct{ uri, gold, ct string }{
 		{"testdata/plain_text.txt", "testdata/plain_text.txt", PlainText},
 		{"testdata/example.org.html", "testdata/example.org.html.gold", HTML},
