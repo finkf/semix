@@ -50,5 +50,5 @@ func New(r io.ReadCloser, uri, ct string) (semix.Document, error) {
 	case HTML:
 		return &htmlDocument{plainTextDocument{r: r, uri: uri}, false}, nil
 	}
-	return nil, nil
+	return nil, errors.Errorf("cannot determine document type: %s (%s)", uri, ct)
 }

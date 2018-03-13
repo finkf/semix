@@ -48,6 +48,7 @@ func (r *xmlDocument) parse() error {
 	// make sure that the original reader is closed
 	reader := r.r
 	defer func() { _ = reader.Close() }()
+	r.r = nil
 	// parse markup
 	d := xml.NewDecoder(reader)
 	newreader, err := parseMarkup(d, nil)
@@ -55,6 +56,7 @@ func (r *xmlDocument) parse() error {
 		return errors.Wrapf(err, "cannot parse XML: %s", r.Path())
 	}
 	r.r = newreader
+	r.parsed = true
 	return nil
 }
 
@@ -71,17 +73,18 @@ func (r *htmlDocument) Read(b []byte) (int, error) {
 			return 0, err
 		}
 	}
-	return r.Read(b)
+	return r.r.Read(b)
 }
 
 var ignoreHTMLTags = map[string]struct{}{
-	"body": {},
+	"head": {},
 }
 
 func (r *htmlDocument) parse() error {
 	// make sure to close underlying reader
 	reader := r.r
 	defer func() { _ = reader.Close() }()
+	r.r = nil
 	// parse html
 	d := xml.NewDecoder(reader)
 	d.Strict = false
@@ -91,6 +94,7 @@ func (r *htmlDocument) parse() error {
 	if err != nil {
 		return errors.Wrapf(err, "cannot parse HTML: %s", r.Path())
 	}
+	r.parsed = true
 	r.r = newreader
 	return nil
 }
@@ -128,14 +132,10 @@ func parseMarkup(d *xml.Decoder, ignore map[string]struct{}) (io.ReadCloser, err
 	buf := &bytes.Buffer{}
 	var err error
 	var t xml.Token
-	for t, err = d.Token(); err != nil; {
+	for t, err = d.Token(); err == nil; t, err = d.Token() {
 		switch token := t.(type) {
 		case xml.CharData:
-			if _, e2 := buf.Write(token); e2 != nil {
-				return nil, errors.Wrapf(e2, "cannot write char data")
-			}
-			// append ' '
-			if e2 := buf.WriteByte(' '); e2 != nil {
+			if e2 := appendCharData(buf, token); e2 != nil {
 				return nil, errors.Wrapf(e2, "cannot write char data")
 			}
 		case xml.StartElement:
@@ -150,4 +150,15 @@ func parseMarkup(d *xml.Decoder, ignore map[string]struct{}) (io.ReadCloser, err
 		return nil, errors.Wrapf(err, "cannot parse markup")
 	}
 	return ioutil.NopCloser(buf), nil
+}
+
+func appendCharData(buf *bytes.Buffer, data []byte) error {
+	data = bytes.Trim(data, "\n\r\v\t ")
+	if len(data) == 0 {
+		return nil
+	}
+	if _, err := buf.Write(data); err != nil {
+		return err
+	}
+	return buf.WriteByte(' ')
 }
