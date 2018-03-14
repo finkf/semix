@@ -108,6 +108,7 @@ type queryTestIndex struct {
 
 func (queryTestIndex) Put(semix.Token) error { return nil }
 func (queryTestIndex) Close() error          { return nil }
+func (queryTestIndex) Flush() error          { return nil }
 func (i queryTestIndex) Get(url string, f func(e index.Entry) bool) error {
 	f(index.Entry{ConceptURL: url, RelationURL: "", L: i.k, Ambiguous: i.a})
 	f(index.Entry{ConceptURL: url, RelationURL: "R", L: i.k, Ambiguous: i.a})
