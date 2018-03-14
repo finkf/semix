@@ -221,6 +221,12 @@ func (c *Client) Ctx(u string, b, e, n int) (rest.Context, error) {
 	return ctx, err
 }
 
+// Flush flushes the index.
+func (c *Client) Flush() error {
+	url := fmt.Sprintf("%s/flush", c.host)
+	return c.get(url, nil)
+}
+
 // DumpFile returns the dump file of the requested url.
 func (c *Client) DumpFile(u string) (rest.DumpFileContent, error) {
 	url := fmt.Sprintf("%s/dump?url=%s", c.host, url.QueryEscape(u))
