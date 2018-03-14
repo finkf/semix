@@ -113,6 +113,8 @@ func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 			say.Info("error: %s", err)
 		}
 	}
+	say.Debug("loaded %d concepts, %d entries, %d rules",
+		r.Graph.ConceptsLen(), len(r.Dictionary), len(r.Rules))
 	return r, nil
 }
 
