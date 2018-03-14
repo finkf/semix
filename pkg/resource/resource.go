@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 	"bitbucket.org/fflo/semix/pkg/traits"
 	"bitbucket.org/fflo/semix/pkg/turtle"
 	"github.com/BurntSushi/toml"
+	"github.com/pkg/errors"
 )
 
 // Comparision ignores case
@@ -185,10 +187,14 @@ func (c *Config) readCache() (*semix.Resource, error) {
 
 func (c *Config) writeCache(r *semix.Resource) error {
 	say.Info("writeCache(): %s", c.File.Cache)
+	if err := os.MkdirAll(filepath.Dir(c.File.Cache), os.ModePerm); err != nil {
+		say.Info("error: %s", err)
+		return errors.Wrapf(err, "cannot create cache directory")
+	}
 	file, err := os.Create(c.File.Cache)
 	if err != nil {
 		say.Info("error: %s", err)
-		return err
+		return errors.Wrapf(err, "cannot write cache")
 	}
 	defer func() { _ = file.Close() }()
 	return gob.NewEncoder(file).Encode(r)
