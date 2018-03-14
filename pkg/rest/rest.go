@@ -47,6 +47,7 @@ func New(self, dir string, r *semix.Resource, i index.Interface) (*Server, error
 	mux.HandleFunc("/ctx", WithLogging(WithGet(requestFunc(h.ctx))))
 	mux.HandleFunc("/info", WithLogging(WithGet(requestFunc(h.info))))
 	mux.HandleFunc("/dump", WithLogging(WithGet(requestFunc(h.dump))))
+	mux.HandleFunc("/flush", WithLogging(WithGet(requestFunc(h.flush))))
 	return &Server{
 		server: &http.Server{
 			Addr:    self,
