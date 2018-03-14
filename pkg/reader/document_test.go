@@ -16,7 +16,9 @@ func compareWithGold(t *testing.T, gold string, r io.Reader) {
 		t.Fatalf("got error: %s", err)
 	}
 	if *update {
-		ioutil.WriteFile(gold, got, 0644)
+		if err := ioutil.WriteFile(gold, got, 0644); err != nil {
+			panic(err)
+		}
 	}
 	want, err := ioutil.ReadFile(gold)
 	if err != nil {
@@ -40,6 +42,9 @@ func TestFileDocuments(t *testing.T) {
 				t.Fatalf("got error: %s", err)
 			}
 			defer func() { _ = d.Close() }()
+			if got := d.Path(); got != tc.uri {
+				t.Fatalf("expected %q; got %q", tc.uri, got)
+			}
 			compareWithGold(t, tc.gold, d)
 		})
 	}
