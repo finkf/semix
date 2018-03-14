@@ -29,6 +29,7 @@ type Interface interface {
 	Putter
 	Get(string, func(Entry) bool) error
 	Close() error
+	Flush() error
 }
 
 // Put reads all tokens from a given stream into an index.

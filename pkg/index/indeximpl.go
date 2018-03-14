@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"bitbucket.org/fflo/semix/pkg/semix"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -63,22 +64,39 @@ func (i *index) Get(url string, f func(Entry) bool) error {
 	return i.storage.Get(url, f)
 }
 
-// Close closes the index and writes all buffered entries to disc.
-func (i *index) Close() (err error) {
+// Flush flushes the index.
+// All non empty buffers are written to the storage.
+func (i *index) Flush() error {
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
-	defer func() {
-		err = i.storage.Close()
-	}()
+	return i.putAll()
+}
+
+// putAll puts all non empty buffers into the index.
+// Must be called with a locked mutex.
+func (i *index) putAll() error {
 	for url, es := range i.buffer {
 		if len(es) == 0 {
 			continue
 		}
 		if err := i.storage.Put(url, es); err != nil {
-			return err
+			return errors.Wrapf(err, "cannot write index buffer")
 		}
 	}
-	return err
+	return nil
+}
+
+// Close closes the index and writes all buffered entries to disc.
+func (i *index) Close() error {
+	i.mutex.Lock()
+	defer i.mutex.Unlock()
+	if err := i.putAll(); err != nil {
+		return errors.Wrapf(err, "cannot close index")
+	}
+	if err := i.storage.Close(); err != nil {
+		return errors.Wrapf(err, "cannot close index")
+	}
+	return nil
 }
 
 // NewMemoryMap create a new in memory index, that uses
@@ -105,6 +123,10 @@ func (i memIndex) Get(url string, f func(Entry) bool) error {
 			return nil
 		}
 	}
+	return nil
+}
+
+func (i memIndex) Flush() error {
 	return nil
 }
 
