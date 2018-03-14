@@ -92,6 +92,7 @@ func Read(file string) (*Config, error) {
 func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 	if useCache && c.File.Cache != "" {
 		if r, err := c.readCache(); err == nil {
+			logResource(r)
 			return r, nil
 		}
 	}
@@ -113,9 +114,13 @@ func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 			say.Info("error: %s", err)
 		}
 	}
+	logResource(r)
+	return r, nil
+}
+
+func logResource(r *semix.Resource) {
 	say.Debug("loaded %d concepts, %d entries, %d rules",
 		r.Graph.ConceptsLen(), len(r.Dictionary), len(r.Rules))
-	return r, nil
 }
 
 // Traits returns a new Traits interface using the configuration
