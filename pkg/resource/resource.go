@@ -170,7 +170,7 @@ func (c *Config) newParser(r io.Reader) (semix.Parser, error) {
 }
 
 func (c *Config) readCache() (*semix.Resource, error) {
-	say.Info("readCache(): %s", c.File.Cache)
+	say.Debug("readCache(): %s", c.File.Cache)
 	file, err := os.Open(c.File.Cache)
 	if err != nil {
 		say.Info("error: %s", err)
@@ -186,7 +186,7 @@ func (c *Config) readCache() (*semix.Resource, error) {
 }
 
 func (c *Config) writeCache(r *semix.Resource) error {
-	say.Info("writeCache(): %s", c.File.Cache)
+	say.Debug("writeCache(): %s", c.File.Cache)
 	if err := os.MkdirAll(filepath.Dir(c.File.Cache), os.ModePerm); err != nil {
 		say.Info("error: %s", err)
 		return errors.Wrapf(err, "cannot create cache directory")
