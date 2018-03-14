@@ -45,7 +45,7 @@ func (i *index) Put(t semix.Token) error {
 			if err := i.storage.Put(url, i.buffer[url]); err != nil {
 				return err
 			}
-			i.buffer[url] = make([]Entry, 0, i.n)
+			i.buffer[url] = i.buffer[url][:0]
 		}
 		return nil
 	})
@@ -82,6 +82,7 @@ func (i *index) putAll() error {
 		if err := i.storage.Put(url, es); err != nil {
 			return errors.Wrapf(err, "cannot write index buffer")
 		}
+		i.buffer[url] = i.buffer[url][:0]
 	}
 	return nil
 }
