@@ -32,6 +32,9 @@ func TestIndex(t *testing.T) {
 				semix.Match(ctx, m,
 					semix.Normalize(ctx,
 						semix.Read(ctx, d))))
+			if err := i.Flush(); err != nil {
+				t.Fatalf("got error: %v", err)
+			}
 			for token := range s {
 				if token.Err != nil {
 					t.Fatalf("got error: %v", token.Err)
