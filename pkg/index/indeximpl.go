@@ -117,7 +117,7 @@ func (i *index) putAll() error {
 		if err := i.storage.Put(url, es); err != nil {
 			return errors.Wrapf(err, "cannot write index buffer")
 		}
-		i.buffer[url] = i.buffer[url][:0]
+		i.putBuffer(url)
 	}
 	return nil
 }
