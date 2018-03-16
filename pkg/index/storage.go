@@ -53,7 +53,7 @@ func (s dirStorage) Put(url string, es []Entry) error {
 func (s dirStorage) write(url string, ds []dse) error {
 	path := preparePath(s.dir, url)
 	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
-	say.Debug("%s: wrting %d entries to %s", url, len(ds), path)
+	say.Debug("%s: writing %d entries to %s", url, len(ds), path)
 	os, err := os.OpenFile(path, flags, 0600)
 	if err != nil {
 		return fmt.Errorf("cannot open %q: %v", path, err)
