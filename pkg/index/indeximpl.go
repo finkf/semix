@@ -51,10 +51,6 @@ type index struct {
 	n       int
 }
 
-func (i *index) newBuffer() interface{} {
-	return make([]Entry, 0, i.n)
-}
-
 func (i *index) putBuffer(url string) {
 	buf := i.buffer[url]
 	if buf == nil {
