@@ -69,7 +69,7 @@ func daemon(cmd *cobra.Command, args []string) error {
 }
 
 func newServer(res string) (*rest.Server, error) {
-	index, err := index.New(daemonDir, indexBufferSize)
+	index, err := index.NewDir(daemonDir, indexBufferSize)
 	if err != nil {
 		return nil, err
 	}

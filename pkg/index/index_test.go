@@ -26,7 +26,7 @@ func TestIndex(t *testing.T) {
 			m := matcher()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			i := NewMemoryMap(1)
+			i := NewMemory(1)
 			d := semix.NewStringDocument(tc.test, tc.test)
 			s := Put(ctx, i,
 				semix.Match(ctx, m,

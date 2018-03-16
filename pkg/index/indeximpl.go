@@ -12,16 +12,16 @@ const (
 	DefaultBufferSize = 1024
 )
 
-// NewMemoryMap create a new in memory index, that uses a simple map
+// NewMemory create a new in memory index, that uses a simple map
 // of Entry slices for storage. It is a shortcut for
-// NewIndexStorage(OpenMemStorage()).
-func NewMemoryMap(n int) Interface {
-	return NewIndexStorage(OpenMemStorage(), n)
+// New(OpenMemStorage(), n).
+func NewMemory(n int) Interface {
+	return New(OpenMemStorage(), n)
 }
 
-// NewIndexStorage returns a new Interface with a given buffer size
+// New returns a new Interface with a given buffer size
 // and storage.
-func NewIndexStorage(s Storage, n int) Interface {
+func New(s Storage, n int) Interface {
 	return &index{
 		storage: s,
 		buffer:  make(map[string][]Entry),
@@ -33,14 +33,14 @@ func NewIndexStorage(s Storage, n int) Interface {
 	}
 }
 
-// New opens a directory index at the given directory path with
+// NewDir opens a directory index at the given directory path with
 // and the given options.
-func New(dir string, size int) (Interface, error) {
+func NewDir(dir string, size int) (Interface, error) {
 	storage, err := OpenDirStorage(dir)
 	if err != nil {
 		return nil, err
 	}
-	return NewIndexStorage(storage, size), nil
+	return New(storage, size), nil
 }
 
 type index struct {
