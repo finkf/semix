@@ -19,19 +19,43 @@ func New(dir string, size int) (Interface, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &index{
+	i := &index{
 		storage: storage,
 		buffer:  make(map[string][]Entry),
 		mutex:   new(sync.RWMutex),
 		n:       size,
-	}, nil
+	}
+	i.pool = &sync.Pool{New: i.newBuffer}
+	return i, nil
 }
 
 type index struct {
 	storage Storage
 	buffer  map[string][]Entry
+	pool    *sync.Pool
 	mutex   *sync.RWMutex
 	n       int
+}
+
+func (i *index) newBuffer() interface{} {
+	return make([]Entry, 0, i.n)
+}
+
+func (i *index) putBuffer(url string) {
+	buf := i.buffer[url]
+	if buf == nil {
+		return
+	}
+	i.buffer[url] = nil
+	buf = buf[:0]
+	i.pool.Put(buf)
+}
+
+func (i *index) getBuffer(url string) {
+	if i.buffer[url] != nil {
+		return
+	}
+	i.buffer[url] = i.pool.Get().([]Entry)
 }
 
 // Put puts a token in the index.
@@ -40,12 +64,13 @@ func (i *index) Put(t semix.Token) error {
 	defer i.mutex.Unlock()
 	return putAll(t, func(e Entry) error {
 		url := e.ConceptURL
+		i.getBuffer(url)
 		i.buffer[url] = append(i.buffer[url], e)
 		if len(i.buffer[url]) == i.n {
 			if err := i.storage.Put(url, i.buffer[url]); err != nil {
-				return err
+				return errors.Wrapf(err, "cannot put entries")
 			}
-			i.buffer[url] = i.buffer[url][:0]
+			i.putBuffer(url)
 		}
 		return nil
 	})
