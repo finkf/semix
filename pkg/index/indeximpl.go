@@ -12,21 +12,35 @@ const (
 	DefaultBufferSize = 1024
 )
 
-// New opens a directory index at the given directory path with
+// NewMemory create a new in memory index, that uses a simple map
+// of Entry slices for storage. It is a shortcut for
+// New(OpenMemStorage(), n).
+func NewMemory(n int) Interface {
+	return New(OpenMemStorage(), n)
+}
+
+// New returns a new Interface with a given buffer size
+// and storage.
+func New(s Storage, n int) Interface {
+	return &index{
+		storage: s,
+		buffer:  make(map[string][]Entry),
+		mutex:   new(sync.RWMutex),
+		n:       n,
+		pool: &sync.Pool{New: func() interface{} {
+			return make([]Entry, 0, n)
+		}},
+	}
+}
+
+// NewDir opens a directory index at the given directory path with
 // and the given options.
-func New(dir string, size int) (Interface, error) {
+func NewDir(dir string, size int) (Interface, error) {
 	storage, err := OpenDirStorage(dir)
 	if err != nil {
 		return nil, err
 	}
-	i := &index{
-		storage: storage,
-		buffer:  make(map[string][]Entry),
-		mutex:   new(sync.RWMutex),
-		n:       size,
-	}
-	i.pool = &sync.Pool{New: i.newBuffer}
-	return i, nil
+	return New(storage, size), nil
 }
 
 type index struct {
@@ -35,10 +49,6 @@ type index struct {
 	pool    *sync.Pool
 	mutex   *sync.RWMutex
 	n       int
-}
-
-func (i *index) newBuffer() interface{} {
-	return make([]Entry, 0, i.n)
 }
 
 func (i *index) putBuffer(url string) {
@@ -107,7 +117,7 @@ func (i *index) putAll() error {
 		if err := i.storage.Put(url, es); err != nil {
 			return errors.Wrapf(err, "cannot write index buffer")
 		}
-		i.buffer[url] = i.buffer[url][:0]
+		i.putBuffer(url)
 	}
 	return nil
 }
@@ -122,41 +132,6 @@ func (i *index) Close() error {
 	if err := i.storage.Close(); err != nil {
 		return errors.Wrapf(err, "cannot close index")
 	}
-	return nil
-}
-
-// NewMemoryMap create a new in memory index, that uses
-// a simple map of Entry slices for storage.
-func NewMemoryMap() Interface {
-	return memIndex{index: make(map[string][]Entry)}
-}
-
-type memIndex struct {
-	index map[string][]Entry
-}
-
-func (i memIndex) Put(t semix.Token) error {
-	return putAll(t, func(e Entry) error {
-		url := e.ConceptURL
-		i.index[url] = append(i.index[url], e)
-		return nil
-	})
-}
-
-func (i memIndex) Get(url string, f func(Entry) bool) error {
-	for _, e := range i.index[url] {
-		if !f(e) {
-			return nil
-		}
-	}
-	return nil
-}
-
-func (i memIndex) Flush() error {
-	return nil
-}
-
-func (i memIndex) Close() error {
 	return nil
 }
 

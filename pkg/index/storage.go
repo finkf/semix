@@ -180,3 +180,32 @@ func preparePath(dir, u string) string {
 	}
 	return u
 }
+
+type memStorage map[string][]Entry
+
+// OpenMemStorage create a new memory storage.
+func OpenMemStorage() Storage {
+	return make(memStorage)
+}
+
+// Put simply appends the entries to the map
+func (s memStorage) Put(url string, es []Entry) error {
+	s[url] = append(s[url], es...)
+	return nil
+}
+
+func (s memStorage) Get(url string, f func(Entry) bool) error {
+	for _, e := range s[url] {
+		if !f(e) {
+			break
+		}
+	}
+	return nil
+}
+
+func (s memStorage) Close() error {
+	for url := range s {
+		delete(s, url)
+	}
+	return nil
+}
