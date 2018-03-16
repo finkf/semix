@@ -12,6 +12,27 @@ const (
 	DefaultBufferSize = 1024
 )
 
+// NewMemoryMap create a new in memory index, that uses a simple map
+// of Entry slices for storage. It is a shortcut for
+// NewIndexStorage(OpenMemStorage()).
+func NewMemoryMap(n int) Interface {
+	return NewIndexStorage(OpenMemStorage(), n)
+}
+
+// NewIndexStorage returns a new Interface with a given buffer size
+// and storage.
+func NewIndexStorage(s Storage, n int) Interface {
+	return &index{
+		storage: s,
+		buffer:  make(map[string][]Entry),
+		mutex:   new(sync.RWMutex),
+		n:       n,
+		pool: &sync.Pool{New: func() interface{} {
+			return make([]Entry, 0, n)
+		}},
+	}
+}
+
 // New opens a directory index at the given directory path with
 // and the given options.
 func New(dir string, size int) (Interface, error) {
@@ -19,14 +40,7 @@ func New(dir string, size int) (Interface, error) {
 	if err != nil {
 		return nil, err
 	}
-	i := &index{
-		storage: storage,
-		buffer:  make(map[string][]Entry),
-		mutex:   new(sync.RWMutex),
-		n:       size,
-	}
-	i.pool = &sync.Pool{New: i.newBuffer}
-	return i, nil
+	return NewIndexStorage(storage, size), nil
 }
 
 type index struct {
@@ -122,41 +136,6 @@ func (i *index) Close() error {
 	if err := i.storage.Close(); err != nil {
 		return errors.Wrapf(err, "cannot close index")
 	}
-	return nil
-}
-
-// NewMemoryMap create a new in memory index, that uses
-// a simple map of Entry slices for storage.
-func NewMemoryMap() Interface {
-	return memIndex{index: make(map[string][]Entry)}
-}
-
-type memIndex struct {
-	index map[string][]Entry
-}
-
-func (i memIndex) Put(t semix.Token) error {
-	return putAll(t, func(e Entry) error {
-		url := e.ConceptURL
-		i.index[url] = append(i.index[url], e)
-		return nil
-	})
-}
-
-func (i memIndex) Get(url string, f func(Entry) bool) error {
-	for _, e := range i.index[url] {
-		if !f(e) {
-			return nil
-		}
-	}
-	return nil
-}
-
-func (i memIndex) Flush() error {
-	return nil
-}
-
-func (i memIndex) Close() error {
 	return nil
 }
 
