@@ -224,7 +224,8 @@ func (c *Client) Ctx(u string, b, e, n int) (rest.Context, error) {
 // Flush flushes the index.
 func (c *Client) Flush() error {
 	url := fmt.Sprintf("%s/flush", c.host)
-	return c.get(url, nil)
+	var empty struct{}
+	return c.get(url, &empty)
 }
 
 // DumpFile returns the dump file of the requested url.

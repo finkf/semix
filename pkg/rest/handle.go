@@ -241,7 +241,7 @@ func (h handle) flush(r *http.Request) (interface{}, int, error) {
 	if err := h.index.Flush(); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	return nil, http.StatusOK, nil
+	return struct{}{}, http.StatusOK, nil
 }
 
 func (h handle) dump(r *http.Request) (interface{}, int, error) {
