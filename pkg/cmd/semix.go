@@ -4,7 +4,6 @@ import (
 	"os"
 	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/client"
 	"bitbucket.org/fflo/semix/pkg/say"
 	isatty "github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
@@ -69,16 +68,7 @@ func init() {
 	semixCmd.AddCommand(infoCmd)
 	semixCmd.AddCommand(daemonCmd)
 	semixCmd.AddCommand(httpdCmd)
-}
-
-func newClient(opts ...client.Option) *client.Client {
-	host := daemonHost
-	if !strings.HasPrefix(host, "http://") ||
-		!strings.HasPrefix(host, "https://") {
-		host = "http://" + host
-	}
-	client := client.New(host, opts...)
-	return client
+	semixCmd.AddCommand(dotCmd)
 }
 
 func setupSay() {
@@ -93,12 +83,19 @@ func setupSay() {
 
 // DaemonHost returns the configured address for the daemon
 func DaemonHost() string {
-	return "http://" + daemonHost
+	return hostWithPrefix(daemonHost)
 }
 
 // HTTPDHost returns the configured address for the HTTP-daemon
 func HTTPDHost() string {
-	return "http://" + httpdHost
+	return hostWithPrefix(httpdHost)
+}
+
+func hostWithPrefix(host string) string {
+	if !strings.HasPrefix(host, "http://") || !strings.HasPrefix(host, "https://") {
+		return "http://" + host
+	}
+	return host
 }
 
 // Execute runs the main semix command.

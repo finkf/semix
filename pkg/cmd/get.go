@@ -33,7 +33,7 @@ func init() {
 
 func get(cmd *cobra.Command, args []string) error {
 	setupSay()
-	client := newClient(client.WithSkip(getSkip), client.WithMax(getMax))
+	client := client.New(DaemonHost(), client.WithSkip(getSkip), client.WithMax(getMax))
 	for _, query := range args {
 		if err := doGet(client, query); err != nil {
 			return err

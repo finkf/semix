@@ -25,7 +25,7 @@ or and URL.`,
 
 func info(cmd *cobra.Command, args []string) error {
 	setupSay()
-	client := newClient()
+	client := client.New(DaemonHost())
 	for _, concept := range args {
 		if err := doInfo(client, concept); err != nil {
 			return errors.Wrapf(err, "[info] cannot get info for %s", concept)

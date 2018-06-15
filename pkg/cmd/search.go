@@ -35,7 +35,7 @@ func init() {
 
 func search(cmd *cobra.Command, args []string) error {
 	setupSay()
-	client := newClient()
+	client := client.New(DaemonHost())
 	doSearch := doConcepts
 	if searchPredicates {
 		doSearch = doPredicates

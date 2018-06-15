@@ -63,7 +63,8 @@ func put(cmd *cobra.Command, args []string) error {
 		return errors.Wrapf(err, "put")
 	}
 	sort.Ints(levs)
-	client := newClient(
+	client := client.New(
+		DaemonHost(),
 		client.WithErrorLimits(levs...),
 		client.WithResolvers(rs...),
 	)
