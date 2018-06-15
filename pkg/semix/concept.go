@@ -38,6 +38,17 @@ func (c Concept) Edges() []Edge {
 	return c.edges
 }
 
+// HasEdge returns true if the concept has the
+// given edge.
+func (c Concept) HasEdge(e Edge) bool {
+	for _, ee := range c.edges {
+		if ee == e {
+			return true
+		}
+	}
+	return false
+}
+
 // CombineURLs combines tow or more URLs.
 // If urls is empty, the empty string is returned.
 // If urls contain exactly on url, this url is returned.
