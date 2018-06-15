@@ -130,7 +130,7 @@ func (c *Client) ConceptURL(u string) (*semix.Concept, error) {
 
 // ConceptID gets the concept searching by ID.
 func (c *Client) ConceptID(id int) (*semix.Concept, error) {
-	url := c.host + fmt.Sprintf("/concept?url=%d", id)
+	url := c.host + fmt.Sprintf("/concept?id=%d", id)
 	var con semix.Concept
 	err := c.get(url, &con)
 	return &con, err
