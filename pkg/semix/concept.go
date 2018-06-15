@@ -38,11 +38,22 @@ func (c Concept) Edges() []Edge {
 	return c.edges
 }
 
-// HasEdge returns true if the concept has the
-// given edge.
-func (c Concept) HasEdge(e Edge) bool {
-	for _, ee := range c.edges {
-		if ee == e {
+// HasLink returns true if the concept has an outgoing
+// edge to o.
+func (c Concept) HasLink(o *Concept) bool {
+	for _, e := range c.edges {
+		if e.O.ID() == o.ID() {
+			return true
+		}
+	}
+	return false
+}
+
+// HasLinkP returns true if the concept has an outgoing
+// edge to o with predicate p.
+func (c Concept) HasLinkP(p, o *Concept) bool {
+	for _, e := range c.edges {
+		if e.P.ID() == p.ID() && o.ID() == e.O.ID() {
 			return true
 		}
 	}
