@@ -236,6 +236,55 @@ func (c *Client) DumpFile(u string) (rest.DumpFileContent, error) {
 	return data, errors.Wrapf(err, "cannot dump file: %s", u)
 }
 
+func (c *Client) Download(q string) (map[int]*semix.Concept, error) {
+	cs := make(map[int]*semix.Concept)
+	return cs, c.DownloadMap(q, cs)
+}
+
+func (c *Client) DownloadMap(q string, cs map[int]*semix.Concept) error {
+	ccs, err := c.Search(q)
+	if err != nil {
+		return err
+	}
+	for _, cc := range ccs {
+		if cs[int(cc.ID())] == nil {
+			cs[int(cc.ID())] = cc
+		}
+		if err := c.downloadAllEdges(cs, cc); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Client) downloadAllEdges(cs map[int]*semix.Concept, cc *semix.Concept) error {
+	edges := cc.Edges()
+	for i := range edges {
+		if err := c.register(cs, edges[i].P.ID()); err != nil {
+			return err
+		}
+		if err := c.register(cs, edges[i].O.ID()); err != nil {
+			return err
+		}
+		edges[i].O = cs[int(edges[i].O.ID())]
+		edges[i].P = cs[int(edges[i].P.ID())]
+	}
+	return nil
+}
+
+func (c *Client) register(cs map[int]*semix.Concept, id int32) error {
+	say.Debug("registering concept id %d", id)
+	if cs[int(id)] != nil {
+		return nil
+	}
+	cc, err := c.ConceptID(int(id))
+	if err != nil {
+		return err
+	}
+	cs[int(id)] = cc
+	return nil
+}
+
 func (c *Client) get(url string, out interface{}) error {
 	say.Debug("sending request [%s] %s", http.MethodGet, url)
 	res, err := c.client.Get(url)
