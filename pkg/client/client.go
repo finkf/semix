@@ -236,11 +236,38 @@ func (c *Client) DumpFile(u string) (rest.DumpFileContent, error) {
 	return data, errors.Wrapf(err, "cannot dump file: %s", u)
 }
 
+// DownloadURL downloads all concepts including all links
+// and predicates.
+func (c *Client) DownloadURL(url string) (map[int]*semix.Concept, error) {
+	cs := make(map[int]*semix.Concept)
+	return cs, c.DownloadURLMap(url, cs)
+}
+
+// DownloadURLMap downloads all concepts including all links
+// and predicates into the given map.
+func (c *Client) DownloadURLMap(url string, cs map[int]*semix.Concept) error {
+	cc, err := c.ConceptURL(url)
+	if err != nil {
+		return err
+	}
+	if cs[int(cc.ID())] == nil {
+		cs[int(cc.ID())] = cc
+	}
+	if err := c.downloadAllEdges(cs, cc); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Download downloads all concepts including all links
+// and predicates.
 func (c *Client) Download(q string) (map[int]*semix.Concept, error) {
 	cs := make(map[int]*semix.Concept)
 	return cs, c.DownloadMap(q, cs)
 }
 
+// DownloadMap downloads all concepts including all links
+// and predicates into the given map.
 func (c *Client) DownloadMap(q string, cs map[int]*semix.Concept) error {
 	ccs, err := c.Search(q)
 	if err != nil {
