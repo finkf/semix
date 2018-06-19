@@ -181,6 +181,30 @@ func (c *Concept) ShortName() string {
 	return c.ShortURL()
 }
 
+// ReduceTransitive removes all transitive edges of this
+// and all its linked concepts.
+func (c *Concept) ReduceTransitive() {
+	end := 0
+	len := len(c.edges)
+	for i, e := range c.edges {
+		var remove bool
+		for _, f := range c.edges {
+			if f.O.HasLinkP(e.P, e.O) {
+				remove = true
+				break
+			}
+		}
+		if remove {
+			c.edges[i] = c.edges[len-end-1]
+			end++
+		}
+	}
+	c.edges = c.edges[0 : len-end]
+	for _, e := range c.edges {
+		e.O.ReduceTransitive()
+	}
+}
+
 // link represents an edge as a pair of URLs.
 type link struct {
 	P struct {
