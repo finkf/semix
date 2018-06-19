@@ -79,8 +79,7 @@ func (d *Dot) String() string {
 	}
 	// write nodes
 	for id, args := range d.nodes {
-		buffer.WriteString(id)
-		buffer.WriteString(" [")
+		buffer.WriteString(fmt.Sprintf("%q [", id))
 		for i := 0; i < len(args); i += 2 {
 			buffer.WriteString(keyval(args[i:]))
 		}
@@ -88,7 +87,7 @@ func (d *Dot) String() string {
 	}
 	// write edges
 	for edge, args := range d.edges {
-		buffer.WriteString(fmt.Sprintf("%s -> %s [", edge.id1, edge.id2))
+		buffer.WriteString(fmt.Sprintf("%q -> %q [", edge.id1, edge.id2))
 		for i := 0; i < len(args); i += 2 {
 			buffer.WriteString(keyval(args[i:]))
 		}
