@@ -3,6 +3,11 @@ package dot
 import (
 	"bytes"
 	"fmt"
+	"image"
+	"image/png"
+	"os/exec"
+
+	"github.com/pkg/errors"
 )
 
 // Various configuration variables for dot graphs.
@@ -91,6 +96,24 @@ func (d *Dot) String() string {
 	}
 	buffer.WriteString("}\n")
 	return buffer.String()
+}
+
+// PNG converts the dot-graph to a png using the dot-code of
+// the graph. It uses the given path to the dot executable.
+func (d *Dot) PNG(exe string) (image.Image, error) {
+	dot := bytes.NewBufferString(d.String()) // redundant
+	out := &bytes.Buffer{}
+	cmd := exec.Command(exe, "-Tpng")
+	cmd.Stdin = dot
+	cmd.Stdout = out
+	if err := cmd.Run(); err != nil {
+		return nil, errors.Wrapf(err, "cannot execute: %s", exe)
+	}
+	img, err := png.Decode(out)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot read image")
+	}
+	return img, nil
 }
 
 func keyval(kv []string) string {
