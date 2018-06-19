@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"image/png"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
 
 	"bitbucket.org/fflo/semix/pkg/client"
+	"bitbucket.org/fflo/semix/pkg/dot"
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/say"
@@ -184,6 +186,43 @@ func (s *Server) setup(r *http.Request) (*template.Template, interface{}, status
 	return s.setuptmpl, struct{}{}, ok()
 }
 
+type link struct {
+	S, P, O string
+}
+
+func (s *Server) graph(w http.ResponseWriter, r *http.Request) {
+	url := r.URL.Query().Get("url")
+	cs, err := s.newClient().DownloadURL(url)
+	if err != nil {
+		say.Info("cannot handle request: cannot download: %s: %v", url, err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	for _, c := range cs {
+		c.ReduceTransitive()
+	}
+	d := dot.New("g", dot.Rankdir, dot.BT)
+	for _, c := range cs {
+		for _, e := range c.Edges() {
+			d.AddNode(c.URL(), dot.Label, c.ShortName())
+			d.AddNode(e.O.URL(), dot.Label, c.ShortName())
+			d.AddEdge(c.URL(), e.O.URL(), dot.Label, e.P.ShortName())
+		}
+	}
+	img, err := d.PNG("/usr/bin/dot")
+	if err != nil {
+		say.Info("cannot handle request: cannot generate image: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "image/png")
+	if err := png.Encode(w, img); err != nil {
+		say.Info("cannot handle request: cannot encode image: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+//w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 func internalError(err error) status {
 	return status{err, http.StatusInternalServerError}
 }

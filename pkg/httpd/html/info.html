@@ -4,16 +4,20 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<title>Semix info</title>
 		<link rel="stylesheet" type="text/css" href="/css/semix.css">
+		<script type="text/javascript" src="/js/semix.js"></script>
 	</head>
 	<body>
 		<a href="/">Home</a>
-		<h1>Semix info for {{.Concept.ShortName}}</h1>
+		<h1>Semix info for <u>{{.Concept.ShortName}}</u></h1>
 		{{if .Concept}}
 		<h2>URL: <a href="{{.Concept.URL}}">{{.Concept.URL}}</a></h2>
 		<h2>Search Index:
 			<a href="/get?q={{printf "?(%q)" .Concept.URL}}&n=50&s=0">simple</a>
 			<a href="/get?q={{printf "?(*(%q))" .Concept.URL}}&n=50&s=0">thematic</a>
 		</h2>
+		<h2><a target="_blank" href="/graph.png?url={{.Concept.URL}}">Show graph</a></h2>
+		<div id="canvas">
+		</div>
 		<h2>Links (<a href="/parents?url={{.Concept.URL}}">Parents</a>):</h2>
 		<ul>
 			{{range $p, $o := .Predicates}}
