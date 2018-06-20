@@ -238,20 +238,20 @@ func (c *Client) DumpFile(u string) (rest.DumpFileContent, error) {
 
 // DownloadURL downloads all concepts including all links
 // and predicates.
-func (c *Client) DownloadURL(url string) (map[int]*semix.Concept, error) {
-	cs := make(map[int]*semix.Concept)
+func (c *Client) DownloadURL(url string) (map[string]*semix.Concept, error) {
+	cs := make(map[string]*semix.Concept)
 	return cs, c.DownloadURLMap(url, cs)
 }
 
 // DownloadURLMap downloads all concepts including all links
 // and predicates into the given map.
-func (c *Client) DownloadURLMap(url string, cs map[int]*semix.Concept) error {
+func (c *Client) DownloadURLMap(url string, cs map[string]*semix.Concept) error {
 	cc, err := c.ConceptURL(url)
 	if err != nil {
 		return err
 	}
-	if cs[int(cc.ID())] == nil {
-		cs[int(cc.ID())] = cc
+	if cs[cc.URL()] == nil {
+		cs[cc.URL()] = cc
 	}
 	if err := c.downloadAllEdges(cs, cc); err != nil {
 		return err
@@ -261,21 +261,21 @@ func (c *Client) DownloadURLMap(url string, cs map[int]*semix.Concept) error {
 
 // Download downloads all concepts including all links
 // and predicates.
-func (c *Client) Download(q string) (map[int]*semix.Concept, error) {
-	cs := make(map[int]*semix.Concept)
+func (c *Client) Download(q string) (map[string]*semix.Concept, error) {
+	cs := make(map[string]*semix.Concept)
 	return cs, c.DownloadMap(q, cs)
 }
 
 // DownloadMap downloads all concepts including all links
 // and predicates into the given map.
-func (c *Client) DownloadMap(q string, cs map[int]*semix.Concept) error {
+func (c *Client) DownloadMap(q string, cs map[string]*semix.Concept) error {
 	ccs, err := c.Search(q)
 	if err != nil {
 		return err
 	}
 	for _, cc := range ccs {
-		if cs[int(cc.ID())] == nil {
-			cs[int(cc.ID())] = cc
+		if cs[cc.URL()] == nil {
+			cs[cc.URL()] = cc
 		}
 		if err := c.downloadAllEdges(cs, cc); err != nil {
 			return err
@@ -284,31 +284,31 @@ func (c *Client) DownloadMap(q string, cs map[int]*semix.Concept) error {
 	return nil
 }
 
-func (c *Client) downloadAllEdges(cs map[int]*semix.Concept, cc *semix.Concept) error {
+func (c *Client) downloadAllEdges(cs map[string]*semix.Concept, cc *semix.Concept) error {
 	edges := cc.Edges()
 	for i := range edges {
-		if err := c.register(cs, edges[i].P.ID()); err != nil {
+		if err := c.register(cs, edges[i].P); err != nil {
 			return err
 		}
-		if err := c.register(cs, edges[i].O.ID()); err != nil {
+		if err := c.register(cs, edges[i].O); err != nil {
 			return err
 		}
-		edges[i].O = cs[int(edges[i].O.ID())]
-		edges[i].P = cs[int(edges[i].P.ID())]
+		edges[i].O = cs[edges[i].O.URL()]
+		edges[i].P = cs[edges[i].P.URL()]
 	}
 	return nil
 }
 
-func (c *Client) register(cs map[int]*semix.Concept, id int32) error {
-	say.Debug("registering concept id %d", id)
-	if cs[int(id)] != nil {
+func (c *Client) register(cs map[string]*semix.Concept, cx *semix.Concept) error {
+	say.Debug("registering concept id %d", cx.ID())
+	if cs[cx.URL()] != nil {
 		return nil
 	}
-	cc, err := c.ConceptID(int(id))
+	cc, err := c.ConceptID(int(cx.ID()))
 	if err != nil {
 		return err
 	}
-	cs[int(id)] = cc
+	cs[cx.URL()] = cc
 	return nil
 }
 
