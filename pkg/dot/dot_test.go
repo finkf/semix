@@ -15,8 +15,12 @@ import (
 
 var update = flag.Bool("update", false, "update gold file")
 
-const goldDotFile = "testdata/gold.dot"
-const goldPNGFile = "testdata/gold.png"
+const (
+	goldDotFile = "testdata/gold.dot"
+	goldPNGFile = "testdata/gold.png"
+	goldSVGFile = "testdata/gold.svg"
+	dotExe      = "/usr/bin/dot"
+)
 
 func newDot() *dot.Dot {
 	d := dot.New("test", dot.Rankdir, dot.LR)
@@ -53,7 +57,7 @@ func TestDot(t *testing.T) {
 func TestPNG(t *testing.T) {
 	d := newDot()
 	if *update {
-		img, err := d.PNG("/usr/bin/dot")
+		img, err := d.PNG(dotExe)
 		if err != nil {
 			t.Fatalf("cannot generate png: %v", err)
 		}
@@ -75,12 +79,41 @@ func TestPNG(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cannot read gold file %s: %v", goldPNGFile, err)
 	}
-	got, err := d.PNG("/usr/bin/dot")
+	got, err := d.PNG(dotExe)
 	if err != nil {
 		t.Fatalf("cannot generate png: %v", err)
 	}
 	if !reflect.DeepEqual(gold, got) {
 		t.Fatalf("gold and test images are not the same")
+	}
+}
+
+func TestSVG(t *testing.T) {
+	d := newDot()
+	if *update {
+		svg, err := d.SVG(dotExe)
+		if err != nil {
+			t.Fatalf("cannot generate svg: %v", err)
+		}
+		out, err := os.Create(goldSVGFile)
+		if err != nil {
+			t.Fatalf("cannot open gold file %s: %v", goldSVGFile, err)
+		}
+		defer func() { _ = out.Close() }()
+		if err := ioutil.WriteFile(goldSVGFile, []byte(svg), os.ModePerm); err != nil {
+			t.Fatalf("cannot write gold file %s: %v", goldSVGFile, err)
+		}
+	}
+	gold, err := ioutil.ReadFile(goldSVGFile)
+	if err != nil {
+		t.Fatalf("cannot read gold file %s: %v", goldSVGFile, err)
+	}
+	got, err := d.SVG(dotExe)
+	if err != nil {
+		t.Fatalf("cannot generate svg: %v", err)
+	}
+	if got != string(gold) {
+		t.Fatalf("expected %s; got %s", gold, got)
 	}
 }
 

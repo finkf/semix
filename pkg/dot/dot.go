@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"io"
+	"io/ioutil"
 	"os/exec"
 
 	"github.com/pkg/errors"
@@ -99,22 +101,41 @@ func (d *Dot) String() string {
 	return buffer.String()
 }
 
-// PNG converts the dot-graph to a png using the dot-code of
+// PNG converts the dot-graph to a png image using the dot-code of
 // the graph. It uses the given path to the dot executable.
 func (d *Dot) PNG(exe string) (image.Image, error) {
-	dot := bytes.NewBufferString(d.String()) // redundant
-	out := &bytes.Buffer{}
-	cmd := exec.Command(exe, "-Tpng")
-	cmd.Stdin = dot
-	cmd.Stdout = out
-	if err := cmd.Run(); err != nil {
-		return nil, errors.Wrapf(err, "cannot execute: %s", exe)
+	out, err := d.executeDot(exe, "-Tpng")
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot execute %q", exe)
 	}
 	img, err := png.Decode(out)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot read image")
 	}
 	return img, nil
+}
+
+// SVG converts the dot-graph to a svg image using the dot-code
+// of the graph. It uses the given path to call the dot executable.
+func (d *Dot) SVG(exe string) (string, error) {
+	out, err := d.executeDot(exe, "-Tsvg")
+	if err != nil {
+		return "", errors.Wrapf(err, "cannot execute %q", exe)
+	}
+	bs, err := ioutil.ReadAll(out)
+	return string(bs), err
+}
+
+func (d *Dot) executeDot(exe string, args ...string) (io.Reader, error) {
+	dot := bytes.NewBufferString(d.String()) // redundant
+	out := &bytes.Buffer{}
+	cmd := exec.Command(exe, args...)
+	cmd.Stdin = dot
+	cmd.Stdout = out
+	if err := cmd.Run(); err != nil {
+		return nil, errors.Wrapf(err, "cannot execute: %s", exe)
+	}
+	return out, nil
 }
 
 func keyval(kv []string) string {
