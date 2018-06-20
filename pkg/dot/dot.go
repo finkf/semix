@@ -12,15 +12,17 @@ import (
 
 // Various configuration variables for dot graphs.
 const (
-	Rankdir = "rankdir"
-	LR      = "LR"
-	TB      = "TB"
-	RL      = "RL"
-	BT      = "BT"
-	Label   = "label"
-	Style   = "style"
-	Dotted  = "dotted"
-	Dashed  = "dashed"
+	Rankdir   = "rankdir"
+	LR        = "LR"
+	TB        = "TB"
+	RL        = "RL"
+	BT        = "BT"
+	Label     = "label"
+	Style     = "style"
+	Dotted    = "dotted"
+	Dashed    = "dashed"
+	Filled    = "filled"
+	FillColor = "fillcolor"
 )
 
 // Dot is used to build a dot graph.
