@@ -203,7 +203,7 @@ func (s *Server) graph(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cs[url].ReduceTransitive()
-	d := dot.New("g", dot.Rankdir, dot.BT)
+	d := dot.New(fmt.Sprintf("%q", cs[url].ShortName()), dot.Rankdir, dot.BT)
 	cs[url].VisitAll(func(c *semix.Concept) {
 		if c.URL() == url {
 			d.AddNode(c.URL(), dot.Label, labelName(c), "shape", "box",
