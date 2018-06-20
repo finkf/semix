@@ -135,6 +135,25 @@ func (c *Concept) EachEdge(f func(Edge)) {
 	}
 }
 
+// VisitAll visits all concepts (including this) recursively.
+// It is guaranteed that each concept is visited exactly once.
+// Predicates are ignored.
+func (c *Concept) VisitAll(f func(c *Concept)) {
+	visited := make(map[*Concept]bool)
+	c.visit(f, visited)
+}
+
+func (c *Concept) visit(f func(c *Concept), visited map[*Concept]bool) {
+	if visited[c] {
+		return
+	}
+	visited[c] = true
+	f(c)
+	for _, e := range c.edges {
+		e.O.visit(f, visited)
+	}
+}
+
 // URL return the url of this concept.
 func (c *Concept) URL() string {
 	return c.url

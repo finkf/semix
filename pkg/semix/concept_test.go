@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"reflect"
 	"testing"
 )
 
@@ -105,5 +106,34 @@ func TestReduceTransitive(t *testing.T) {
 	}
 	if !c.HasLinkP(p, d) {
 		t.Fatalf("c should have a p link to d")
+	}
+}
+
+func TestVisitAll(t *testing.T) {
+	a := &Concept{url: "a", id: 1}
+	b := &Concept{url: "b", id: 2}
+	c := &Concept{url: "c", id: 3}
+	p := &Concept{url: "p", id: 4}
+	q := &Concept{url: "q", id: 5}
+	d := &Concept{url: "d", id: 6}
+
+	a.edges = append(a.edges, Edge{P: p, O: b})
+	a.edges = append(a.edges, Edge{P: p, O: c})
+	a.edges = append(a.edges, Edge{P: p, O: d})
+	a.edges = append(a.edges, Edge{P: q, O: a})
+	b.edges = append(b.edges, Edge{P: p, O: c})
+	b.edges = append(b.edges, Edge{P: p, O: d})
+	c.edges = append(c.edges, Edge{P: p, O: d})
+
+	got := make(map[*Concept]bool)
+	a.VisitAll(func(c *Concept) {
+		if got[c] {
+			t.Fatalf("concept %s was visited already", c)
+		}
+		got[c] = true
+	})
+	want := map[*Concept]bool{a: true, b: true, c: true, d: true}
+	if !reflect.DeepEqual(want, got) {
+		t.Fatalf("expected %v; got %v", want, got)
 	}
 }
