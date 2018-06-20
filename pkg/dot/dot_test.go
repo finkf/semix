@@ -58,7 +58,7 @@ func TestDot(t *testing.T) {
 }
 
 func TestPNG(t *testing.T) {
-	if noTestDot {
+	if *noTestDot {
 		return
 	}
 	d := newDot()
