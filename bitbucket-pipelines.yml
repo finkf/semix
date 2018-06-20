@@ -10,7 +10,7 @@ pipelines:
     - step:
         script: # Modify the commands below to build your repository.
           - apt-get update
-          - apt-get install -y zip graphviz
+          - apt-get install -y zip
           - git config --global url."git@bitbucket.org:".insteadOf "https://bitbucket.org/"
           - PACKAGE_PATH="${GOPATH}/src/bitbucket.org/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}"
           - mkdir -pv "${PACKAGE_PATH}"
@@ -22,10 +22,10 @@ pipelines:
           - go get -v github.com/inconshreveable/mousetrap # for windows builds
           - golint ./...
           - go vet ./...
-          - go test -cover ./...
+          - go test -cover -no-test-dot ./...
           - |
             for s in 1 2 3 4 5; do
-              go test -tags isize$s ./...
+              go test -tags isize$s -no-test-dot ./...
             done
           - |
             if test "${BITBUCKET_BRANCH}" = "master"; then

@@ -13,7 +13,10 @@ import (
 	"bitbucket.org/fflo/semix/pkg/dot"
 )
 
-var update = flag.Bool("update", false, "update gold file")
+var (
+	update    = flag.Bool("update", false, "update gold file")
+	noTestDot = flag.Bool("no-test-dot", false, "disable tests using the dot executable")
+)
 
 const (
 	goldDotFile = "testdata/gold.dot"
@@ -55,6 +58,9 @@ func TestDot(t *testing.T) {
 }
 
 func TestPNG(t *testing.T) {
+	if noTestDot {
+		return
+	}
 	d := newDot()
 	if *update {
 		img, err := d.PNG(dotExe)
@@ -89,6 +95,9 @@ func TestPNG(t *testing.T) {
 }
 
 func TestSVG(t *testing.T) {
+	if *noTestDot {
+		return
+	}
 	d := newDot()
 	if *update {
 		svg, err := d.SVG(dotExe)
