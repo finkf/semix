@@ -203,25 +203,32 @@ func (c *Concept) ShortName() string {
 // ReduceTransitive removes all transitive edges of this
 // and all its linked concepts.
 func (c *Concept) ReduceTransitive() {
-	end := 0
 	len := len(c.edges)
-	for i, e := range c.edges {
-		var remove bool
-		for _, f := range c.edges {
-			if f.O.HasLinkP(e.P, e.O) {
-				remove = true
-				break
-			}
-		}
-		if remove {
-			c.edges[i] = c.edges[len-end-1]
-			end++
+	for i := 0; i < len; {
+		e := c.edges[i]
+		if c.anyEdgeHasLinkToP(e.P, e.O) {
+			// swap edges
+			tmp := c.edges[len-1]
+			c.edges[len-1] = c.edges[i]
+			c.edges[i] = tmp
+			len--
+		} else {
+			i++
 		}
 	}
-	c.edges = c.edges[0 : len-end]
 	for _, e := range c.edges {
 		e.O.ReduceTransitive()
 	}
+	c.edges = c.edges[0:len]
+}
+
+func (c *Concept) anyEdgeHasLinkToP(p, o *Concept) bool {
+	for _, e := range c.edges {
+		if e.O.ID() != o.ID() && e.P.ID() == p.ID() && e.O.HasLinkP(p, o) {
+			return true
+		}
+	}
+	return false
 }
 
 // link represents an edge as a pair of URLs.

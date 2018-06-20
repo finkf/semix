@@ -16,7 +16,7 @@ import (
 	"bitbucket.org/fflo/semix/pkg/index"
 	"bitbucket.org/fflo/semix/pkg/rest"
 	"bitbucket.org/fflo/semix/pkg/say"
-	x "bitbucket.org/fflo/semix/pkg/semix"
+	"bitbucket.org/fflo/semix/pkg/semix"
 	"github.com/pkg/errors"
 )
 
@@ -69,7 +69,7 @@ func (s *Server) search(r *http.Request) (*template.Template, interface{}, statu
 	}
 	return s.searchtmpl, struct {
 		Title    string
-		Concepts []*x.Concept
+		Concepts []*semix.Concept
 	}{fmt.Sprintf("%q", q), cs}, ok()
 }
 
@@ -81,7 +81,7 @@ func (s *Server) predicates(r *http.Request) (*template.Template, interface{}, s
 	}
 	return s.searchtmpl, struct {
 		Title    string
-		Concepts []*x.Concept
+		Concepts []*semix.Concept
 	}{fmt.Sprintf("%q", q), cs}, ok()
 }
 
@@ -93,7 +93,7 @@ func (s *Server) parents(r *http.Request) (*template.Template, interface{}, stat
 	}
 	return s.searchtmpl, struct {
 		Title    string
-		Concepts []*x.Concept
+		Concepts []*semix.Concept
 	}{fmt.Sprintf("parents of %q", q), cs}, ok()
 }
 
@@ -198,17 +198,24 @@ func (s *Server) graph(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	for _, c := range cs {
-		c.ReduceTransitive()
+	if _, ok := cs[url]; !ok {
+		say.Info("cannot handle request: cannot find url: %s", url)
+		http.Error(w, "not found", http.StatusNotFound)
+		return
 	}
+	cs[url].ReduceTransitive()
 	d := dot.New("g", dot.Rankdir, dot.BT)
-	for _, c := range cs {
-		for _, e := range c.Edges() {
-			d.AddNode(c.URL(), dot.Label, c.ShortName())
-			d.AddNode(e.O.URL(), dot.Label, c.ShortName())
-			d.AddEdge(c.URL(), e.O.URL(), dot.Label, e.P.ShortName())
+	cs[url].VisitAll(func(c *semix.Concept) {
+		if c.URL() == url {
+			d.AddNode(c.URL(), dot.Label, labelName(c), "shape", "box",
+				dot.FillColor, "lightgrey", dot.Style, dot.Filled)
+		} else {
+			d.AddNode(c.URL(), dot.Label, labelName(c), "shape", "box")
 		}
-	}
+		for _, e := range c.Edges() {
+			d.AddEdge(c.URL(), e.O.URL(), dot.Label, labelName(e.P))
+		}
+	})
 	img, err := d.PNG("/usr/bin/dot")
 	if err != nil {
 		say.Info("cannot handle request: cannot generate image: %v", err)
@@ -220,6 +227,19 @@ func (s *Server) graph(w http.ResponseWriter, r *http.Request) {
 		say.Info("cannot handle request: cannot encode image: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func labelName(c *semix.Concept) string {
+	name := c.ShortName()
+	if len(name) <= 10 {
+		return name
+	}
+	for i := len(name) / 2; i < len(name); i++ {
+		if name[i] == ' ' {
+			return name[:i] + "\n" + name[i+1:]
+		}
+	}
+	return name
 }
 
 //w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
