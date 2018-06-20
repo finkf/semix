@@ -68,7 +68,6 @@ func init() {
 	semixCmd.AddCommand(infoCmd)
 	semixCmd.AddCommand(daemonCmd)
 	semixCmd.AddCommand(httpdCmd)
-	semixCmd.AddCommand(dotCmd)
 }
 
 func setupSay() {
