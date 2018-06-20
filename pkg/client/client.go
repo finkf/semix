@@ -300,16 +300,18 @@ func (c *Client) downloadAllEdges(cs map[string]*semix.Concept, cc *semix.Concep
 }
 
 func (c *Client) register(cs map[string]*semix.Concept, cx *semix.Concept) error {
-	say.Debug("registering concept id %d", cx.ID())
-	if cs[cx.URL()] != nil {
+	id := int(cx.ID())
+	url := cx.URL()
+	if cs[url] != nil {
 		return nil
 	}
-	cc, err := c.ConceptID(int(cx.ID()))
+	say.Debug("registering concept %q (%d)", url, id)
+	cc, err := c.ConceptID(id)
 	if err != nil {
 		return err
 	}
-	cs[cx.URL()] = cc
-	return nil
+	cs[url] = cc
+	return c.downloadAllEdges(cs, cs[url])
 }
 
 func (c *Client) get(url string, out interface{}) error {
