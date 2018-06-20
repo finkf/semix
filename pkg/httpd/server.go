@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"image/png"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -216,15 +215,15 @@ func (s *Server) graph(w http.ResponseWriter, r *http.Request) {
 			d.AddEdge(c.URL(), e.O.URL(), dot.Label, labelName(e.P))
 		}
 	})
-	img, err := d.PNG("/usr/bin/dot")
+	svg, err := d.SVG("/usr/bin/dot")
 	if err != nil {
 		say.Info("cannot handle request: cannot generate image: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "image/png")
-	if err := png.Encode(w, img); err != nil {
-		say.Info("cannot handle request: cannot encode image: %v", err)
+	w.Header().Set("Content-Type", "image/svg+xml")
+	if _, err := w.Write([]byte(svg)); err != nil {
+		say.Info("cannot handle request: cannot write image: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

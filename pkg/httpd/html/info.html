@@ -15,7 +15,7 @@
 			<a href="/get?q={{printf "?(%q)" .Concept.URL}}&n=50&s=0">simple</a>
 			<a href="/get?q={{printf "?(*(%q))" .Concept.URL}}&n=50&s=0">thematic</a>
 		</h2>
-		<h2><a target="_blank" href="/graph.png?url={{.Concept.URL}}">Show graph</a></h2>
+		<h2><a target="_blank" href="/graph.svg?url={{.Concept.URL}}">Show graph</a></h2>
 		<div id="canvas">
 		</div>
 		<h2>Links (<a href="/parents?url={{.Concept.URL}}">Parents</a>):</h2>
