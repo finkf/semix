@@ -102,12 +102,11 @@ func newMux(s *Server) *http.Server {
 		rest.WithLogging(rest.WithGet(handle(s.setup))))
 	mux.HandleFunc("/parents",
 		rest.WithLogging(rest.WithGet(handle(s.parents))))
-	mux.HandleFunc("/favicon.ico",
-		rest.WithLogging(rest.WithGet(s.favicon)))
+	// do not log requests for favicon
+	mux.HandleFunc("/favicon.ico", rest.WithGet(s.favicon))
 	mux.HandleFunc("/js/semix.js",
 		rest.WithLogging(rest.WithGet(s.js)))
-	mux.HandleFunc("/css/semix.css",
-		rest.WithLogging(rest.WithGet(s.css)))
+	mux.HandleFunc("/graph.svg", rest.WithLogging(rest.WithGet(s.graph)))
 	return &http.Server{
 		Addr:    s.host,
 		Handler: mux,

@@ -38,6 +38,28 @@ func (c Concept) Edges() []Edge {
 	return c.edges
 }
 
+// HasLink returns true if the concept has an outgoing
+// edge to o.
+func (c Concept) HasLink(o *Concept) bool {
+	for _, e := range c.edges {
+		if e.O.ID() == o.ID() {
+			return true
+		}
+	}
+	return false
+}
+
+// HasLinkP returns true if the concept has an outgoing
+// edge to o with predicate p.
+func (c Concept) HasLinkP(p, o *Concept) bool {
+	for _, e := range c.edges {
+		if e.P.ID() == p.ID() && o.ID() == e.O.ID() {
+			return true
+		}
+	}
+	return false
+}
+
 // CombineURLs combines tow or more URLs.
 // If urls is empty, the empty string is returned.
 // If urls contain exactly on url, this url is returned.
@@ -113,6 +135,25 @@ func (c *Concept) EachEdge(f func(Edge)) {
 	}
 }
 
+// VisitAll visits all concepts (including this) recursively.
+// It is guaranteed that each concept is visited exactly once.
+// Predicates are ignored.
+func (c *Concept) VisitAll(f func(c *Concept)) {
+	visited := make(map[*Concept]bool)
+	c.visit(f, visited)
+}
+
+func (c *Concept) visit(f func(c *Concept), visited map[*Concept]bool) {
+	if visited[c] {
+		return
+	}
+	visited[c] = true
+	f(c)
+	for _, e := range c.edges {
+		e.O.visit(f, visited)
+	}
+}
+
 // URL return the url of this concept.
 func (c *Concept) URL() string {
 	return c.url
@@ -157,6 +198,37 @@ func (c *Concept) ShortName() string {
 		return c.Name
 	}
 	return c.ShortURL()
+}
+
+// ReduceTransitive removes all transitive edges of this
+// and all its linked concepts.
+func (c *Concept) ReduceTransitive() {
+	len := len(c.edges)
+	for i := 0; i < len; {
+		e := c.edges[i]
+		if c.anyEdgeHasLinkToP(e.P, e.O) {
+			// swap edges
+			tmp := c.edges[len-1]
+			c.edges[len-1] = c.edges[i]
+			c.edges[i] = tmp
+			len--
+		} else {
+			i++
+		}
+	}
+	for _, e := range c.edges {
+		e.O.ReduceTransitive()
+	}
+	c.edges = c.edges[0:len]
+}
+
+func (c *Concept) anyEdgeHasLinkToP(p, o *Concept) bool {
+	for _, e := range c.edges {
+		if e.O.ID() != o.ID() && e.P.ID() == p.ID() && e.O.HasLinkP(p, o) {
+			return true
+		}
+	}
+	return false
 }
 
 // link represents an edge as a pair of URLs.

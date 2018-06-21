@@ -9,7 +9,7 @@ REPO := bitbucket.org/$(OWNER)/$(SLUG)
 DEPS := $(shell find -type f -name '*.go')
 
 semix: $(DEPS) vet test lint
-	$S $(GO) build $(GOTAGS) -o $@ semix.go
+	$S $(GO) build $(GOTAGS) -o $@ main.go
 
 .PHONY: vet
 vet:
@@ -58,7 +58,7 @@ go-get:
 
 # install target
 .PHONY: install
-install: go-get semix.go
+install: go-get main.go
 	$S $(GO) install $(GOTAGS)
 
 # tar.gz files
@@ -74,8 +74,8 @@ upload: $(addsuffix .upload,$(RELS))
 
 # build releases for different oses and architectures
 # semix-darwin-amd64 builds the semix-daemon for 64-bit osx
-%.exe: semix.go
+%.exe: .go
 	$S $(GO) get "github.com/inconshreveable/mousetrap"
 	$S GOOS=windows GOARCH=$(subst .exe,,$(call w,3,$@)) $(GO) build -o $@ $<
-semix-darwin-amd64 semix-linux-amd64: semix.go
+semix-darwin-amd64 semix-linux-amd64: main.go
 	$S GOOS=$(call w,2,$@) GOARCH=$(call w,3,$@) $(GO) build -o $@ $<

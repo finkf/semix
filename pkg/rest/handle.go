@@ -237,6 +237,13 @@ func (h handle) ctx(r *http.Request) (interface{}, int, error) {
 	}, http.StatusOK, nil
 }
 
+func (h handle) flush(r *http.Request) (interface{}, int, error) {
+	if err := h.index.Flush(); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	return struct{}{}, http.StatusOK, nil
+}
+
 func (h handle) dump(r *http.Request) (interface{}, int, error) {
 	file := openDumpFile(h.dir, r.URL.Query().Get("url"))
 	defer func() { _ = file.Close() }()

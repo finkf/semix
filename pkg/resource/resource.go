@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 	"bitbucket.org/fflo/semix/pkg/traits"
 	"bitbucket.org/fflo/semix/pkg/turtle"
 	"github.com/BurntSushi/toml"
+	"github.com/pkg/errors"
 )
 
 // Comparision ignores case
@@ -90,6 +92,7 @@ func Read(file string) (*Config, error) {
 func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 	if useCache && c.File.Cache != "" {
 		if r, err := c.readCache(); err == nil {
+			logResource(r)
 			return r, nil
 		}
 	}
@@ -111,7 +114,13 @@ func (c *Config) Parse(useCache bool) (*semix.Resource, error) {
 			say.Info("error: %s", err)
 		}
 	}
+	logResource(r)
 	return r, nil
+}
+
+func logResource(r *semix.Resource) {
+	say.Debug("loaded %d concepts, %d entries, %d rules",
+		r.Graph.ConceptsLen(), len(r.Dictionary), len(r.Rules))
 }
 
 // Traits returns a new Traits interface using the configuration
@@ -168,7 +177,7 @@ func (c *Config) newParser(r io.Reader) (semix.Parser, error) {
 }
 
 func (c *Config) readCache() (*semix.Resource, error) {
-	say.Info("readCache(): %s", c.File.Cache)
+	say.Debug("readCache(): %s", c.File.Cache)
 	file, err := os.Open(c.File.Cache)
 	if err != nil {
 		say.Info("error: %s", err)
@@ -184,11 +193,15 @@ func (c *Config) readCache() (*semix.Resource, error) {
 }
 
 func (c *Config) writeCache(r *semix.Resource) error {
-	say.Info("writeCache(): %s", c.File.Cache)
+	say.Debug("writeCache(): %s", c.File.Cache)
+	if err := os.MkdirAll(filepath.Dir(c.File.Cache), os.ModePerm); err != nil {
+		say.Info("error: %s", err)
+		return errors.Wrapf(err, "cannot create cache directory")
+	}
 	file, err := os.Create(c.File.Cache)
 	if err != nil {
 		say.Info("error: %s", err)
-		return err
+		return errors.Wrapf(err, "cannot write cache")
 	}
 	defer func() { _ = file.Close() }()
 	return gob.NewEncoder(file).Encode(r)

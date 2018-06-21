@@ -26,12 +26,15 @@ func TestIndex(t *testing.T) {
 			m := matcher()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			i := NewMemoryMap()
+			i := NewMemory(2)
 			d := semix.NewStringDocument(tc.test, tc.test)
 			s := Put(ctx, i,
 				semix.Match(ctx, m,
 					semix.Normalize(ctx,
 						semix.Read(ctx, d))))
+			if err := i.Flush(); err != nil {
+				t.Fatalf("got error: %v", err)
+			}
 			for token := range s {
 				if token.Err != nil {
 					t.Fatalf("got error: %v", token.Err)

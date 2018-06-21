@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bitbucket.org/fflo/semix/pkg/say"
 	"bitbucket.org/fflo/semix/pkg/semix"
 )
 
@@ -52,7 +53,7 @@ func (s dirStorage) Put(url string, es []Entry) error {
 func (s dirStorage) write(url string, ds []dse) error {
 	path := preparePath(s.dir, url)
 	flags := os.O_APPEND | os.O_CREATE | os.O_WRONLY
-	// say.Info("wrting %d entries to %s", len(ds), path)
+	say.Debug("%s: writing %d entries to %s", url, len(ds), path)
 	os, err := os.OpenFile(path, flags, 0600)
 	if err != nil {
 		return fmt.Errorf("cannot open %q: %v", path, err)
@@ -74,7 +75,7 @@ func (s dirStorage) Get(url string, f func(Entry) bool) error {
 		return fmt.Errorf("cannot open %q: %v", path, err)
 	}
 	defer is.Close()
-	// say.Info("reading path %s", path)
+	say.Debug("reading path %s", path)
 	for {
 		ds, err := readBlock(is)
 		if err != nil {
@@ -178,4 +179,33 @@ func preparePath(dir, u string) string {
 		// say.Info("could no prepare: %s: %s", p, err)
 	}
 	return u
+}
+
+type memStorage map[string][]Entry
+
+// OpenMemStorage create a new memory storage.
+func OpenMemStorage() Storage {
+	return make(memStorage)
+}
+
+// Put simply appends the entries to the map
+func (s memStorage) Put(url string, es []Entry) error {
+	s[url] = append(s[url], es...)
+	return nil
+}
+
+func (s memStorage) Get(url string, f func(Entry) bool) error {
+	for _, e := range s[url] {
+		if !f(e) {
+			break
+		}
+	}
+	return nil
+}
+
+func (s memStorage) Close() error {
+	for url := range s {
+		delete(s, url)
+	}
+	return nil
 }

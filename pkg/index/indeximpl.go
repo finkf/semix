@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"bitbucket.org/fflo/semix/pkg/semix"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -11,26 +12,60 @@ const (
 	DefaultBufferSize = 1024
 )
 
-// New opens a directory index at the given directory path with
+// NewMemory create a new in memory index, that uses a simple map
+// of Entry slices for storage. It is a shortcut for
+// New(OpenMemStorage(), n).
+func NewMemory(n int) Interface {
+	return New(OpenMemStorage(), n)
+}
+
+// New returns a new Interface with a given buffer size
+// and storage.
+func New(s Storage, n int) Interface {
+	return &index{
+		storage: s,
+		buffer:  make(map[string][]Entry),
+		mutex:   new(sync.RWMutex),
+		n:       n,
+		pool: &sync.Pool{New: func() interface{} {
+			return make([]Entry, 0, n)
+		}},
+	}
+}
+
+// NewDir opens a directory index at the given directory path with
 // and the given options.
-func New(dir string, size int) (Interface, error) {
+func NewDir(dir string, size int) (Interface, error) {
 	storage, err := OpenDirStorage(dir)
 	if err != nil {
 		return nil, err
 	}
-	return &index{
-		storage: storage,
-		buffer:  make(map[string][]Entry),
-		mutex:   new(sync.RWMutex),
-		n:       size,
-	}, nil
+	return New(storage, size), nil
 }
 
 type index struct {
 	storage Storage
 	buffer  map[string][]Entry
+	pool    *sync.Pool
 	mutex   *sync.RWMutex
 	n       int
+}
+
+func (i *index) putBuffer(url string) {
+	buf := i.buffer[url]
+	if buf == nil {
+		return
+	}
+	i.buffer[url] = nil
+	buf = buf[:0]
+	i.pool.Put(buf)
+}
+
+func (i *index) getBuffer(url string) {
+	if i.buffer[url] != nil {
+		return
+	}
+	i.buffer[url] = i.pool.Get().([]Entry)
 }
 
 // Put puts a token in the index.
@@ -39,12 +74,13 @@ func (i *index) Put(t semix.Token) error {
 	defer i.mutex.Unlock()
 	return putAll(t, func(e Entry) error {
 		url := e.ConceptURL
+		i.getBuffer(url)
 		i.buffer[url] = append(i.buffer[url], e)
 		if len(i.buffer[url]) == i.n {
 			if err := i.storage.Put(url, i.buffer[url]); err != nil {
-				return err
+				return errors.Wrapf(err, "cannot put entries")
 			}
-			i.buffer[url] = make([]Entry, 0, i.n)
+			i.putBuffer(url)
 		}
 		return nil
 	})
@@ -63,52 +99,39 @@ func (i *index) Get(url string, f func(Entry) bool) error {
 	return i.storage.Get(url, f)
 }
 
-// Close closes the index and writes all buffered entries to disc.
-func (i *index) Close() (err error) {
+// Flush flushes the index.
+// All non empty buffers are written to the storage.
+func (i *index) Flush() error {
 	i.mutex.Lock()
 	defer i.mutex.Unlock()
-	defer func() {
-		err = i.storage.Close()
-	}()
+	return i.putAll()
+}
+
+// putAll puts all non empty buffers into the index.
+// Must be called with a locked mutex.
+func (i *index) putAll() error {
 	for url, es := range i.buffer {
 		if len(es) == 0 {
 			continue
 		}
 		if err := i.storage.Put(url, es); err != nil {
-			return err
+			return errors.Wrapf(err, "cannot write index buffer")
 		}
-	}
-	return err
-}
-
-// NewMemoryMap create a new in memory index, that uses
-// a simple map of Entry slices for storage.
-func NewMemoryMap() Interface {
-	return memIndex{index: make(map[string][]Entry)}
-}
-
-type memIndex struct {
-	index map[string][]Entry
-}
-
-func (i memIndex) Put(t semix.Token) error {
-	return putAll(t, func(e Entry) error {
-		url := e.ConceptURL
-		i.index[url] = append(i.index[url], e)
-		return nil
-	})
-}
-
-func (i memIndex) Get(url string, f func(Entry) bool) error {
-	for _, e := range i.index[url] {
-		if !f(e) {
-			return nil
-		}
+		i.putBuffer(url)
 	}
 	return nil
 }
 
-func (i memIndex) Close() error {
+// Close closes the index and writes all buffered entries to disc.
+func (i *index) Close() error {
+	i.mutex.Lock()
+	defer i.mutex.Unlock()
+	if err := i.putAll(); err != nil {
+		return errors.Wrapf(err, "cannot close index")
+	}
+	if err := i.storage.Close(); err != nil {
+		return errors.Wrapf(err, "cannot close index")
+	}
 	return nil
 }
 

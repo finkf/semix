@@ -239,18 +239,3 @@ semix.put = function(content, isURL) {
 semix.alertError = function(msg, status) {
 		window.alert("error:\n" + msg + "\nstatus: " + status);
 };
-
-// semix.getPutURL = function(base, url) {
-// 		var config = semix.getConfiguration();
-// 		var uri = base + '?m=' + config.memorySize;
-// 		uri += '&t=' + config.threshold;
-// 		if (url !== undefined) {
-// 				base += '&url=' + url;
-// 		}
-// 		config.limits.forEach(function(e, i) {
-// 				uri += '&ks=' + e;
-// 		});
-// 		config.resolvers.forEach(function(e, i) {
-// 				uri += '&rs=' + e;
-// 		});
-// }

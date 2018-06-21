@@ -9,6 +9,7 @@ ambigs = "0.5"
 [predicates]
 ignore = [
 	"http://www.w3.org/2004/02/skos/core#narrower",
+  "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
 ]
 transitive = [
 	"http://www.w3.org/2004/02/skos/core#broader",
