@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/client"
-	"bitbucket.org/fflo/semix/pkg/rest"
+	"gitlab.com/finkf/semix/pkg/client"
+	"gitlab.com/finkf/semix/pkg/rest"
 )
 
 // Option is a functional option to configure the server

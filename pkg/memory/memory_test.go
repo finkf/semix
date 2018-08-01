@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"bitbucket.org/fflo/semix/pkg/semix"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 func TestInc(t *testing.T) {

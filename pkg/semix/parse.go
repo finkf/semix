@@ -1,8 +1,8 @@
 package semix
 
 import (
-	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/pkg/errors"
+	"gitlab.com/finkf/semix/pkg/say"
 )
 
 // Parser defines a parser that parses (Subject, Predicate, Object) triples.

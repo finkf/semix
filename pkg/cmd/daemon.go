@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"bitbucket.org/fflo/semix/pkg/index"
-	"bitbucket.org/fflo/semix/pkg/resource"
-	"bitbucket.org/fflo/semix/pkg/rest"
-	"bitbucket.org/fflo/semix/pkg/say"
 	"github.com/spf13/cobra"
+	"gitlab.com/finkf/semix/pkg/index"
+	"gitlab.com/finkf/semix/pkg/resource"
+	"gitlab.com/finkf/semix/pkg/rest"
+	"gitlab.com/finkf/semix/pkg/say"
 )
 
 var daemonCmd = &cobra.Command{

@@ -6,10 +6,10 @@ import (
 	"os"
 	"sort"
 
-	"bitbucket.org/fflo/semix/pkg/client"
-	"bitbucket.org/fflo/semix/pkg/index"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"gitlab.com/finkf/semix/pkg/client"
+	"gitlab.com/finkf/semix/pkg/index"
 )
 
 var getCmd = &cobra.Command{

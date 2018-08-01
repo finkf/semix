@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"bitbucket.org/fflo/semix/pkg/memory"
-	"bitbucket.org/fflo/semix/pkg/semix"
+	"gitlab.com/finkf/semix/pkg/memory"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 func checkSyntax(ast ast) (t astType, err error) {

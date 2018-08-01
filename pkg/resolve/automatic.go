@@ -1,8 +1,8 @@
 package resolve
 
 import (
-	"bitbucket.org/fflo/semix/pkg/memory"
-	"bitbucket.org/fflo/semix/pkg/semix"
+	"gitlab.com/finkf/semix/pkg/memory"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 // Automatic disambiguates concepts by calculating the thematic overlap

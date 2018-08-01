@@ -10,13 +10,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/client"
-	"bitbucket.org/fflo/semix/pkg/dot"
-	"bitbucket.org/fflo/semix/pkg/index"
-	"bitbucket.org/fflo/semix/pkg/rest"
-	"bitbucket.org/fflo/semix/pkg/say"
-	"bitbucket.org/fflo/semix/pkg/semix"
 	"github.com/pkg/errors"
+	"gitlab.com/finkf/semix/pkg/client"
+	"gitlab.com/finkf/semix/pkg/dot"
+	"gitlab.com/finkf/semix/pkg/index"
+	"gitlab.com/finkf/semix/pkg/rest"
+	"gitlab.com/finkf/semix/pkg/say"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 type status struct {

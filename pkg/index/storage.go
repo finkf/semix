@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/say"
-	"bitbucket.org/fflo/semix/pkg/semix"
+	"gitlab.com/finkf/semix/pkg/say"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 // Storage puts IndexEntries into files.
@@ -163,11 +163,11 @@ func readBlock(r io.Reader) ([]dse, error) {
 }
 
 func relationRegisterPath(dir string) string {
-	return preparePath(dir, "http://bitbucket.org/fflo/semix/relation-register.gob")
+	return preparePath(dir, "http://gitlab.com/finkf/semix/relation-register.gob")
 }
 
 func documentRegisterPath(dir string) string {
-	return preparePath(dir, "http://bitbucket.org/fflo/semix/document-register.gob")
+	return preparePath(dir, "http://gitlab.com/finkf/semix/document-register.gob")
 }
 
 func preparePath(dir, u string) string {

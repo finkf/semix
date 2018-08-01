@@ -3,7 +3,7 @@ package searcher
 import (
 	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/semix"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 // New create a new Searcher instance.

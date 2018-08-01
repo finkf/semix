@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"bitbucket.org/fflo/semix/pkg/index"
+	"gitlab.com/finkf/semix/pkg/index"
 )
 
 // LookupFunc looks up a query string. It should return the corresponding

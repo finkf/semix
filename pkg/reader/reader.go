@@ -4,8 +4,8 @@ import (
 	"io"
 	"os"
 
-	"bitbucket.org/fflo/semix/pkg/semix"
 	"github.com/pkg/errors"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 // Content-Types for the documents

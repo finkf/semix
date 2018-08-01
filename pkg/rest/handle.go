@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/index"
-	"bitbucket.org/fflo/semix/pkg/query"
-	"bitbucket.org/fflo/semix/pkg/rule"
-	"bitbucket.org/fflo/semix/pkg/say"
-	"bitbucket.org/fflo/semix/pkg/searcher"
-	"bitbucket.org/fflo/semix/pkg/semix"
 	"github.com/pkg/errors"
+	"gitlab.com/finkf/semix/pkg/index"
+	"gitlab.com/finkf/semix/pkg/query"
+	"gitlab.com/finkf/semix/pkg/rule"
+	"gitlab.com/finkf/semix/pkg/say"
+	"gitlab.com/finkf/semix/pkg/searcher"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 type lookupData struct {

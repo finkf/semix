@@ -12,13 +12,13 @@ import (
 	"strconv"
 	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/rdfxml"
-	"bitbucket.org/fflo/semix/pkg/say"
-	"bitbucket.org/fflo/semix/pkg/semix"
-	"bitbucket.org/fflo/semix/pkg/traits"
-	"bitbucket.org/fflo/semix/pkg/turtle"
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
+	"gitlab.com/finkf/semix/pkg/rdfxml"
+	"gitlab.com/finkf/semix/pkg/say"
+	"gitlab.com/finkf/semix/pkg/semix"
+	"gitlab.com/finkf/semix/pkg/traits"
+	"gitlab.com/finkf/semix/pkg/turtle"
 )
 
 // Comparision ignores case

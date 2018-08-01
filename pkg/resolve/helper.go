@@ -3,7 +3,7 @@ package resolve
 import (
 	"math"
 
-	"bitbucket.org/fflo/semix/pkg/semix"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 // maxConcept chooses the concept with the biggest score.

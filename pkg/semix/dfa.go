@@ -4,7 +4,7 @@ import (
 	"log"
 	"sort"
 
-	"bitbucket.org/fflo/sparsetable"
+	"gitlab.com/finkf/sparsetable"
 )
 
 // DFA is a simple wrapper around a sparsetable.DFA.

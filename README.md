@@ -23,7 +23,7 @@ Usage: `semix [command] [--help]`
 
 ## Downloads
 You can download the pre-compiled binaries from
-[the downloads page](https://bitbucket.org/fflo/semix/downloads/).
+[the downloads page](https://gitlab.com/finkf/semix/downloads/).
 If you want to use the (simplistic) httpd daemon,
 you should also download one of the supplied html package files.
 

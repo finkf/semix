@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"bitbucket.org/fflo/semix/pkg/memory"
-	"bitbucket.org/fflo/semix/pkg/rule"
-	"bitbucket.org/fflo/semix/pkg/semix"
+	"gitlab.com/finkf/semix/pkg/memory"
+	"gitlab.com/finkf/semix/pkg/rule"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 func TestSimple(t *testing.T) {

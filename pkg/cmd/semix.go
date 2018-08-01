@@ -4,9 +4,9 @@ import (
 	"os"
 	"strings"
 
-	"bitbucket.org/fflo/semix/pkg/say"
 	isatty "github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+	"gitlab.com/finkf/semix/pkg/say"
 )
 
 const (

@@ -3,8 +3,8 @@ package index
 import (
 	"context"
 
-	"bitbucket.org/fflo/semix/pkg/say"
-	"bitbucket.org/fflo/semix/pkg/semix"
+	"gitlab.com/finkf/semix/pkg/say"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 // Entry denotes a public available index entry

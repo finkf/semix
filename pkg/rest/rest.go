@@ -4,11 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"bitbucket.org/fflo/semix/pkg/index"
-	"bitbucket.org/fflo/semix/pkg/rule"
-	"bitbucket.org/fflo/semix/pkg/searcher"
-	"bitbucket.org/fflo/semix/pkg/semix"
 	"github.com/pkg/errors"
+	"gitlab.com/finkf/semix/pkg/index"
+	"gitlab.com/finkf/semix/pkg/rule"
+	"gitlab.com/finkf/semix/pkg/searcher"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 // Server represents a server instance.

@@ -1,7 +1,7 @@
 package memory
 
 import (
-	"bitbucket.org/fflo/semix/pkg/semix"
+	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 // Memory is simple ringbuffer that enables counting of concepts stored
