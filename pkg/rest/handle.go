@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/finkf/semix/pkg/index"
+	"github.com/finkf/semix/pkg/query"
+	"github.com/finkf/semix/pkg/rule"
+	"github.com/finkf/semix/pkg/say"
+	"github.com/finkf/semix/pkg/searcher"
+	"github.com/finkf/semix/pkg/semix"
 	"github.com/pkg/errors"
-	"gitlab.com/finkf/semix/pkg/index"
-	"gitlab.com/finkf/semix/pkg/query"
-	"gitlab.com/finkf/semix/pkg/rule"
-	"gitlab.com/finkf/semix/pkg/say"
-	"gitlab.com/finkf/semix/pkg/searcher"
-	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 type lookupData struct {

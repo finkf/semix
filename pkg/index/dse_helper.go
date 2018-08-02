@@ -6,5 +6,5 @@ func dseRelationURL(d bool) string {
 	if d {
 		return ""
 	}
-	return "http://gitlab.com/finkf/semix/pkg/index/indirect"
+	return "http://github.com/finkf/semix/pkg/index/indirect"
 }

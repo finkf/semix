@@ -10,7 +10,7 @@ import (
 const (
 	// SplitURL is the name of predicates that denote ambiguous connections
 	// in the concept graph.
-	SplitURL = "http://gitlab.com/finkf/semix/pkg/semix/a-star"
+	SplitURL = "http://github.com/finkf/semix/pkg/semix/a-star"
 )
 
 // Edge represents an edge in the concept graph that

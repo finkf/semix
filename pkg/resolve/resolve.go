@@ -3,8 +3,8 @@ package resolve
 import (
 	"context"
 
-	"gitlab.com/finkf/semix/pkg/memory"
-	"gitlab.com/finkf/semix/pkg/semix"
+	"github.com/finkf/semix/pkg/memory"
+	"github.com/finkf/semix/pkg/semix"
 )
 
 // Interface defines the interface for the disambiguation.

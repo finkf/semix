@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"path/filepath"
 
-	"gitlab.com/finkf/semix/pkg/say"
+	"github.com/finkf/semix/pkg/say"
 )
 
 var (

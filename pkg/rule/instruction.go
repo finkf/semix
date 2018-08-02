@@ -5,8 +5,8 @@ import (
 	"math"
 	"sort"
 
-	"gitlab.com/finkf/semix/pkg/memory"
-	"gitlab.com/finkf/semix/pkg/semix"
+	"github.com/finkf/semix/pkg/memory"
+	"github.com/finkf/semix/pkg/semix"
 )
 
 type opcode int

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"gitlab.com/finkf/semix/pkg/cmd"
+	"github.com/finkf/semix/pkg/cmd"
 )
 
 func main() {

@@ -1,8 +1,8 @@
 package resolve
 
 import (
-	"gitlab.com/finkf/semix/pkg/memory"
-	"gitlab.com/finkf/semix/pkg/semix"
+	"github.com/finkf/semix/pkg/memory"
+	"github.com/finkf/semix/pkg/semix"
 )
 
 // Simple chooses the most occuring concept in the memory

@@ -11,11 +11,11 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/finkf/semix/pkg/index"
+	"github.com/finkf/semix/pkg/rest"
+	"github.com/finkf/semix/pkg/say"
+	"github.com/finkf/semix/pkg/semix"
 	"github.com/pkg/errors"
-	"gitlab.com/finkf/semix/pkg/index"
-	"gitlab.com/finkf/semix/pkg/rest"
-	"gitlab.com/finkf/semix/pkg/say"
-	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 // Option is a functional configuration option for the client.

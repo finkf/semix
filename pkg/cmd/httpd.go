@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"gitlab.com/finkf/semix/pkg/httpd"
-	"gitlab.com/finkf/semix/pkg/say"
+	"github.com/finkf/semix/pkg/httpd"
+	"github.com/finkf/semix/pkg/say"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"

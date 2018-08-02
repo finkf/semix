@@ -10,7 +10,7 @@ func newTraits() traits {
 		transitive:       make(map[string]bool),
 		symmetric:        make(map[string]bool),
 		ignore:           make(map[string]bool),
-		splitRelationURL: "http://gitlab.com/finkf/semix/pkg/rdfxml/split",
+		splitRelationURL: "http://github.com/finkf/semix/pkg/rdfxml/split",
 	}
 }
 

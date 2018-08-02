@@ -13,12 +13,12 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/finkf/semix/pkg/rdfxml"
+	"github.com/finkf/semix/pkg/say"
+	"github.com/finkf/semix/pkg/semix"
+	"github.com/finkf/semix/pkg/traits"
+	"github.com/finkf/semix/pkg/turtle"
 	"github.com/pkg/errors"
-	"gitlab.com/finkf/semix/pkg/rdfxml"
-	"gitlab.com/finkf/semix/pkg/say"
-	"gitlab.com/finkf/semix/pkg/semix"
-	"gitlab.com/finkf/semix/pkg/traits"
-	"gitlab.com/finkf/semix/pkg/turtle"
 )
 
 // Comparision ignores case

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"gitlab.com/finkf/semix/pkg/say"
+	"github.com/finkf/semix/pkg/say"
 )
 
 func Test(t *testing.T) {

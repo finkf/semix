@@ -3,8 +3,8 @@ package index
 import (
 	"sync"
 
+	"github.com/finkf/semix/pkg/semix"
 	"github.com/pkg/errors"
-	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 const (

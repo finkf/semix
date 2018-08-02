@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/finkf/semix/pkg/index"
+	"github.com/finkf/semix/pkg/resolve"
+	"github.com/finkf/semix/pkg/rule"
+	"github.com/finkf/semix/pkg/semix"
 	"github.com/pkg/errors"
-	"gitlab.com/finkf/semix/pkg/index"
-	"gitlab.com/finkf/semix/pkg/resolve"
-	"gitlab.com/finkf/semix/pkg/rule"
-	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 // DumpFileContent defines the content and the content type of a dump file.
@@ -95,7 +95,7 @@ func (p PutData) document(dir string) (semix.Document, error) {
 }
 
 // Resolver defines one of the three resolvers simple, automatic or ruled
-// as defined in gitlab.com/finkf/semix/pkg/resolve
+// as defined in github.com/finkf/semix/pkg/resolve
 type Resolver struct {
 	Name       string
 	Threshold  float64

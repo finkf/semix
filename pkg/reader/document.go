@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/finkf/semix/pkg/semix"
 	"github.com/pkg/errors"
-	"gitlab.com/finkf/semix/pkg/semix"
 )
 
 type plainTextDocument struct {

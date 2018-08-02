@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/finkf/semix/pkg/say"
+	"github.com/finkf/semix/pkg/say"
 )
 
 // WithLogging wraps a HandlerFunc and logs the handling of the request.

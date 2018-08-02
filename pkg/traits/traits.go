@@ -1,7 +1,7 @@
 // Package traits defines a simple structure to configure traits.
 package traits
 
-import "gitlab.com/finkf/semix/pkg/semix"
+import "github.com/finkf/semix/pkg/semix"
 
 // Option speciefies an Option to set up a traits instance.
 type Option func(*traits)

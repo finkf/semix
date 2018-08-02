@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"gitlab.com/finkf/semix/pkg/memory"
+	"github.com/finkf/semix/pkg/memory"
 )
 
 // Map maps concept URLs to compiled rules.

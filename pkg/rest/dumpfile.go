@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/finkf/semix/pkg/semix"
+	"github.com/finkf/semix/pkg/semix"
 )
 
 func init() {

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/finkf/semix/pkg/dot"
+	"github.com/finkf/semix/pkg/dot"
 )
 
 var (

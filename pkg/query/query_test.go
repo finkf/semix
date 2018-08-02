@@ -6,8 +6,8 @@ import (
 	"sort"
 	"testing"
 
-	"gitlab.com/finkf/semix/pkg/index"
-	"gitlab.com/finkf/semix/pkg/semix"
+	"github.com/finkf/semix/pkg/index"
+	"github.com/finkf/semix/pkg/semix"
 )
 
 func TestQueryExecute(t *testing.T) {

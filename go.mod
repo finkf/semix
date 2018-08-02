@@ -1,7 +1,7 @@
-module "gitlab.com/finkf/semix"
+module "github.com/finkf/semix"
 
 require (
-	"gitlab.com/finkf/sparsetable" v1.0.4
+	"github.com/finkf/sparsetable" v1.0.4
 	"github.com/BurntSushi/toml" v0.3.0
 	"github.com/fatih/color" v1.6.0
 	"github.com/spf13/cobra" v0.0.1

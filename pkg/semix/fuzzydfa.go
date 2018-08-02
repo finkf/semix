@@ -3,7 +3,7 @@ package semix
 import (
 	"fmt"
 
-	"gitlab.com/finkf/sparsetable"
+	"github.com/finkf/sparsetable"
 )
 
 // FuzzyDFA is a simple wrapper around a sparsetable.FuzzyDFA.

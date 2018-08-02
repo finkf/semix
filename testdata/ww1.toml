@@ -7,20 +7,20 @@ ambigs = "0.3"
 [predicates]
 ignore = []
 transitive = [
-	"http://gitlab.com/finkf/ww1/predicates/date",
-	#"http://gitlab.com/finkf/ww1/",
+	"http://github.com/finkf/ww1/predicates/date",
+	#"http://github.com/finkf/ww1/",
 	#"http://ww1.cis.lmu.de/Type",
 	#"http://ww1.cis.lmu.de/Location",
 ]
 symmetric = [
-	#"http://gitlab.com/finkf/ww1/",
+	#"http://github.com/finkf/ww1/",
 	#"http://ww1.cis.lmu.de/Date",
 ]
 name = [
-	"http://gitlab.com/finkf/ww1/predicates/pref-name",
+	"http://github.com/finkf/ww1/predicates/pref-name",
 ]
 distinct = [
-	"http://gitlab.com/finkf/ww1/predicates/alt-name",
+	"http://github.com/finkf/ww1/predicates/alt-name",
 ]
 rules = []
 ambiguous = []

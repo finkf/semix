@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/finkf/semix/pkg/semix"
+	"github.com/finkf/semix/pkg/semix"
 )
 
 func TestIndex(t *testing.T) {

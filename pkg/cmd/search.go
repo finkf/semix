@@ -6,10 +6,10 @@ import (
 	"os"
 	"sort"
 
+	"github.com/finkf/semix/pkg/client"
+	x "github.com/finkf/semix/pkg/semix"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gitlab.com/finkf/semix/pkg/client"
-	x "gitlab.com/finkf/semix/pkg/semix"
 )
 
 var searchCmd = &cobra.Command{

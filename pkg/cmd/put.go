@@ -7,11 +7,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/finkf/semix/pkg/client"
+	"github.com/finkf/semix/pkg/index"
+	"github.com/finkf/semix/pkg/rest"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gitlab.com/finkf/semix/pkg/client"
-	"gitlab.com/finkf/semix/pkg/index"
-	"gitlab.com/finkf/semix/pkg/rest"
 )
 
 var (
